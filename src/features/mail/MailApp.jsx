@@ -12,7 +12,7 @@ import { useMailStore } from './store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { io } from 'socket.io-client';
+
 import { DndContext } from '@dnd-kit/core';
 import { Plus } from 'lucide-react';
 
@@ -68,16 +68,30 @@ const MailApp = () => {
   }, [setComposeOpen, setSearchOpen, setFolder]);
 
   useEffect(() => {
-    const socket = io(getSocketUrl());
     const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-    
-    socket.on('new-email', (data) => {
-      if (data.recipient === auth.email || data.workspaceId === auth.workspaceId) {
-        queryClient.invalidateQueries(['mails']);
-      }
-    });
+    if (!auth.email) return;
 
-    return () => socket.disconnect();
+    let ws = null;
+    try {
+      const wsBase = getSocketUrl().replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
+      const wsUrl = `${wsBase}/ws/mail?email=${encodeURIComponent(auth.email)}`;
+      ws = new WebSocket(wsUrl);
+
+      ws.onmessage = (e) => {
+        const payload = JSON.parse(e.data);
+        if (payload.type === 'NEW_MAIL') {
+          if (payload.mail.recipient === auth.email || payload.mail.workspaceId === auth.workspaceId) {
+            queryClient.invalidateQueries(['mails']);
+          }
+        }
+      };
+    } catch (e) {
+      console.warn('Mail Socket Init failed', e);
+    }
+
+    return () => {
+      if (ws) ws.close();
+    };
   }, []);
 
   return (
