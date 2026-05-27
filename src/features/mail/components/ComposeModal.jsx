@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getApiUrl } from '../../../api';
+import { getApiUrl, fetchApi } from '../../../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Minus, Maximize2, Send, Paperclip, 
@@ -60,12 +60,10 @@ const ComposeModal = () => {
 
   const fetchSmartCompose = async (currentText) => {
     try {
-      const res = await fetch(getApiUrl('/api/mail/smart-compose'), {
+      const data = await fetchApi('/api/mail/smart-compose', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentText, context: 'Professional email' })
       });
-      const data = await res.json();
       setSuggestion(data.suggestion);
     } catch (e) {}
   };
@@ -95,18 +93,15 @@ const ComposeModal = () => {
 
     try {
       if (draftId) {
-        await fetch(getApiUrl(`/api/mail/${draftId}`), {
+        await fetchApi(`/api/mail/${draftId}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(draftData)
         });
       } else {
-        const res = await fetch(getApiUrl('/api/mail/send'), {
+        const data = await fetchApi('/api/mail/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(draftData)
         });
-        const data = await res.json();
         if (data._id) setDraftId(data._id);
       }
       queryClient.invalidateQueries(['mails']);
@@ -123,14 +118,12 @@ const ComposeModal = () => {
 
   const sendMutation = useMutation({
     mutationFn: async (mailData) => {
-      const endpoint = draftId ? getApiUrl(`/api/mail/${draftId}`) : getApiUrl('/api/mail/send');
+      const endpoint = draftId ? `/api/mail/${draftId}` : '/api/mail/send';
       const method = draftId ? 'PATCH' : 'POST';
-      const res = await fetch(endpoint, {
+      return fetchApi(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mailData)
       });
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['mails']);

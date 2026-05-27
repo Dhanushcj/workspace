@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { getApiUrl } from '../../../api';
+import { getApiUrl, fetchApi } from '../../../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Filter, ArrowUpDown, Star, Archive, 
@@ -28,11 +28,13 @@ const MailList = () => {
   const email = auth.email || '';
 
   const { data: emails = [], isLoading } = useQuery({
-    queryKey: ['mails', workspaceId, email, searchQuery],
+    queryKey: ['mails', workspaceId, email, searchQuery, folder],
     queryFn: async () => {
-      const res = await fetch(getApiUrl(`/api/mail/${workspaceId}?email=${email}${searchQuery ? `&q=${searchQuery}` : ''}`));
-      if (!res.ok) throw new Error('Failed to fetch');
-      return res.json();
+      let backendFolder = folder.toLowerCase();
+      if (['work', 'client', 'finance', 'personal'].includes(backendFolder)) backendFolder = 'inbox';
+      if (backendFolder === 'starred') backendFolder = 'inbox';
+      
+      return fetchApi(`/api/mail?folder=${encodeURIComponent(backendFolder)}${searchQuery ? `&q=${searchQuery}` : ''}`);
     },
     // Keep previous data while fetching new search results for smoother UI
     placeholderData: (previousData) => previousData,

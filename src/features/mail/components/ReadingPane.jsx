@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getApiUrl } from '../../../api';
+import { getApiUrl, fetchApi } from '../../../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Reply, Forward, Archive, Trash2, Clock, 
@@ -24,19 +24,20 @@ const ReadingPane = () => {
   const { data: mail, isLoading: isMailLoading } = useQuery({
     queryKey: ['mail', selectedId],
     queryFn: async () => {
-      const res = await fetch(getApiUrl(`/api/mail/${auth.workspaceId}?email=${auth.email}`));
-      const mails = await res.json();
-      const selected = mails.find(m => m._id === selectedId);
-      
-      // Auto-mark as read
-      if (selected && !selected.isRead) {
-        fetch(getApiUrl(`/api/mail/${selected._id}`), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isRead: true })
-        }).then(() => queryClient.invalidateQueries(['mails']));
+      // Use fetchApi to get correct folder emails (we don't know the folder so we just query all mails or rely on selectedId from previous list)
+      // Actually, since we only need ONE mail, we can query the backend by ID
+      try {
+        const mail = await fetchApi(`/api/mail/${selectedId}`);
+        if (mail && !mail.isRead) {
+          fetchApi(`/api/mail/${selectedId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ isRead: true })
+          }).then(() => queryClient.invalidateQueries(['mails']));
+        }
+        return mail;
+      } catch (err) {
+        return null;
       }
-      return selected;
     },
     enabled: !!selectedId
   });
@@ -44,36 +45,30 @@ const ReadingPane = () => {
   // AI Summary Mutation
   const summaryMutation = useMutation({
     mutationFn: async (content) => {
-      const res = await fetch(getApiUrl('/api/mail/summarize'), {
+      return fetchApi('/api/mail/summarize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content })
       });
-      return res.json();
     }
   });
 
   // AI Smart Reply Mutation
   const smartReplyMutation = useMutation({
     mutationFn: async ({ content, sender }) => {
-      const res = await fetch(getApiUrl('/api/mail/smart-reply'), {
+      return fetchApi('/api/mail/smart-reply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, sender })
       });
-      return res.json();
     }
   });
 
   // Mail Update Mutation
   const updateMailMutation = useMutation({
     mutationFn: async (updates) => {
-      const res = await fetch(getApiUrl(`/api/mail/${selectedId}`), {
+      return fetchApi(`/api/mail/${selectedId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['mail', selectedId]);

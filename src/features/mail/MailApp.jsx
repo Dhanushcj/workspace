@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { getApiUrl, getSocketUrl } from '../../api';
+import { getApiUrl, getSocketUrl, fetchApi } from '../../api';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Sidebar from './components/Sidebar';
 import MailList from './components/MailList';
@@ -30,9 +30,8 @@ const MailApp = () => {
       const auth = JSON.parse(localStorage.getItem('auth') || '{}');
       
       // Update in DB
-      await fetch(getApiUrl(`/api/mail/${mailId}`), {
+      await fetchApi(`/api/mail/${mailId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ label: targetFolder })
       });
       

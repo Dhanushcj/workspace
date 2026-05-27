@@ -35,6 +35,34 @@ export const getApiUrl = (path) => {
   return `${API_BASE_URL}${cleanPath}`;
 };
 
+export const fetchApi = async (path, options = {}) => {
+  const token = localStorage.getItem('token') || (JSON.parse(localStorage.getItem('auth') || '{}')).token;
+  const headers = new Headers(options.headers || {});
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  
+  const response = await fetch(getApiUrl(path), {
+    ...options,
+    headers
+  });
+  
+  if (!response.ok) {
+    let errorMsg = 'API Error';
+    try {
+      const data = await response.json();
+      errorMsg = data.error || data.message || errorMsg;
+    } catch (e) {}
+    throw new Error(errorMsg);
+  }
+  
+  return response.json();
+};
+
 export const getSocketUrl = () => API_BASE_URL;
 
 export default API_BASE_URL;
+
