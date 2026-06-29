@@ -11,7 +11,20 @@ import ShowApp from './pages/ShowApp';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SheetsApp from './pages/SheetsApp';
-
+import TaskBoard from './pages/TaskBoard';
+import TasksRouter from './pages/TasksRouter';
+import ManagerDashboard from './pages/ManagerDashboard';
+import TeamLeadDashboard from './pages/TeamLeadDashboard';
+import TeamMemberDashboard from './pages/TeamMemberDashboard';
+import TasksProjects from './pages/TasksProjects';
+import TasksSprintPlanner from './pages/TasksSprintPlanner';
+import TasksBacklog from './pages/TasksBacklog';
+import TasksAssignment from './pages/TasksAssignment';
+import TasksBlockers from './pages/TasksBlockers';
+import TasksTeam from './pages/TasksTeam';
+import TasksWorkload from './pages/TasksWorkload';
+import TasksMessages from './pages/TasksMessages';
+import TasksSettings from './pages/TasksSettings';
 import MeetingHome from './pages/MeetingHome';
 import MeetingsTab from './pages/MeetingsTab';
 import CalendarTab from './pages/CalendarTab';
@@ -72,6 +85,20 @@ function App() {
           <Route path="/w/:workspaceId/docs" element={<DocsApp />} />
           <Route path="/w/:workspaceId/show" element={<ShowApp />} />
           <Route path="/w/:workspaceId/sheets" element={<SheetsApp />} />
+          <Route path="/w/:workspaceId/tasks" element={<TasksRouter />} />
+          <Route path="/w/:workspaceId/tasks/board" element={<TaskBoard />} />
+          <Route path="/w/:workspaceId/tasks/projects" element={<TasksProjects />} />
+          <Route path="/w/:workspaceId/tasks/planner" element={<TasksSprintPlanner />} />
+          <Route path="/w/:workspaceId/tasks/backlog" element={<TasksBacklog />} />
+          <Route path="/w/:workspaceId/tasks/assignments" element={<TasksAssignment />} />
+          <Route path="/w/:workspaceId/tasks/blockers" element={<TasksBlockers />} />
+          <Route path="/w/:workspaceId/tasks/team" element={<TasksTeam />} />
+          <Route path="/w/:workspaceId/tasks/workload" element={<TasksWorkload />} />
+          <Route path="/w/:workspaceId/tasks/messages" element={<TasksMessages />} />
+          <Route path="/w/:workspaceId/tasks/settings" element={<TasksSettings />} />
+          <Route path="/w/:workspaceId/dashboard/manager" element={<ManagerDashboard />} />
+          <Route path="/w/:workspaceId/dashboard/lead" element={<TeamLeadDashboard />} />
+          <Route path="/w/:workspaceId/dashboard/member" element={<TeamMemberDashboard />} />
           
           <Route path="/w/:workspaceId" element={<Navigate to="chat" replace />} />
         </Routes>

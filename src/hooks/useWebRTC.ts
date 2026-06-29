@@ -226,6 +226,9 @@ export const useWebRTC = ({
         peerConnectionsRef.current.delete(peerId);
         remoteStreamsRef.current.delete(peerId);
         remoteScreenStreamsRef.current.delete(peerId);
+        if (onPeerTrackAdded) {
+          onPeerTrackAdded(peerId);
+        }
       }
     };
 

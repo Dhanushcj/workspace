@@ -50,6 +50,9 @@ const RemoteVideo = ({ peer, stream, isSpeaking, mobileStyle, isScreen, remoteSt
       currentStream = peer.stream;
     }
   }
+
+  // Compute a dependency key based on track IDs and states so swapping tracks triggers useEffect
+  const trackIdsKey = currentStream ? currentStream.getVideoTracks().map(t => `${t.id}-${t.readyState}-${t.muted}`).join(',') : '';
   
   useEffect(() => { 
     if (currentStream && videoRef.current) { 
@@ -60,7 +63,7 @@ const RemoteVideo = ({ peer, stream, isSpeaking, mobileStyle, isScreen, remoteSt
       const checkTracks = () => {
         const videoTrack = currentStream.getVideoTracks()[0];
         if (videoTrack) {
-          setHasVideo(videoTrack.enabled && videoTrack.readyState === 'live');
+          setHasVideo(videoTrack.enabled && videoTrack.readyState === 'live' && !videoTrack.muted);
         } else {
           setHasVideo(false);
         }
@@ -68,11 +71,12 @@ const RemoteVideo = ({ peer, stream, isSpeaking, mobileStyle, isScreen, remoteSt
 
       currentStream.onaddtrack = checkTracks;
       currentStream.onremovetrack = checkTracks;
-      const videoTrack = currentStream.getVideoTracks()[0];
-      if (videoTrack) {
+      const videoTracks = currentStream.getVideoTracks();
+      videoTracks.forEach(videoTrack => {
          videoTrack.onunmute = checkTracks;
          videoTrack.onmute = checkTracks;
-      }
+         videoTrack.onended = checkTracks;
+      });
       
       checkTracks();
 
@@ -87,9 +91,21 @@ const RemoteVideo = ({ peer, stream, isSpeaking, mobileStyle, isScreen, remoteSt
       return () => {
         clearInterval(intervalId);
         clearTimeout(timeoutId);
+        if (currentStream) {
+          currentStream.onaddtrack = null;
+          currentStream.onremovetrack = null;
+        }
+        videoTracks.forEach(videoTrack => {
+           videoTrack.onunmute = null;
+           videoTrack.onmute = null;
+           videoTrack.onended = null;
+        });
       };
-    } 
-  }, [currentStream]);
+    } else if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      setHasVideo(false);
+    }
+  }, [currentStream, trackIdsKey]);
 
   const actualHasVideo = isScreen ? true : ((peer.videoEnabled !== false || peer.isScreenSharing) && hasVideo);
 
@@ -1300,6 +1316,13 @@ const m = Math.floor((seconds % 3600) / 60);
             applyContentHints(newStream);
             const newVideoTrack = newStream.getVideoTracks()[0];
             streamRef.current.addTrack(newVideoTrack);
+            
+            if (userVideo.current) {
+              userVideo.current.srcObject = streamRef.current;
+              userVideo.current.play().catch(e => {
+                if (e.name !== 'AbortError') console.error("Local video play error:", e);
+              });
+            }
             
             peersRef.current.forEach(({ pc, peerID }) => {
               if (!pc) return;

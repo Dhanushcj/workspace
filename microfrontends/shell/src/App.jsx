@@ -7,7 +7,8 @@ const APPS = [
   { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, color: '#3b82f6', desc: 'Command Center' },
   { id: 'mail', label: 'Mail App', icon: Mail, color: '#8b5cf6', port: 3010, desc: 'Secure Email MFE' },
   { id: 'meet', label: 'Meetings App', icon: Video, color: '#10b981', port: 3020, desc: 'Video Huddles MFE' },
-  { id: 'chat', label: 'Kural Chat', icon: MessageSquare, color: '#00c17e', port: 3030, desc: 'Team Messenger MFE' }
+  { id: 'chat', label: 'Kural Chat', icon: MessageSquare, color: '#00c17e', port: 3030, desc: 'Team Messenger MFE' },
+  { id: 'tasks', label: 'Tasks', icon: Grid, color: '#f59e0b', port: 3040, desc: 'Project Management' }
 ];
 
 export default function App() {
@@ -22,7 +23,8 @@ export default function App() {
   const iframeRefs = {
     mail: useRef(null),
     meet: useRef(null),
-    chat: useRef(null)
+    chat: useRef(null),
+    tasks: useRef(null)
   };
 
   // Handle postMessage synchronization from MFE sub-apps

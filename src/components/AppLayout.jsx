@@ -16,6 +16,7 @@ const APPS = [
   { icon: MessageSquare,   label: 'Kural',    path: 'chat',      color: '#00C17E', desc: 'Team chat' },
   { icon: Presentation,    label: 'Show',     path: 'show',      color: '#F59E0B', desc: 'Slide decks' },
   { icon: FileSpreadsheet, label: 'Sheets',   path: 'sheets',    color: '#10B981', desc: 'Data grids' },
+  { icon: Grid,            label: 'Tasks',    path: 'tasks',     color: '#F59E0B', desc: 'Project boards' },
   { icon: Shield,          label: 'Admin',    path: 'admin',     color: '#EF4444', desc: 'User management' },
 ];
 

@@ -29,7 +29,8 @@ const SERVICES = {
   mail: 'http://localhost:3102',
   meet: 'http://localhost:3103',
   chat: 'http://localhost:3104',
-  sockets: 'http://localhost:3105'
+  sockets: 'http://localhost:3105',
+  tasks: 'http://localhost:3106'
 };
 
 // Route matching rules
@@ -42,11 +43,12 @@ app.use((req, res, next) => {
     proxy.web(req, res, { target: SERVICES.mail });
   } else if (url.startsWith('/api/meetings') || url.startsWith('/api/meet')) {
     proxy.web(req, res, { target: SERVICES.meet });
+  } else if (url.startsWith('/api/tasks')) {
+    proxy.web(req, res, { target: SERVICES.tasks });
   } else if (
     url.startsWith('/api/chat') || 
     url.startsWith('/api/channels') || 
     url.startsWith('/api/members') ||
-    url.startsWith('/api/tasks') ||
     url.startsWith('/api/docs') ||
     url.startsWith('/api/show') ||
     url.startsWith('/api/status') ||
@@ -107,6 +109,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`   - Mail     -> ${SERVICES.mail}`);
   console.log(`   - Meetings -> ${SERVICES.meet}`);
   console.log(`   - Chat     -> ${SERVICES.chat}`);
+  console.log(`   - Tasks    -> ${SERVICES.tasks}`);
   console.log(`   - Sockets  -> ${SERVICES.sockets}`);
   console.log(`======================================================\n`);
 });

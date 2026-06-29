@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Video, MessageSquare, FileText, FileSpreadsheet, Presentation, Shield, Zap, Server, BarChart2, Layout, Users, ChevronRight, CheckCircle2, Sparkles, Loader2 } from 'lucide-react';
+import { Mail, Video, MessageSquare, FileText, FileSpreadsheet, Presentation, Shield, Zap, Server, BarChart2, Layout, Users, ChevronRight, CheckCircle2, Sparkles, Loader2, Grid } from 'lucide-react';
 import LogoImage from '../assets/landing-logo.png';
 import AIEcosystemCircle from '../components/AIEcosystemCircle';
 import { getApiUrl } from '../api';
@@ -138,6 +138,13 @@ const LandingPage = () => {
               title="Slides" 
               description="Professional presentation builder with corporate templates and seamless sharing."
               link="/login?app=show"
+            />
+            <ProductCard 
+              icon={Grid} 
+              color="bg-amber-100 text-amber-700" 
+              title="Tasks" 
+              description="Streamline project management with intuitive Kanban boards and seamless task tracking."
+              link="/login?app=tasks"
             />
           </div>
         </div>
