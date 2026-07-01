@@ -147,7 +147,7 @@ export async function threadsRoutes(fastify: FastifyInstance) {
       const currentEmail = normalizeEmail(request.user?.email || '');
       const currentName = request.user?.name || currentEmail;
 
-      if (!workspaceId || !content) return reply.code(400).send({ error: 'workspaceId and content required' });
+      if (!workspaceId || (!content && mediaUrls.length === 0)) return reply.code(400).send({ error: 'workspaceId and either content or media required' });
 
       const post = await ThreadPost.create({
         workspaceId,
