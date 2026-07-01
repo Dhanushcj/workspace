@@ -355,7 +355,6 @@ const ThreadsTab = ({ workspaceId, currentUserEmail, currentUserName, activityMo
     setGeneratedPoster(null);
     
     try {
-      const apiKey = ''; // Provided key
       const prompt = `You are a professional corporate graphic designer. Generate a visually stunning and modern SVG poster/ad.
 The poster must look "Professional Corporate".
 ${useRealisticPhotos 
@@ -367,18 +366,19 @@ Use a beautiful, vibrant color palette. Ensure text is readable. Make it standar
 CRITICAL XML RULES: All ampersands (&) in URLs MUST be escaped as &amp;. If using preserveAspectRatio, use a valid value like "xMidYMid slice" (with a space).
 RETURN ONLY THE RAW SVG CODE. Do not include markdown code blocks (\`\`\`), just the raw <svg>...</svg>.`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl('/api/threads/poster'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7 }
-        })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ prompt })
       });
       
       const data = await response.json();
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        let svgCode = data.candidates[0].content.parts[0].text.trim();
+      if (data.svg) {
+        let svgCode = data.svg.trim();
         if (svgCode.startsWith('\`\`\`xml')) svgCode = svgCode.replace(/^\`\`\`xml/, '').replace(/\`\`\`$/, '');
         if (svgCode.startsWith('\`\`\`svg')) svgCode = svgCode.replace(/^\`\`\`svg/, '').replace(/\`\`\`$/, '');
         if (svgCode.startsWith('\`\`\`html')) svgCode = svgCode.replace(/^\`\`\`html/, '').replace(/\`\`\`$/, '');

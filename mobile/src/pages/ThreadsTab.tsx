@@ -118,7 +118,6 @@ export default function ThreadsTab() {
     setIsGeneratingAI(true);
     setGeneratedPoster(null);
     try {
-      const apiKey = ''; // Same as web
       const prompt = `You are a professional corporate graphic designer. Generate a visually stunning and modern SVG poster/ad.
 The poster must look "Professional Corporate".
 ${useRealisticPhotos 
