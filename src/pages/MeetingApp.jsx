@@ -453,7 +453,8 @@ const MeetingApp = () => {
   }, [appState, meetingMetadata, aiAssistantActive]);
 
   useEffect(() => {
-    if (aiAssistantActive && streamRef.current && !window.isAIBot) {
+    // Only the host captures and sends mixed audio to avoid duplicate/overlapped AI transcripts
+    if (aiAssistantActive && streamRef.current && !window.isAIBot && meetingMetadata?.isHost) {
       const API_URL = getApiUrl('/');
       let wsBase = API_URL;
       if (wsBase.startsWith('https://')) wsBase = wsBase.replace('https://', 'wss://');
@@ -470,54 +471,76 @@ const MeetingApp = () => {
           type: 'metadata',
           meetingId: meetingMetadata?._id || meetingMetadata?.meetingId || id,
           userId: auth._id || auth.id || 'unknown-user',
-          speakerName: auth.user || 'User'
+          speakerName: 'Meeting Audio' // Mixed audio, so it represents the whole meeting
         }));
       };
 
       try {
-        const audioTracks = streamRef.current.getAudioTracks();
-        if (audioTracks.length > 0) {
-          const stream = new MediaStream([audioTracks[0]]);
-          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-            ? 'audio/webm;codecs=opus'
-            : MediaRecorder.isTypeSupported('audio/webm')
-            ? 'audio/webm'
-            : '';
-          
-          let intervalId;
-          const startRecordingCycle = () => {
-             if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : '';
+        
+        let intervalId;
+        const startRecordingCycle = () => {
+           if (!ws || ws.readyState !== WebSocket.OPEN) return;
+           
+           try {
+             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+             const dest = audioCtx.createMediaStreamDestination();
+
+             // Add remote tracks
+             if (peersRef.current) {
+               peersRef.current.forEach(({ pc }) => {
+                 if (!pc) return;
+                 const receiver = pc.getReceivers().find(r => r.track?.kind === 'audio');
+                 if (receiver && receiver.track && receiver.track.readyState === 'live') {
+                   try {
+                     const remoteSource = audioCtx.createMediaStreamSource(new MediaStream([receiver.track]));
+                     remoteSource.connect(dest);
+                   } catch(e) {}
+                 }
+               });
+             }
+
+             // Add local track if not muted
              if (!isMutedRef.current && streamRef.current && streamRef.current.getAudioTracks().length > 0) {
-                try {
-                   const currentStream = new MediaStream([streamRef.current.getAudioTracks()[0]]);
-                   const recorder = new MediaRecorder(currentStream, mimeType ? { mimeType } : undefined);
-                   aiMediaRecorderRef.current = recorder;
-                   recorder.ondataavailable = (e) => {
-                      if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-                         e.data.arrayBuffer().then(buf => {
-                            if (ws.readyState === WebSocket.OPEN) ws.send(buf);
-                         });
-                      }
-                   };
-                   recorder.start();
-                   setTimeout(() => {
-                      if (recorder.state === 'recording') recorder.stop();
-                   }, 10000);
-                } catch(e) {
-                   console.warn("AI recording cycle error:", e);
-                }
+               try {
+                 const localSource = audioCtx.createMediaStreamSource(new MediaStream([streamRef.current.getAudioTracks()[0]]));
+                 localSource.connect(dest);
+               } catch(e) {}
              }
-          };
 
-          intervalId = setInterval(startRecordingCycle, 10000);
-          startRecordingCycle();
-
-          return () => {
-             clearInterval(intervalId);
-             if (aiMediaRecorderRef.current) {
-                try { aiMediaRecorderRef.current.stop(); } catch {}
-                aiMediaRecorderRef.current = null;
+             if (dest.stream.getAudioTracks().length > 0) {
+               const recorder = new MediaRecorder(dest.stream, mimeType ? { mimeType } : undefined);
+               aiMediaRecorderRef.current = recorder;
+               recorder.ondataavailable = (e) => {
+                  if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+                     e.data.arrayBuffer().then(buf => {
+                        if (ws.readyState === WebSocket.OPEN) ws.send(buf);
+                     });
+                  }
+               };
+               recorder.start();
+               setTimeout(() => {
+                  if (recorder.state === 'recording') recorder.stop();
+               }, 10000);
              }
+           } catch(e) {
+             console.warn("AI recording cycle error:", e);
+           }
+        };
+
+        intervalId = setInterval(startRecordingCycle, 10000);
+        startRecordingCycle();
+
+        return () => {
+           clearInterval(intervalId);
+           if (aiMediaRecorderRef.current) {
+              try { aiMediaRecorderRef.current.stop(); } catch {}
+              aiMediaRecorderRef.current = null;
+           }
              if (aiWsRef.current) {
                 aiWsRef.current.close();
                 aiWsRef.current = null;
