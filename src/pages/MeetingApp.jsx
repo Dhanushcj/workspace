@@ -676,6 +676,8 @@ const m = Math.floor((seconds % 3600) / 60);
           if (!pc || pc.connectionState === 'closed') continue;
           try {
             const sender = pc.addTrack(screenTrack, stream);
+            const transceiver = pc.getTransceivers().find(t => t.sender === sender);
+            if (transceiver) transceiver.direction = 'sendonly';
             screenSendersRef.current.set(peerID, sender);
           } catch (err) {
             console.warn(`[ScreenShare] Failed to addTrack to ${peerID}:`, err);
@@ -948,13 +950,40 @@ const m = Math.floor((seconds % 3600) / 60);
           try {
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-            sendWsRef.current('answer', { targetPeerId: fromPeerId, sdp: answer });
+            
+            const screenTrack = screenStreamRef.current?.getVideoTracks()[0];
+            const screenTransceiver = screenTrack ? pc.getTransceivers().find(t => t.sender.track === screenTrack) : undefined;
+            
+            sendWsRef.current('answer', { 
+                targetPeerId: fromPeerId, 
+                sdp: answer,
+                isScreenShare: !!screenStreamRef.current,
+                screenTrackId: screenTrack?.id,
+                screenMid: screenTransceiver?.mid,
+                screenStreamId: screenStreamRef.current?.id
+            });
           } catch (err) {
             console.warn('[WebRTC] createAnswer/setLocal failed:', err);
           }
         }
         if (msg.type === 'answer') {
           const fromPeerId = msg.fromPeerId;
+          if (msg.isScreenShare) {
+             window.pendingScreenShare = window.pendingScreenShare || new Set();
+             window.pendingScreenShare.add(fromPeerId);
+          }
+          if (msg.screenTrackId) {
+             window.screenTrackIds = window.screenTrackIds || new Map();
+             window.screenTrackIds.set(fromPeerId, msg.screenTrackId);
+          }
+          if (msg.screenMid) {
+             window.screenMids = window.screenMids || new Map();
+             window.screenMids.set(fromPeerId, msg.screenMid);
+          }
+          if (msg.screenStreamId) {
+             window.screenStreamIds = window.screenStreamIds || new Map();
+             window.screenStreamIds.set(fromPeerId, msg.screenStreamId);
+          }
           const pc = peersRef.current.find(p => p.peerID === fromPeerId)?.pc;
           if (pc) {
             try {
@@ -1000,6 +1029,10 @@ const m = Math.floor((seconds % 3600) / 60);
         }
         if (msg.type === 'peer-media-state') {
           if (msg.fromPeerId === peerIdRef.current) return; // Ignore echoed self-messages
+          
+          if (msg.isScreenSharing === false && remoteScreenStreamsRef.current) {
+              remoteScreenStreamsRef.current.delete(msg.fromPeerId);
+          }
           
           setPeers(prev => prev.map(p => {
             if (p.peerID === msg.fromPeerId) {

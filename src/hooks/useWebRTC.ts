@@ -172,7 +172,9 @@ export const useWebRTC = ({
     // Add screen share tracks if currently active
     if (screenStreamRef.current) {
       screenStreamRef.current.getTracks().forEach(track => {
-        pc.addTrack(track, screenStreamRef.current!);
+        const sender = pc.addTrack(track, screenStreamRef.current!);
+        const transceiver = pc.getTransceivers().find(t => t.sender === sender);
+        if (transceiver) transceiver.direction = 'sendonly';
       });
     }
 
@@ -341,7 +343,9 @@ export const useWebRTC = ({
     // If screen share is active, also add screen track
     if (screenStreamRef.current) {
       const screenTrack = screenStreamRef.current.getVideoTracks()[0];
-      pc.addTrack(screenTrack, screenStreamRef.current);
+      const sender = pc.addTrack(screenTrack, screenStreamRef.current);
+      const transceiver = pc.getTransceivers().find(t => t.sender === sender);
+      if (transceiver) transceiver.direction = 'sendonly';
     }
 
     if (!polite) {
