@@ -173,7 +173,7 @@ export const useWebRTC = ({
     if (screenStreamRef.current) {
       screenStreamRef.current.getTracks().forEach(track => {
         const sender = pc.addTrack(track, screenStreamRef.current!);
-        const transceiver = pc.getTransceivers().find(t => t.sender === sender);
+        const transceiver = pc.getTransceivers().find((t: RTCRtpTransceiver) => t.sender === sender);
         if (transceiver) transceiver.direction = 'sendonly';
       });
     }
@@ -344,7 +344,7 @@ export const useWebRTC = ({
     if (screenStreamRef.current) {
       const screenTrack = screenStreamRef.current.getVideoTracks()[0];
       const sender = pc.addTrack(screenTrack, screenStreamRef.current);
-      const transceiver = pc.getTransceivers().find(t => t.sender === sender);
+      const transceiver = pc.getTransceivers().find((t: RTCRtpTransceiver) => t.sender === sender);
       if (transceiver) transceiver.direction = 'sendonly';
     }
 
