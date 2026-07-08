@@ -1389,10 +1389,7 @@ const m = Math.floor((seconds % 3600) / 60);
               }
               if (cameraSender) {
                 cameraSender.replaceTrack(newVideoTrack).then(() => {
-                  pc.createOffer().then(offer => {
-                    pc.setLocalDescription(offer);
-                    if (sendWsRef.current) sendWsRef.current('offer', { targetPeerId: peerID, sdp: offer });
-                  }).catch(e => console.warn("Failed to create offer after replaceTrack:", e));
+                  // No need to createOffer after replaceTrack as it doesn't modify SDP m-lines
                 }).catch(e => console.warn("Failed to replace video track:", e));
               } else {
                 try {

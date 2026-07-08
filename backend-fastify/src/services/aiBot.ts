@@ -73,10 +73,9 @@ export async function launchAIBot(meetingId: string, joinCode: string, backendBa
   }
 
   const renderUrl = process.env.RENDER_EXTERNAL_URL || '';
-  const backendWsUrl = process.env.BACKEND_WS_URL ||
-    (backendBaseUrl ? toWebSocketBaseUrl(backendBaseUrl) :
-      (renderUrl ? toWebSocketBaseUrl(renderUrl) : `ws://localhost:${process.env.PORT || 3001}`));
-  const wsUrl = `${backendWsUrl}/ws/webrtc`;
+  // Connect directly to the local server instance to avoid external routing/DNS issues
+  const port = process.env.PORT || 3001;
+  const wsUrl = `ws://127.0.0.1:${port}/ws/webrtc`;
 
   console.log(`[AIBot] Connecting to signaling server at ${wsUrl}`);
 
