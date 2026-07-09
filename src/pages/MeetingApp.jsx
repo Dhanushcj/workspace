@@ -123,7 +123,7 @@ const RemoteVideo = ({ peer, stream, isSpeaking, mobileStyle, isScreen, remoteSt
   return (
     <div className={`absolute inset-0 w-full h-full ${isScreen ? 'bg-black' : 'bg-[#1a1b1e]'} transition-all duration-500 overflow-hidden flex items-center justify-center
       ${isSpeaking ? 'ring-2 ring-inset ring-[#5244e1] shadow-[inset_0_0_30px_rgba(82,68,225,0.2)]' : ''}`}>
-       <video playsInline muted ref={videoRef} autoPlay className={`w-full h-full ${isScreen ? 'object-contain' : 'object-cover'} ${!actualHasVideo ? 'hidden' : ''}`} />
+       <video playsInline ref={videoRef} autoPlay className={`w-full h-full ${isScreen ? 'object-contain' : 'object-cover'} ${!actualHasVideo ? 'opacity-0 absolute pointer-events-none -z-10' : ''}`} />
        {!actualHasVideo && (
          mobileStyle ? (
             <div className="absolute inset-0 bg-violet-600 flex flex-col items-center justify-center">
@@ -541,12 +541,11 @@ const MeetingApp = () => {
               try { aiMediaRecorderRef.current.stop(); } catch {}
               aiMediaRecorderRef.current = null;
            }
-             if (aiWsRef.current) {
-                aiWsRef.current.close();
-                aiWsRef.current = null;
-             }
-          };
-        }
+           if (aiWsRef.current) {
+              aiWsRef.current.close();
+              aiWsRef.current = null;
+           }
+        };
       } catch (e) {
          console.warn('Could not start MediaRecorder for AI:', e);
       }
@@ -1667,7 +1666,7 @@ const m = Math.floor((seconds % 3600) / 60);
                     {/* Local tile in strip (if not pinned) */}
                     {pinnedUser !== 'local' && (
                       <div className="relative rounded-2xl overflow-hidden bg-slate-800 w-[140px] md:w-full aspect-video shrink-0 cursor-pointer group" onClick={() => setPinnedUser('local')}>
-                        <video playsInline muted ref={userVideo} autoPlay className={`w-full h-full ${isScreenSharing ? 'object-contain' : 'object-cover'} ${(!videoOn && !isScreenSharing) ? 'hidden' : ''}`} />
+                        <video playsInline muted ref={userVideo} autoPlay className={`w-full h-full ${isScreenSharing ? 'object-contain' : 'object-cover'} ${(!videoOn && !isScreenSharing) ? 'opacity-0 absolute pointer-events-none -z-10' : ''}`} />
                         {(!videoOn && !isScreenSharing) && (
                           <div className="absolute inset-0 flex items-center justify-center bg-blue-600">
                             <span className="text-xl font-black text-white">{auth.user?.charAt(0)?.toUpperCase()}</span>
@@ -1737,7 +1736,7 @@ const m = Math.floor((seconds % 3600) / 60);
                          </div>
                       )}
                       <div className={`relative rounded-3xl overflow-hidden bg-slate-800 ${tileClass} cursor-pointer group`}>
-                         <video playsInline muted ref={userVideo} autoPlay className={`w-full h-full object-cover ${(!videoOn) ? 'hidden' : ''}`} />
+                         <video playsInline muted ref={userVideo} autoPlay className={`w-full h-full object-cover ${(!videoOn) ? 'opacity-0 absolute pointer-events-none -z-10' : ''}`} />
                          {(!videoOn) && (
                             <div className="absolute inset-0 flex items-center justify-center bg-[#1a1b1e]">
                                <UserAvatar name={auth.user} />

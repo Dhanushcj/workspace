@@ -917,6 +917,20 @@ export default function Meetings() {
           track.stop?.(); // Completely stop hardware
           stream.removeTrack?.(track);
         });
+        
+        // Replace the track with null for all peer connections to unfreeze last frame
+        peerConnectionsRef.current.forEach((pc: any, peerId: string) => {
+          try {
+            const senders = pc.getSenders?.() || [];
+            const cameraSender = senders.find((s: any) => 
+              s.track && s.track.kind === 'video' && s.track.id !== screenTrackIdsRef.current.get(peerId)
+            );
+            if (cameraSender && cameraSender.replaceTrack) {
+              cameraSender.replaceTrack(null).catch(() => {});
+            }
+          } catch (err) {}
+        });
+
         // Send state update
         if (activeRoom) {
           sendSignal('media-state', { audioEnabled: !isMuted, videoEnabled: false });
