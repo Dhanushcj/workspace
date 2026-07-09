@@ -162,6 +162,7 @@ export default function Meetings() {
   const [remotePeers, setRemotePeers] = React.useState<RemotePeer[]>([]);
   const [localStream, setLocalStream] = React.useState<any>(null);
   const [localScreenStream, setLocalScreenStream] = React.useState<any>(null);
+  const localScreenStreamRef = React.useRef<any>(null);
   const [remoteStreams, setRemoteStreams] = React.useState<Record<string, any>>({});
   const remoteStreamsRef = React.useRef<Record<string, any>>({});
   const [remoteScreenStreams, setRemoteScreenStreams] = React.useState<Record<string, any>>({});
@@ -662,6 +663,16 @@ export default function Meetings() {
       console.warn(`[WebRTC] No local stream for ${targetPeerId}, PC created without media`);
     }
 
+    if (localScreenStreamRef.current) {
+      if (pc.addStream) {
+        pc.addStream(localScreenStreamRef.current);
+      } else if (pc.addTrack) {
+        localScreenStreamRef.current.getTracks().forEach((track: any) => {
+          pc.addTrack(track, localScreenStreamRef.current);
+        });
+      }
+    }
+
     pc.onicecandidate = (event: any) => {
       if (event.candidate) {
         sendSignal('ice-candidate', { targetPeerId, candidate: event.candidate });
@@ -852,7 +863,16 @@ export default function Meetings() {
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        sendSignal('offer', { targetPeerId, sdp: offer });
+        const screenTrack = localScreenStreamRef.current?.getVideoTracks()[0];
+        const screenTransceiver = screenTrack && pc.getTransceivers ? pc.getTransceivers().find((t: any) => t.sender && t.sender.track === screenTrack) : undefined;
+        sendSignal('offer', { 
+          targetPeerId, 
+          sdp: offer,
+          isScreenShare: !!localScreenStreamRef.current,
+          screenTrackId: screenTrack?.id,
+          screenMid: screenTransceiver?.mid,
+          screenStreamId: localScreenStreamRef.current?.id
+        });
       } catch (err) {
         console.warn(`[WebRTC] createOffer/setLocal failed for ${targetPeerId}:`, err);
       }
@@ -1120,7 +1140,16 @@ export default function Meetings() {
                           try {
                             const offer = await pc.createOffer();
                             await pc.setLocalDescription(offer);
-                            sendSignalRef.current('offer', { targetPeerId: peer.peerId, sdp: offer });
+                            const screenTrack = localScreenStreamRef.current?.getVideoTracks()[0];
+                            const screenTransceiver = screenTrack && pc.getTransceivers ? pc.getTransceivers().find((t: any) => t.sender && t.sender.track === screenTrack) : undefined;
+                            sendSignalRef.current('offer', { 
+                                targetPeerId: peer.peerId, 
+                                sdp: offer,
+                                isScreenShare: !!localScreenStreamRef.current,
+                                screenTrackId: screenTrack?.id,
+                                screenMid: screenTransceiver?.mid,
+                                screenStreamId: localScreenStreamRef.current?.id
+                            });
                           } catch (err) { console.warn('[WebRTC] Fallback offer failed:', err); }
                         }
                       }, 5000);
@@ -1171,7 +1200,16 @@ export default function Meetings() {
                           try {
                             const offer = await pc.createOffer();
                             await pc.setLocalDescription(offer);
-                            sendSignalRef.current('offer', { targetPeerId: msg.peerId, sdp: offer });
+                            const screenTrack = localScreenStreamRef.current?.getVideoTracks()[0];
+                            const screenTransceiver = screenTrack && pc.getTransceivers ? pc.getTransceivers().find((t: any) => t.sender && t.sender.track === screenTrack) : undefined;
+                            sendSignalRef.current('offer', { 
+                                targetPeerId: msg.peerId, 
+                                sdp: offer,
+                                isScreenShare: !!localScreenStreamRef.current,
+                                screenTrackId: screenTrack?.id,
+                                screenMid: screenTransceiver?.mid,
+                                screenStreamId: localScreenStreamRef.current?.id
+                            });
                           } catch (err) { console.warn('[WebRTC] Fallback offer failed:', err); }
                         }
                       }, 5000);
@@ -1463,6 +1501,7 @@ export default function Meetings() {
     }
     resetCallAudio();
     localStreamRef.current = null;
+    localScreenStreamRef.current = null;
     setLocalScreenStream(null);
     setLocalStream(null);
     setActiveRoom(null);
@@ -2330,6 +2369,7 @@ export default function Meetings() {
               try {
                 const displayStream = await getDisplayMedia({ video: true });
                 setLocalScreenStream(displayStream);
+                localScreenStreamRef.current = displayStream;
                 setIsSharing(true);
                 
                 const screenTrack = displayStream.getVideoTracks()[0];
@@ -2352,6 +2392,7 @@ export default function Meetings() {
                   screenTrack.onended = () => {
                      setIsSharing(false);
                      setLocalScreenStream(null);
+                     localScreenStreamRef.current = null;
                      if (wsRef.current?.readyState === WebSocket.OPEN) {
                        wsRef.current.send(JSON.stringify({ type: 'screen-share-stopped', data: {} }));
                        wsRef.current.send(JSON.stringify({
@@ -2380,6 +2421,7 @@ export default function Meetings() {
                  const screenTrack = localScreenStream.getVideoTracks()[0];
                  localScreenStream.getTracks().forEach((t: any) => t.stop());
                  setLocalScreenStream(null);
+                 localScreenStreamRef.current = null;
                  if (wsRef.current?.readyState === WebSocket.OPEN) {
                    wsRef.current.send(JSON.stringify({ type: 'screen-share-stopped', data: {} }));
                    wsRef.current.send(JSON.stringify({

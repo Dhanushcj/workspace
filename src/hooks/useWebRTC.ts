@@ -342,7 +342,18 @@ export const useWebRTC = ({
        try {
          const offer = await pc.createOffer();
          await pc.setLocalDescription(offer);
-         sendWs('offer', { targetPeerId: peerId, sdp: offer });
+         
+         const screenTrack = screenStreamRef.current?.getVideoTracks()[0];
+         const screenTransceiver = screenTrack ? pc.getTransceivers().find((t: RTCRtpTransceiver) => t.sender.track === screenTrack) : undefined;
+         
+         sendWs('offer', { 
+           targetPeerId: peerId, 
+           sdp: offer,
+           isScreenShare: !!(window as any).isStartingScreenShare || !!screenStreamRef.current,
+           screenTrackId: screenTrack?.id,
+           screenMid: screenTransceiver?.mid,
+           screenStreamId: screenStreamRef.current?.id
+         });
        } catch (err) {
          console.warn('Failed to create offer', err);
        }
