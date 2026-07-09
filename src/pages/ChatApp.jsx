@@ -332,7 +332,6 @@ const ChatApp = () => {
 
   useEffect(() => {
     isMountedRef.current = true;
-    document.title = "Kural Messenger";
     fetchChannels();
     fetchMembers();
     fetchCallHistory();
