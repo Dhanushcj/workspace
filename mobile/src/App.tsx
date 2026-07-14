@@ -142,6 +142,15 @@ function DeepLinkHandler() {
   return null;
 }
 
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { navigationRef } from './lib/router';
+import { BottomNav } from './components/layout';
+
+const Stack = createNativeStackNavigator();
+
+function MeetingsScreen() { return null; }
+
 export default function App() {
   const [loading, setLoading] = React.useState(true);
   const [fontsLoaded] = useFonts({
@@ -268,42 +277,30 @@ export default function App() {
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
   ) : (
-    <BrowserRouter>
+    <NavigationContainer ref={navigationRef}>
       {/* Global incoming call overlay  appears on any screen */}
       <IncomingCallOverlay />
       <DeepLinkHandler />
       <InAppNotificationToast />
-      <Routes>
-        {/* Public route */}
-        <Route path="/login" element={<Login />} />
+      
+      <AppLayout>
+        <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="Home">{() => <ProtectedRoute><Home /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="Mail">{() => <ProtectedRoute><Mail /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="Meetings" component={MeetingsScreen} />
+          <Stack.Screen name="Chat">{() => <ProtectedRoute><Chat /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="Docs">{() => <ProtectedRoute><Docs /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="Sheets">{() => <ProtectedRoute><Sheets /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="Show">{() => <ProtectedRoute><Show /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="Settings">{() => <ProtectedRoute><Settings /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="TeamManagement">{() => <ProtectedRoute><TeamManagement /></ProtectedRoute>}</Stack.Screen>
+          <Stack.Screen name="SuperAdminDashboard">{() => <ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>}</Stack.Screen>
+        </Stack.Navigator>
+      </AppLayout>
 
-        {/* Protected layout shell  all inner pages require authentication */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/home" replace />} />
-          <Route path="home" element={<Home />} />
-          <Route path="mail" element={<Mail />} />
-          <Route path="meetings" element={null} />
-          <Route path="chat" element={<Chat />} />
-          <Route path="docs" element={<Docs />} />
-          <Route path="sheets" element={<Sheets />} />
-          <Route path="show" element={<Show />} />
-
-          <Route path="settings" element={<Settings />} />
-          <Route path="team" element={<TeamManagement />} />
-          <Route path="superadmin" element={<SuperAdminDashboard />} />
-        </Route>
-
-        {/* Catch-all  redirect unknown paths to home */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
-      </Routes>
-    </BrowserRouter>
+      <BottomNav />
+    </NavigationContainer>
   )}
     </SafeAreaProvider>
   );

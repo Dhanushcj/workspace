@@ -164,58 +164,6 @@ var init_Transcript = __esm({
   }
 });
 
-// src/services/transcription.ts
-var transcription_exports = {};
-__export(transcription_exports, {
-  transcribeChunk: () => transcribeChunk
-});
-async function transcribeChunk(meetingId, userId, speakerName, filePath) {
-  if (!process.env.GROQ_API_KEY || !groq) {
-    console.warn("[Transcription] GROQ_API_KEY is not set or groq client is not initialized. Skipping transcription.");
-    return null;
-  }
-  try {
-    const transcription = await groq.audio.transcriptions.create({
-      file: import_fs.default.createReadStream(filePath),
-      model: "whisper-large-v3",
-      prompt: "\u0BB5\u0BA3\u0B95\u0BCD\u0B95\u0BAE\u0BCD, this is a meeting conversation in English and Tamil (\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD). Transcribe accurately, preserving both English and Tamil words.",
-      temperature: 0,
-      response_format: "verbose_json"
-    });
-    const text = transcription.text.trim();
-    const lowerText = text.toLowerCase();
-    const cleanText = lowerText.replace(/[^a-z0-9\s]/g, "").trim();
-    const isHallucination = cleanText.includes("meeting conversation in tamil and english transcribe accurately") || cleanText.includes("meeting conversation transcribe accurately") || cleanText.includes("transcribe accurately") || cleanText.includes("tanscribe accurately") || cleanText.includes("we go on") || cleanText.includes("were going to go on") || cleanText.includes("you see were getting some different individuals") || cleanText.includes("transcription by") || cleanText.includes("transcribed by") || cleanText.includes("e\u011Fri de konu\u015Fay\u0131m") || cleanText.includes("tries to communicate") || cleanText === "thank you" || cleanText === "thanks" || cleanText === "tchau" || cleanText === "tchau tchau" || cleanText === "subscribe" || cleanText === "terima kasih";
-    if (text && !isHallucination && cleanText.length > 1) {
-      await Transcript.create({
-        meetingId,
-        userId,
-        speakerName,
-        text,
-        timestamp: /* @__PURE__ */ new Date()
-      });
-      return text;
-    }
-    return null;
-  } catch (error) {
-    console.error("[Transcription] Failed to transcribe chunk:", error.message);
-    return null;
-  }
-}
-var import_fs, import_groq_sdk, groq;
-var init_transcription = __esm({
-  "src/services/transcription.ts"() {
-    "use strict";
-    import_fs = __toESM(require("fs"));
-    import_groq_sdk = __toESM(require("groq-sdk"));
-    init_Transcript();
-    groq = null;
-    if (process.env.GROQ_API_KEY) {
-      groq = new import_groq_sdk.default({ apiKey: process.env.GROQ_API_KEY });
-    }
-  }
-});
-
 // src/services/pushNotifications.ts
 var pushNotifications_exports = {};
 __export(pushNotifications_exports, {
@@ -226,7 +174,7 @@ async function sendPushNotification(recipientEmails, title, body, data) {
     if (!recipientEmails || recipientEmails.length === 0) {
       return;
     }
-    if (!admin.apps.length) {
+    if (!(0, import_app.getApps)().length) {
       console.warn("[PushService] Firebase Admin is not initialized. Cannot send push notification.");
       return;
     }
@@ -250,24 +198,30 @@ async function sendPushNotification(recipientEmails, title, body, data) {
       }
     }
     console.log(`[PushService] Dispatching FCM push notifications to ${tokens.length} token(s)...`);
+    const isCall = data?.type === "incoming_call";
     const message = {
-      notification: {
-        title,
-        body
+      ...isCall ? {} : {
+        notification: {
+          title,
+          body
+        }
       },
       data: stringifiedData,
       android: {
         priority: "high",
-        notification: {
-          channelId: "default",
-          sound: "default"
+        ...isCall ? {} : {
+          notification: {
+            channelId: "default",
+            sound: "default"
+          }
         }
       },
       tokens
     };
-    const response = await admin.messaging().sendEachForMulticast(message);
+    const response = await (0, import_messaging.getMessaging)().sendEachForMulticast(message);
     console.log(`[PushService] FCM push result: ${response.successCount} successful, ${response.failureCount} failed.`);
     if (response.failureCount > 0) {
+      const failedTokens = response.responses.map((resp, idx) => !resp.success ? tokens[idx] : null).filter((token) => token !== null);
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
           console.error(`[PushService] Failed to send to token ${tokens[idx]}:`, resp.error);
@@ -278,24 +232,31 @@ async function sendPushNotification(recipientEmails, title, body, data) {
     console.error("[PushService] Failed to send push notifications:", error);
   }
 }
-var admin;
+var import_app, import_messaging;
 var init_pushNotifications = __esm({
   "src/services/pushNotifications.ts"() {
     "use strict";
     init_User();
-    admin = __toESM(require("firebase-admin"));
-    if (!admin.apps.length) {
+    import_app = require("firebase-admin/app");
+    import_messaging = require("firebase-admin/messaging");
+    if (!(0, import_app.getApps)().length) {
       try {
-        let credential2;
+        let credential;
         if (process.env.FIREBASE_SERVICE_ACCOUNT) {
           const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-          credential2 = admin.credential.cert(serviceAccount);
+          credential = (0, import_app.cert)(serviceAccount);
         } else {
-          const serviceAccount = require("../../serviceAccountKey.json");
-          credential2 = admin.credential.cert(serviceAccount);
+          try {
+            const fs8 = require("fs");
+            const path7 = require("path");
+            const fileContent = fs8.readFileSync(path7.join(__dirname, "../../serviceAccountKey.json"), "utf8");
+            credential = (0, import_app.cert)(JSON.parse(fileContent));
+          } catch (err) {
+            throw new Error("Local serviceAccountKey.json not found and FIREBASE_SERVICE_ACCOUNT env var is missing");
+          }
         }
-        admin.initializeApp({
-          credential: credential2
+        (0, import_app.initializeApp)({
+          credential
         });
         console.log("[PushService] Firebase Admin initialized successfully.");
       } catch (error) {
@@ -328,7 +289,7 @@ function handleMailSocket(socket, req) {
   const logFile = import_path.default.join(__dirname, "../../socket_debug.log");
   const log = (msg) => {
     try {
-      import_fs2.default.appendFileSync(logFile, `[${(/* @__PURE__ */ new Date()).toISOString()}] ${msg}
+      import_fs.default.appendFileSync(logFile, `[${(/* @__PURE__ */ new Date()).toISOString()}] ${msg}
 `);
     } catch (e) {
     }
@@ -363,13 +324,65 @@ function handleMailSocket(socket, req) {
     socket.close(1008, "Email identifier required");
   }
 }
-var import_fs2, import_path, activeMailSockets;
+var import_fs, import_path, activeMailSockets;
 var init_mailSockets = __esm({
   "src/services/mailSockets.ts"() {
     "use strict";
-    import_fs2 = __toESM(require("fs"));
+    import_fs = __toESM(require("fs"));
     import_path = __toESM(require("path"));
     activeMailSockets = /* @__PURE__ */ new Map();
+  }
+});
+
+// src/services/transcription.ts
+var transcription_exports = {};
+__export(transcription_exports, {
+  transcribeChunk: () => transcribeChunk
+});
+async function transcribeChunk(meetingId, userId, speakerName, filePath) {
+  if (!process.env.GROQ_API_KEY || !groq) {
+    console.warn("[Transcription] GROQ_API_KEY is not set or groq client is not initialized. Skipping transcription.");
+    return null;
+  }
+  try {
+    const transcription = await groq.audio.transcriptions.create({
+      file: import_fs4.default.createReadStream(filePath),
+      model: "whisper-large-v3",
+      prompt: "\u0BB5\u0BA3\u0B95\u0BCD\u0B95\u0BAE\u0BCD, this is a meeting conversation in English and Tamil (\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD). Transcribe accurately, preserving both English and Tamil words.",
+      temperature: 0,
+      response_format: "verbose_json"
+    });
+    const text = transcription.text.trim();
+    const lowerText = text.toLowerCase();
+    const cleanText = lowerText.replace(/[^a-z0-9\s]/g, "").trim();
+    const isHallucination = cleanText.includes("meeting conversation in tamil and english transcribe accurately") || cleanText.includes("meeting conversation transcribe accurately") || cleanText.includes("transcribe accurately") || cleanText.includes("tanscribe accurately") || cleanText.includes("we go on") || cleanText.includes("were going to go on") || cleanText.includes("you see were getting some different individuals") || cleanText.includes("transcription by") || cleanText.includes("transcribed by") || cleanText.includes("e\u011Fri de konu\u015Fay\u0131m") || cleanText.includes("tries to communicate") || cleanText === "thank you" || cleanText === "thanks" || cleanText === "tchau" || cleanText === "tchau tchau" || cleanText === "subscribe" || cleanText === "terima kasih";
+    if (text && !isHallucination && cleanText.length > 1) {
+      await Transcript.create({
+        meetingId,
+        userId,
+        speakerName,
+        text,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      return text;
+    }
+    return null;
+  } catch (error) {
+    console.error("[Transcription] Failed to transcribe chunk:", error.message);
+    return null;
+  }
+}
+var import_fs4, import_groq_sdk, groq;
+var init_transcription = __esm({
+  "src/services/transcription.ts"() {
+    "use strict";
+    import_fs4 = __toESM(require("fs"));
+    import_groq_sdk = __toESM(require("groq-sdk"));
+    init_Transcript();
+    groq = null;
+    if (process.env.GROQ_API_KEY) {
+      groq = new import_groq_sdk.default({ apiKey: process.env.GROQ_API_KEY });
+    }
   }
 });
 
@@ -399,8 +412,8 @@ var import_fastify = __toESM(require("fastify"));
 var import_cors = __toESM(require("@fastify/cors"));
 var import_websocket = __toESM(require("@fastify/websocket"));
 var import_dotenv2 = __toESM(require("dotenv"));
-var import_fs5 = __toESM(require("fs"));
-var import_path4 = __toESM(require("path"));
+var import_fs6 = __toESM(require("fs"));
+var import_path5 = __toESM(require("path"));
 var import_jsonwebtoken6 = __toESM(require("jsonwebtoken"));
 var import_multipart = __toESM(require("@fastify/multipart"));
 
@@ -1436,22 +1449,26 @@ init_Transcript();
 // src/services/aiBot.ts
 var import_ws = __toESM(require("ws"));
 var import_fs3 = __toESM(require("fs"));
-var import_path2 = __toESM(require("path"));
-var import_os = __toESM(require("os"));
+var import_path3 = __toESM(require("path"));
+var import_os2 = __toESM(require("os"));
 var import_jsonwebtoken3 = __toESM(require("jsonwebtoken"));
 var import_bcrypt2 = __toESM(require("bcrypt"));
 init_User();
-init_transcription();
 
 // src/services/summarizer.ts
-var import_groq_sdk2 = __toESM(require("groq-sdk"));
-init_Transcript();
+var import_fs2 = __toESM(require("fs"));
+var import_path2 = __toESM(require("path"));
+var import_os = __toESM(require("os"));
+var import_generative_ai = require("@google/generative-ai");
+var import_server = require("@google/generative-ai/server");
 init_User();
 init_pushNotifications();
 init_webPush();
-var groq2 = null;
-if (process.env.GROQ_API_KEY) {
-  groq2 = new import_groq_sdk2.default({ apiKey: process.env.GROQ_API_KEY });
+var genAI = null;
+var fileManager = null;
+if (process.env.GEMINI_API_KEY) {
+  genAI = new import_generative_ai.GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  fileManager = new import_server.GoogleAIFileManager(process.env.GEMINI_API_KEY);
 }
 async function dispatchSummaryMail(meeting, summaryHtml) {
   try {
@@ -1540,11 +1557,12 @@ async function summarizeMeeting(meetingId) {
     console.log("[Summarizer] Another process already claimed this summary, skipping.");
     return null;
   }
-  const transcripts = await Transcript.find({ meetingId }).sort({ timestamp: 1 });
-  const hasTranscripts = transcripts && transcripts.length > 0;
+  const tmpDir = import_os.default.tmpdir();
+  const audioFilePath = import_path2.default.join(tmpDir, `meeting_audio_${meetingId}.webm`);
+  const hasAudioFile = import_fs2.default.existsSync(audioFilePath);
   let summaryHtml;
-  if (!hasTranscripts || !process.env.GROQ_API_KEY || !groq2) {
-    console.log(`[Summarizer] No transcripts found (or no API key/client). Sending completion notification.`);
+  if (!hasAudioFile || !process.env.GEMINI_API_KEY || !genAI || !fileManager) {
+    console.log(`[Summarizer] No audio file found (or no API key/client). Sending completion notification.`);
     let duration = 0;
     if (meeting.scheduledAt) {
       duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 6e4));
@@ -1573,35 +1591,39 @@ async function summarizeMeeting(meetingId) {
   <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:16px">Sent by Forge India Connect AI</p>
 </div>`;
   } else {
-    const fullText = transcripts.map((t) => `[${t.timestamp.toISOString()}] ${t.speakerName}: ${t.text}`).join("\n");
-    console.log(`[Summarizer] Summarizing ${transcripts.length} transcript entries (${fullText.length} chars)...`);
-    const prompt = `You are an expert Executive Assistant. Summarize the following meeting transcript.
-The transcript may contain a mix of English and Tamil.
+    console.log(`[Summarizer] Summarizing audio file ${audioFilePath}...`);
+    const prompt = `You are an expert Executive Assistant. Summarize the provided meeting audio.
+The audio may contain a mix of English and Tamil.
 Your summary MUST be entirely in English.
 Your response MUST be formatted in clean HTML suitable for an email body.
 Do NOT use markdown. Use bold tags, lists, and headers (h2, h3).
 Do NOT use a predefined rigid template. Dynamically analyze the meeting context and generate appropriate sections (e.g. Executive Summary, Main Discussion Points, Key Takeaways, Action Items, Ideas, etc.) based ONLY on what was actually discussed.
-Focus on capturing the real essence of the conversation accurately.
-
-Here is the meeting transcript:
-${fullText}`;
+Focus on capturing the real essence of the conversation accurately.`;
+    let uploadedFile = null;
     try {
-      const chatCompletion = await groq2.chat.completions.create({
-        messages: [{ role: "user", content: prompt }],
-        model: "llama-3.3-70b-versatile",
-        temperature: 0.2,
-        max_tokens: 2e3
+      console.log("[Summarizer] Uploading audio to Gemini...");
+      uploadedFile = await fileManager.uploadFile(audioFilePath, {
+        mimeType: "audio/webm",
+        displayName: `meeting_audio_${meetingId}`
       });
-      const rawSummary = chatCompletion.choices[0]?.message?.content || "";
+      console.log(`[Summarizer] Uploaded to Gemini: ${uploadedFile.file.uri}`);
+      const model17 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      console.log("[Summarizer] Requesting generation...");
+      const result = await model17.generateContent([
+        {
+          fileData: {
+            mimeType: uploadedFile.file.mimeType,
+            fileUri: uploadedFile.file.uri
+          }
+        },
+        { text: prompt }
+      ]);
+      const rawSummary = result.response.text() || "";
       let duration = meeting.durationMinutes || 60;
-      if (transcripts && transcripts.length > 0) {
-        const firstTs = new Date(transcripts[0].timestamp).getTime();
-        const lastTs = new Date(transcripts[transcripts.length - 1].timestamp).getTime();
-        duration = Math.max(1, Math.round((lastTs - firstTs) / 6e4));
-      } else if (meeting.scheduledAt) {
+      if (meeting.scheduledAt) {
         duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 6e4));
       }
-      const uniqueSpeakers = new Set(transcripts.map((t) => t.speakerName)).size;
+      const uniqueSpeakers = await Participant.countDocuments({ meetingId });
       summaryHtml = `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;border-radius:12px">
   <div style="background:linear-gradient(135deg,#1e40af,#7c3aed);padding:24px;border-radius:8px;margin-bottom:20px">
@@ -1626,8 +1648,23 @@ ${fullText}`;
 </div>`;
       console.log(`[Summarizer] AI summary generated and formatted.`);
     } catch (err) {
-      console.error("[Summarizer] Groq API failed:", err.message);
+      console.error("[Summarizer] Gemini API failed:", err.message);
       return null;
+    } finally {
+      if (uploadedFile && fileManager) {
+        try {
+          await fileManager.deleteFile(uploadedFile.file.name);
+          console.log(`[Summarizer] Deleted ${uploadedFile.file.name} from Gemini API`);
+        } catch (e) {
+          console.warn("[Summarizer] Failed to delete file from Gemini API", e);
+        }
+      }
+      try {
+        import_fs2.default.unlinkSync(audioFilePath);
+        console.log(`[Summarizer] Deleted local file ${audioFilePath}`);
+      } catch (e) {
+        console.warn("[Summarizer] Failed to delete local audio file", e);
+      }
     }
   }
   if (summaryHtml) {
@@ -1673,9 +1710,6 @@ async function mintAIBotToken() {
     return null;
   }
 }
-function toWebSocketBaseUrl(url) {
-  return url.replace(/^https:/, "wss:").replace(/^http:/, "ws:").replace(/\/+$/, "");
-}
 async function launchAIBot(meetingId, joinCode, backendBaseUrl) {
   if (activeBots.has(meetingId)) {
     console.log(`[AIBot] Bot already active for meeting ${meetingId}`);
@@ -1687,8 +1721,8 @@ async function launchAIBot(meetingId, joinCode, backendBaseUrl) {
     throw new Error("Cannot launch AI Assistant: bot user/token is unavailable.");
   }
   const renderUrl = process.env.RENDER_EXTERNAL_URL || "";
-  const backendWsUrl = process.env.BACKEND_WS_URL || (backendBaseUrl ? toWebSocketBaseUrl(backendBaseUrl) : renderUrl ? toWebSocketBaseUrl(renderUrl) : `ws://localhost:${process.env.PORT || 3001}`);
-  const wsUrl = `${backendWsUrl}/ws/webrtc`;
+  const port = process.env.PORT || 3001;
+  const wsUrl = `ws://127.0.0.1:${port}/ws/webrtc?token=${auth.token}`;
   console.log(`[AIBot] Connecting to signaling server at ${wsUrl}`);
   let ws;
   try {
@@ -1796,22 +1830,14 @@ function handleAudioSocket(ws) {
         console.warn("[AudioSocket] Received audio chunk before metadata, ignoring.");
         return;
       }
-      const tmpDir = import_os.default.tmpdir();
-      const fileName = `chunk_${currentMeetingId}_${currentUserId}_${Date.now()}.webm`;
-      const filePath = import_path2.default.join(tmpDir, fileName);
+      const tmpDir = import_os2.default.tmpdir();
+      const fileName = `meeting_audio_${currentMeetingId}.webm`;
+      const filePath = import_path3.default.join(tmpDir, fileName);
       try {
-        import_fs3.default.writeFileSync(filePath, message);
-        const text = await transcribeChunk(currentMeetingId, currentUserId, currentSpeakerName, filePath);
-        if (text) {
-          console.log(`[AudioSocket] Transcribed: "${text.slice(0, 60)}..."`);
-        }
+        import_fs3.default.appendFileSync(filePath, message);
+        console.log(`[AudioSocket] Appended chunk to ${fileName}`);
       } catch (e) {
         console.error("[AudioSocket] Error processing chunk:", e.message);
-      } finally {
-        try {
-          import_fs3.default.unlinkSync(filePath);
-        } catch {
-        }
       }
     }
   });
@@ -2335,12 +2361,12 @@ async function meetingRoutes(fastify2) {
         return reply.code(400).send({ error: "No valid audio data received." });
       }
       const ext = contentType.includes("webm") ? "webm" : "m4a";
-      const os2 = await import("os");
+      const os3 = await import("os");
       const fsMod = await import("fs");
       const pathMod = await import("path");
       const { transcribeChunk: transcribeChunk2 } = await Promise.resolve().then(() => (init_transcription(), transcription_exports));
       const fileName = `chunk_${id}_${userId}_${Date.now()}.${ext}`;
-      const filePath = pathMod.join(os2.tmpdir(), fileName);
+      const filePath = pathMod.join(os3.tmpdir(), fileName);
       fsMod.writeFileSync(filePath, rawBody);
       console.log(`[AudioChunk] Saved ${rawBody.length} bytes  ${filePath}`);
       const text = await transcribeChunk2(id, userId, speakerName, filePath);
@@ -2549,10 +2575,10 @@ async function meetingRoutes(fastify2) {
 init_mailSockets();
 init_pushNotifications();
 init_webPush();
-var import_groq_sdk3 = __toESM(require("groq-sdk"));
-var groq3 = null;
+var import_groq_sdk2 = __toESM(require("groq-sdk"));
+var groq2 = null;
 if (process.env.GROQ_API_KEY) {
-  groq3 = new import_groq_sdk3.default({ apiKey: process.env.GROQ_API_KEY });
+  groq2 = new import_groq_sdk2.default({ apiKey: process.env.GROQ_API_KEY });
 }
 async function fetchJsonWithTimeout(url, options, timeoutMs = 1e4) {
   const controller = new AbortController();
@@ -2748,9 +2774,9 @@ Important: Provide ONLY the final generated email body text. Do not include intr
       let generatedText = "";
       let provider = "local-fallback";
       try {
-        if (groq3) {
+        if (groq2) {
           console.log("[SmartReply] Routing to Groq SDK...");
-          const chatCompletion = await groq3.chat.completions.create({
+          const chatCompletion = await groq2.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [{ role: "user", content: aiPrompt }],
             temperature: 0.2
@@ -2942,9 +2968,9 @@ Your response MUST be formatted in clean HTML suitable for an email body. Do NOT
 Provide ONLY the final email body content itself. Do not include any introductory conversational text or email headers (like Subject/To/From).`;
       let generatedHtml = "";
       try {
-        if (groq3) {
+        if (groq2) {
           console.log("[AI Composer] Routing to Groq SDK...");
-          const chatCompletion = await groq3.chat.completions.create({
+          const chatCompletion = await groq2.chat.completions.create({
             model: "llama-3.3-70b-versatile",
             messages: [{ role: "user", content: aiPrompt }],
             temperature: 0.5
@@ -2985,8 +3011,8 @@ Email Draft: "${currentText}"
 Context: "${context || "Professional email"}"`;
       let suggestion = "";
       try {
-        if (groq3) {
-          const chatCompletion = await groq3.chat.completions.create({
+        if (groq2) {
+          const chatCompletion = await groq2.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [{ role: "user", content: aiPrompt }],
             temperature: 0.1,
@@ -4078,13 +4104,13 @@ async function docsRoutes(fastify2) {
 }
 
 // src/routes/show.ts
-var fs4 = __toESM(require("fs"));
-var path3 = __toESM(require("path"));
+var fs5 = __toESM(require("fs"));
+var path4 = __toESM(require("path"));
 var cachedExamples = "";
 try {
-  const examplesPath = path3.join(__dirname, "../ppt_examples.json");
-  if (fs4.existsSync(examplesPath)) {
-    cachedExamples = fs4.readFileSync(examplesPath, "utf8");
+  const examplesPath = path4.join(__dirname, "../ppt_examples.json");
+  if (fs5.existsSync(examplesPath)) {
+    cachedExamples = fs5.readFileSync(examplesPath, "utf8");
   }
 } catch (e) {
   console.error("Failed to load ppt_examples.json", e);
@@ -4153,7 +4179,7 @@ Generate 5 to 7 slides with rich, professional content following the flow in the
     } catch (err) {
       console.error("AI GENERATION ERROR:", err);
       try {
-        fs4.writeFileSync(path3.join(__dirname, "../groq_error_debug.log"), err.message + "\\n" + err.stack);
+        fs5.writeFileSync(path4.join(__dirname, "../groq_error_debug.log"), err.message + "\\n" + err.stack);
       } catch (e) {
       }
       return reply.code(500).send({ error: err.message || "Failed to generate presentation" });
@@ -4422,14 +4448,14 @@ var ThreadComment = (0, import_mongoose22.model)("ThreadComment", ThreadCommentS
 init_User();
 
 // src/services/threadSockets.ts
-var import_fs4 = __toESM(require("fs"));
-var import_path3 = __toESM(require("path"));
+var import_fs5 = __toESM(require("fs"));
+var import_path4 = __toESM(require("path"));
 var activeThreadSockets = /* @__PURE__ */ new Map();
 function handleThreadsSocket(socket, req) {
-  const logFile = import_path3.default.join(__dirname, "../../socket_debug.log");
+  const logFile = import_path4.default.join(__dirname, "../../socket_debug.log");
   const log = (msg) => {
     try {
-      import_fs4.default.appendFileSync(logFile, `[${(/* @__PURE__ */ new Date()).toISOString()}] [ThreadsSocket] ${msg}
+      import_fs5.default.appendFileSync(logFile, `[${(/* @__PURE__ */ new Date()).toISOString()}] [ThreadsSocket] ${msg}
 `);
     } catch (e) {
     }
@@ -4588,7 +4614,7 @@ async function threadsRoutes(fastify2) {
       const { workspaceId, content, mediaUrls = [], visibility = "everyone", visibilityData = [] } = request.body;
       const currentEmail = normalizeEmail3(request.user?.email || "");
       const currentName = request.user?.name || currentEmail;
-      if (!workspaceId || !content) return reply.code(400).send({ error: "workspaceId and content required" });
+      if (!workspaceId || !content && mediaUrls.length === 0) return reply.code(400).send({ error: "workspaceId and either content or media required" });
       const post = await ThreadPost.create({
         workspaceId,
         authorEmail: currentEmail,
@@ -4809,7 +4835,7 @@ async function threadsRoutes(fastify2) {
     try {
       const { prompt } = request.body;
       const geminiKey = process.env.GEMINI_API_KEY;
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -5335,7 +5361,7 @@ async function ensureDefaultUser() {
 }
 
 // src/index.ts
-import_dotenv2.default.config({ path: import_path4.default.join(__dirname, "../.env") });
+import_dotenv2.default.config({ path: import_path5.default.join(__dirname, "../.env") });
 import_dotenv2.default.config();
 var PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
 var MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/nexus-zoom";
@@ -5400,8 +5426,8 @@ async function bootstrap() {
   server.addHook("onRequest", async (request, reply) => {
     if (!ENABLE_SOCKET_FILE_LOGS) return;
     try {
-      const logFile = import_path4.default.join(__dirname, "../../socket_debug.log");
-      import_fs5.default.appendFileSync(logFile, `[${(/* @__PURE__ */ new Date()).toISOString()}] [onRequest Hook] URL: "${request.url}", Method: "${request.method}", IP: "${request.ip}", Headers: ${JSON.stringify(request.headers)}
+      const logFile = import_path5.default.join(__dirname, "../../socket_debug.log");
+      import_fs6.default.appendFileSync(logFile, `[${(/* @__PURE__ */ new Date()).toISOString()}] [onRequest Hook] URL: "${request.url}", Method: "${request.method}", IP: "${request.ip}", Headers: ${JSON.stringify(request.headers)}
 `);
     } catch (e) {
       console.error("Failed to write to socket_debug.log inside onRequest hook:", e);
@@ -5410,10 +5436,10 @@ async function bootstrap() {
   server.addHook("onResponse", async (request, reply) => {
     if (!ENABLE_SOCKET_FILE_LOGS) return;
     try {
-      const logFile = import_path4.default.join(__dirname, "../../socket_debug.log");
+      const logFile = import_path5.default.join(__dirname, "../../socket_debug.log");
       const entry = `[${(/* @__PURE__ */ new Date()).toISOString()}] [onResponse Hook] URL: "${request.url}", Method: "${request.method}", Status: "${reply.statusCode}", ResponseTimeMs: "${reply.getResponseTime ? reply.getResponseTime() : "n/a"}"
 `;
-      import_fs5.default.appendFileSync(logFile, entry);
+      import_fs6.default.appendFileSync(logFile, entry);
     } catch (e) {
       console.error("Failed to write to socket_debug.log inside onResponse hook:", e);
     }
@@ -5470,28 +5496,38 @@ async function bootstrap() {
     if (!auth) return;
     server.log.info(`Authenticated WebRTC client: ${auth.user.email}`);
     handleWebRtcSignalling(auth.ws);
+    return new Promise(() => {
+    });
   });
   server.get("/ws/mail", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     server.log.info(`Authenticated Mail Socket: ${auth.user.email}`);
     handleMailSocket(auth.ws, req);
+    return new Promise(() => {
+    });
   });
   server.get("/ws/audio", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     handleAudioSocket(auth.ws);
+    return new Promise(() => {
+    });
   });
   server.get("/ws/threads", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     handleThreadsSocket(auth.ws, req);
+    return new Promise(() => {
+    });
   });
   server.get("/ws/calls", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     server.log.info(`Authenticated voice call signaling: ${auth.user.email}`);
     handleCallSignaling(auth.ws);
+    return new Promise(() => {
+    });
   });
   server.get("/health", async () => {
     const connected = isMongoConnected();

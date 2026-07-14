@@ -1,157 +1,105 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React from 'react';
+import { 
+  createNavigationContainerRef,
+  StackActions
+} from '@react-navigation/native';
 
-interface NavigationContextType {
-  pathname: string;
-  navigate: (to: string | number, options?: { replace?: boolean }) => void;
-  outlet: React.ReactNode | null;
-  setOutlet: (outlet: React.ReactNode | null) => void;
-}
+export const navigationRef = createNavigationContainerRef<any>();
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+export function useNavigate() {
+  return React.useCallback((to: string | number, options?: { replace?: boolean }) => {
+    if (!navigationRef.isReady()) return;
 
-export function NavigationProvider({ children }: { children: React.ReactNode }) {
-  const [pathname, setPathname] = useState('/login');
-  const [history, setHistory] = useState<string[]>(['/login']);
-  const [outlet, setOutlet] = useState<React.ReactNode | null>(null);
-
-  const navigate = (to: string | number, options?: { replace?: boolean }) => {
     if (typeof to === 'number') {
-      if (to === -1 && history.length > 1) {
-        const prev = history[history.length - 2];
-        setPathname(prev);
-        setHistory(h => h.slice(0, -1));
+      if (to === -1 && navigationRef.canGoBack()) {
+        navigationRef.goBack();
       }
       return;
     }
-    
+
     if (typeof to !== 'string' || !to) return;
+
+    let path = to;
+    let params: any = {};
     
-    let normalized = to;
-    if (!to.startsWith('/')) {
-      normalized = '/' + to;
+    // Parse query params (e.g. /meetings?joinCode=123)
+    if (path.includes('?')) {
+      const [p, q] = path.split('?');
+      path = p;
+      // manual simple parse for RN if URLSearchParams not available
+      q.split('&').forEach(part => {
+        const [k, v] = part.split('=');
+        if (k) params[k] = decodeURIComponent(v || '');
+      });
     }
 
-    setPathname(normalized);
+    let screenName = 'Home';
+    if (path.startsWith('/')) path = path.slice(1);
+    
+    // Map paths to Screen names
+    if (path === 'login') screenName = 'Login';
+    else if (path === 'home' || path === '') screenName = 'Home';
+    else if (path === 'mail') screenName = 'Mail';
+    else if (path === 'chat') screenName = 'Chat';
+    else if (path === 'meetings') screenName = 'Meetings';
+    else if (path === 'docs') screenName = 'Docs';
+    else if (path === 'sheets') screenName = 'Sheets';
+    else if (path === 'show') screenName = 'Show';
+    else if (path === 'settings') screenName = 'Settings';
+    else if (path === 'team') screenName = 'TeamManagement';
+    else if (path === 'superadmin') screenName = 'SuperAdminDashboard';
+
     if (options?.replace) {
-      setHistory(prev => [...prev.slice(0, -1), normalized]);
+      navigationRef.dispatch(StackActions.replace(screenName, params));
     } else {
-      setHistory(prev => [...prev, normalized]);
+      navigationRef.navigate(screenName, params);
     }
-  };
-
-  return (
-    <NavigationContext.Provider value={{ pathname, navigate, outlet, setOutlet }}>
-      {children}
-    </NavigationContext.Provider>
-  );
-}
-
-export function useNavigate() {
-  const context = useContext(NavigationContext);
-  if (!context) throw new Error('useNavigate must be used within NavigationProvider');
-  return context.navigate;
+  }, []);
 }
 
 export function useLocation() {
-  const context = useContext(NavigationContext);
-  if (!context) throw new Error('useLocation must be used within NavigationProvider');
-  
-  const parts = context.pathname.split('?');
-  const pathname = parts[0];
-  const search = parts.length > 1 ? '?' + parts[1] : '';
-  
+  const [pathname, setPathname] = React.useState('/login');
+  const [search, setSearch] = React.useState('');
+
+  React.useEffect(() => {
+    if (!navigationRef.isReady()) return;
+    
+    const updateLocation = () => {
+      const route = navigationRef.getCurrentRoute();
+      if (route) {
+        let p = '/' + route.name.toLowerCase();
+        if (route.name === 'TeamManagement') p = '/team';
+        if (route.name === 'SuperAdminDashboard') p = '/superadmin';
+        setPathname(p);
+        
+        if (route.params) {
+          const qs = Object.entries(route.params)
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+            .join('&');
+          setSearch(qs ? '?' + qs : '');
+        } else {
+          setSearch('');
+        }
+      }
+    };
+    
+    updateLocation();
+    const unsubscribe = navigationRef.addListener('state', updateLocation);
+    return unsubscribe;
+  }, []);
+
   return { pathname, search };
 }
 
-export function BrowserRouter({ children }: { children: React.ReactNode }) {
-  return <NavigationProvider>{children}</NavigationProvider>;
-}
-
-interface RouteProps {
-  path?: string;
-  element: React.ReactNode;
-  index?: boolean;
-  children?: React.ReactNode;
-}
-
-export function Routes({ children }: { children: React.ReactNode }) {
-  const context = useContext(NavigationContext);
-  if (!context) throw new Error('Routes must be used within NavigationProvider');
-
-  const { pathname, navigate, setOutlet } = context;
-  const cleanPath = pathname.split('?')[0];
-
-  const routesArray = React.Children.toArray(children) as React.ReactElement<RouteProps>[];
-
-  let matchedElement: React.ReactNode | null = null;
-  let activeOutlet: React.ReactNode | null = null;
-
-  const loginRoute = routesArray.find(r => r.props.path === '/login');
-  const mainLayoutRoute = routesArray.find(r => r.props.path === '/');
-  const wildcardRoute = routesArray.find(r => r.props.path === '*');
-
-  if (cleanPath === '/login') {
-    matchedElement = loginRoute ? loginRoute.props.element : null;
-  } else if (cleanPath === '/' || cleanPath.startsWith('/')) {
-    // Try to match a top-level route first (non-layout routes)
-    const topLevelMatch = routesArray.find(r =>
-      r.props.path && r.props.path !== '/' && r.props.path !== '*' && r.props.path !== '/login' &&
-      cleanPath === r.props.path
-    );
-
-    if (topLevelMatch) {
-      matchedElement = topLevelMatch.props.element;
-    } else if (mainLayoutRoute) {
-      matchedElement = mainLayoutRoute.props.element;
-
-      if (mainLayoutRoute.props.children) {
-        const subRoutes = React.Children.toArray(mainLayoutRoute.props.children) as React.ReactElement<RouteProps>[];
-        // Strip leading slash for sub-path matching
-        const currentSubPath = cleanPath.replace(/^\//, ''); // e.g. "home" from "/home"
-
-        const matchedSub = subRoutes.find(r =>
-          r.props.path === currentSubPath ||
-          (r.props.index && (currentSubPath === '' || cleanPath === '/'))
-        );
-
-        if (matchedSub) {
-          activeOutlet = matchedSub.props.element;
-        } else {
-          // Check for wildcard in sub-routes
-          const subWildcard = subRoutes.find(r => r.props.path === '*');
-          if (subWildcard) {
-            activeOutlet = subWildcard.props.element;
-          } else if (wildcardRoute) {
-            // Top-level wildcard fallback
-            matchedElement = wildcardRoute.props.element;
-          }
-        }
-      }
-    } else if (wildcardRoute) {
-      matchedElement = wildcardRoute.props.element;
-    }
-  }
-
-  useEffect(() => {
-    setOutlet(activeOutlet);
-  }, [activeOutlet, setOutlet]);
-
-  return <>{matchedElement}</>;
-}
-
-export function Route({ element }: RouteProps) {
-  return <>{element}</>;
-}
-
-export function Outlet() {
-  const context = useContext(NavigationContext);
-  if (!context) throw new Error('Outlet must be used within NavigationProvider');
-  return <>{context.outlet}</>;
-}
+// These are stubbed out since we will use React Navigation's Stack.Navigator directly in App.tsx
+export function BrowserRouter({ children }: { children: React.ReactNode }) { return <>{children}</>; }
+export function Routes({ children }: { children: React.ReactNode }) { return <>{children}</>; }
+export function Route(props: any) { return null; }
+export function Outlet() { return null; }
 
 export function Navigate({ to, replace }: { to: string; replace?: boolean }) {
   const navigate = useNavigate();
-  useEffect(() => {
+  React.useEffect(() => {
     navigate(to, { replace });
   }, [to, replace, navigate]);
   return null;

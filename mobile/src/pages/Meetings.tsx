@@ -2422,6 +2422,7 @@ export default function Meetings() {
                  localScreenStream.getTracks().forEach((t: any) => t.stop());
                  setLocalScreenStream(null);
                  localScreenStreamRef.current = null;
+
                  if (wsRef.current?.readyState === WebSocket.OPEN) {
                    wsRef.current.send(JSON.stringify({ type: 'screen-share-stopped', data: {} }));
                    wsRef.current.send(JSON.stringify({

@@ -191,19 +191,15 @@ export function handleAudioSocket(ws: WebSocket) {
       }
 
       const tmpDir = os.tmpdir();
-      const fileName = `chunk_${currentMeetingId}_${currentUserId}_${Date.now()}.webm`;
+      const fileName = `meeting_audio_${currentMeetingId}.webm`;
       const filePath = path.join(tmpDir, fileName);
 
       try {
-        fs.writeFileSync(filePath, message as Buffer);
-        const text = await transcribeChunk(currentMeetingId, currentUserId, currentSpeakerName, filePath);
-        if (text) {
-          console.log(`[AudioSocket] Transcribed: "${text.slice(0, 60)}..."`);
-        }
+        // Append the buffer to the single meeting audio file
+        fs.appendFileSync(filePath, message as Buffer);
+        console.log(`[AudioSocket] Appended chunk to ${fileName}`);
       } catch (e: any) {
         console.error('[AudioSocket] Error processing chunk:', e.message);
-      } finally {
-        try { fs.unlinkSync(filePath); } catch {}
       }
     }
   });

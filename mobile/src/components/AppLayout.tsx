@@ -2,11 +2,11 @@ import React from 'react';
 import { View, StyleSheet, Platform, StatusBar, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TopBar } from './layout';
-import { Outlet, useLocation } from '../lib/router';
+import { useLocation } from '../lib/router';
 import { getScreenType, getContentPadding } from '../lib/responsive';
 import Meetings from '../pages/Meetings';
 
-export default function AppLayout() {
+export default function AppLayout({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
   const { width } = useWindowDimensions();
   const pageTitle = location.pathname.split('/')[1] || 'Workspace';
@@ -48,7 +48,7 @@ export default function AppLayout() {
           }
         ]}>
           <View style={styles.contentWrapper}>
-            <Outlet />
+            {children}
             <Meetings />
           </View>
         </View>

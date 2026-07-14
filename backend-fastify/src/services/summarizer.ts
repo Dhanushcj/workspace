@@ -1,4 +1,8 @@
-import Groq from 'groq-sdk';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleAIFileManager } from '@google/generative-ai/server';
 import { Transcript } from '../models/Transcript';
 import { Meeting } from '../models/Meeting';
 import { Participant } from '../models/Participant';
@@ -7,9 +11,11 @@ import { User } from '../models/User';
 import { sendPushNotification } from './pushNotifications';
 import { sendWebPush } from './webPush';
 
-let groq: Groq | null = null;
-if (process.env.GROQ_API_KEY) {
-  groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+let genAI: GoogleGenerativeAI | null = null;
+let fileManager: GoogleAIFileManager | null = null;
+if (process.env.GEMINI_API_KEY) {
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
 }
 async function dispatchSummaryMail(meeting: any, summaryHtml: string) {
   try {
@@ -124,14 +130,15 @@ export async function summarizeMeeting(meetingId: string) {
     return null;
   }
 
-  const transcripts = await Transcript.find({ meetingId }).sort({ timestamp: 1 });
-  const hasTranscripts = transcripts && transcripts.length > 0;
+  const tmpDir = os.tmpdir();
+  const audioFilePath = path.join(tmpDir, `meeting_audio_${meetingId}.webm`);
+  const hasAudioFile = fs.existsSync(audioFilePath);
 
   let summaryHtml: string;
 
-  if (!hasTranscripts || !process.env.GROQ_API_KEY || !groq) {
-    // No transcripts or no API key / groq client  send a "meeting completed" notification instead
-    console.log(`[Summarizer] No transcripts found (or no API key/client). Sending completion notification.`);
+  if (!hasAudioFile || !process.env.GEMINI_API_KEY || !genAI || !fileManager) {
+    // No audio file or no API key / Gemini client -> send a "meeting completed" notification instead
+    console.log(`[Summarizer] No audio file found (or no API key/client). Sending completion notification.`);
     let duration = 0;
     if (meeting.scheduledAt) {
       duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 60000));
@@ -161,41 +168,49 @@ export async function summarizeMeeting(meetingId: string) {
   <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:16px">Sent by Forge India Connect AI</p>
 </div>`;
   } else {
-    // We have transcripts  generate AI summary
-    const fullText = transcripts.map((t: any) => `[${t.timestamp.toISOString()}] ${t.speakerName}: ${t.text}`).join('\n');
-    console.log(`[Summarizer] Summarizing ${transcripts.length} transcript entries (${fullText.length} chars)...`);
+    // We have an audio file -> generate AI summary using Gemini
+    console.log(`[Summarizer] Summarizing audio file ${audioFilePath}...`);
 
-    const prompt = `You are an expert Executive Assistant. Summarize the following meeting transcript.
-The transcript may contain a mix of English and Tamil.
+    const prompt = `You are an expert Executive Assistant. Summarize the provided meeting audio.
+The audio may contain a mix of English and Tamil.
 Your summary MUST be entirely in English.
 Your response MUST be formatted in clean HTML suitable for an email body.
 Do NOT use markdown. Use bold tags, lists, and headers (h2, h3).
 Do NOT use a predefined rigid template. Dynamically analyze the meeting context and generate appropriate sections (e.g. Executive Summary, Main Discussion Points, Key Takeaways, Action Items, Ideas, etc.) based ONLY on what was actually discussed.
-Focus on capturing the real essence of the conversation accurately.
+Focus on capturing the real essence of the conversation accurately.`;
 
-Here is the meeting transcript:
-${fullText}`;
-
+    let uploadedFile: any = null;
     try {
-      const chatCompletion = await groq.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.2,
-        max_tokens: 2000,
+      // Upload the file to Gemini
+      console.log('[Summarizer] Uploading audio to Gemini...');
+      uploadedFile = await fileManager.uploadFile(audioFilePath, {
+        mimeType: 'audio/webm',
+        displayName: `meeting_audio_${meetingId}`,
       });
 
-      const rawSummary = chatCompletion.choices[0]?.message?.content || '';
+      console.log(`[Summarizer] Uploaded to Gemini: ${uploadedFile.file.uri}`);
+
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      console.log('[Summarizer] Requesting generation...');
+      const result = await model.generateContent([
+        {
+          fileData: {
+            mimeType: uploadedFile.file.mimeType,
+            fileUri: uploadedFile.file.uri
+          }
+        },
+        { text: prompt },
+      ]);
+
+      const rawSummary = result.response.text() || '';
       let duration = meeting.durationMinutes || 60;
-      if (transcripts && transcripts.length > 0) {
-        const firstTs = new Date(transcripts[0].timestamp).getTime();
-        const lastTs = new Date(transcripts[transcripts.length - 1].timestamp).getTime();
-        duration = Math.max(1, Math.round((lastTs - firstTs) / 60000));
-      } else if (meeting.scheduledAt) {
+      if (meeting.scheduledAt) {
         duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 60000));
       }
 
-      // Extract unique speakers from transcript to show participant count
-      const uniqueSpeakers = new Set(transcripts.map((t: any) => t.speakerName)).size;
+      // Extract unique speakers from Participant collection
+      const uniqueSpeakers = await Participant.countDocuments({ meetingId });
 
       // Wrap the raw AI summary in our premium Forge India email design
       summaryHtml = `
@@ -228,8 +243,25 @@ ${fullText}`;
       
       console.log(`[Summarizer] AI summary generated and formatted.`);
     } catch (err: any) {
-      console.error('[Summarizer] Groq API failed:', err.message);
+      console.error('[Summarizer] Gemini API failed:', err.message);
       return null;
+    } finally {
+      // Clean up uploaded file from Gemini to save space
+      if (uploadedFile && fileManager) {
+        try {
+          await fileManager.deleteFile(uploadedFile.file.name);
+          console.log(`[Summarizer] Deleted ${uploadedFile.file.name} from Gemini API`);
+        } catch (e) {
+          console.warn('[Summarizer] Failed to delete file from Gemini API', e);
+        }
+      }
+      // Delete local temporary audio file
+      try {
+        fs.unlinkSync(audioFilePath);
+        console.log(`[Summarizer] Deleted local file ${audioFilePath}`);
+      } catch (e) {
+        console.warn('[Summarizer] Failed to delete local audio file', e);
+      }
     }
   }
 
