@@ -1071,7 +1071,9 @@ export default function Meetings() {
     };
 
     const setupWs = () => {
-      const wsUrl = buildWsUrl(token);
+      const { token: freshToken } = getSession();
+      const activeToken = freshToken || token;
+      const wsUrl = buildWsUrl(activeToken);
       console.log('[Signaling] Connecting to:', wsUrl, 'room:', signalingRoomId, 'attempt:', reconnectAttempts + 1);
 
       const ws = new WebSocket(wsUrl);
@@ -1083,7 +1085,7 @@ export default function Meetings() {
         ws.send(JSON.stringify({
           type: 'join',
           data: {
-            token,
+            token: activeToken,
             meetingId: signalingRoomId,
             roomId: publicRoomId || signalingRoomId,
             joinCode: publicRoomId || undefined,
@@ -1382,11 +1384,15 @@ export default function Meetings() {
 
       ws.onerror = (e: any) => console.warn('[Signaling] WS error:', e?.message || e);
 
-      ws.onclose = (e: any) => {
+      ws.onclose = async (e: any) => {
         console.log('[Signaling] WS closed. Code:', e?.code);
         peerIdRef.current = null;
         if (!intentionalCloseRef.current && reconnectAttempts < maxReconnectAttempts) {
           reconnectAttempts++;
+          if (e?.code === 4001) {
+            console.log('[Signaling] Token expired. Forcing token rotation via dummy API call...');
+            await api.meetings.getRooms().catch(() => {});
+          }
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 15000);
           console.log(`[Signaling] Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`);
           setTimeout(setupWs, delay);
