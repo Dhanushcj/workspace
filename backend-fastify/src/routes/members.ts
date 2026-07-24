@@ -25,7 +25,12 @@ export async function memberRoutes(fastify: FastifyInstance) {
   fastify.get('/:workspaceId', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { workspaceId } = request.params as any;
-      const users = await User.find({ workspaceId: workspaceId || defaultWorkspaceId })
+      const targetWorkspace = workspaceId || defaultWorkspaceId;
+      const query = targetWorkspace === defaultWorkspaceId
+        ? { $or: [{ workspaceId: targetWorkspace }, { workspaceId: { $exists: false } }, { workspaceId: null }] }
+        : { workspaceId: targetWorkspace };
+
+      const users = await User.find(query)
         .sort({ createdAt: -1 })
         .select('-password -passwordHash -mfaSecret');
 
