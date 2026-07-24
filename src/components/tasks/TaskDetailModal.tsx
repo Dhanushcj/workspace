@@ -25,7 +25,8 @@ export const TaskDetailModal = ({
   const { updateTask, statuses, members } = useWorkflowStore();
   const { addToast } = useToastStore();
   const { user } = useAuthStore();
-  const isTeamLeadOrManager = user?.role === 'TEAM_LEAD' || user?.role === 'MANAGER' || user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'company-admin';
+  const rawRole = (user?.role || '').toUpperCase().replace(' ', '_');
+  const isTeamLeadOrManager = ['TEAM_LEAD', 'LEAD', 'MANAGER', 'SUPER_ADMIN', 'ADMIN', 'COMPANY-ADMIN', 'COMPANY_ADMIN'].includes(rawRole);
   const isDeveloper = !isTeamLeadOrManager;
   
   const [formData, setFormData] = useState({

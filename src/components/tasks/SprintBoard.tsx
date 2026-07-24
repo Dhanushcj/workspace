@@ -50,8 +50,8 @@ export const SprintBoard = ({
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const userRole = user?.role || 'DEVELOPER';
-  const isTeamLead = userRole === 'TEAM_LEAD' || userRole === 'MANAGER';
+  const userRole = (user?.role || '').toUpperCase().replace(' ', '_');
+  const isTeamLead = ['TEAM_LEAD', 'LEAD', 'MANAGER', 'SUPER_ADMIN', 'ADMIN', 'COMPANY-ADMIN', 'COMPANY_ADMIN'].includes(userRole);
   const { currentSprint } = useWorkflowStore();
   
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
@@ -74,7 +74,8 @@ export const SprintBoard = ({
     let filtered = tasks.filter(t => (t as any).sprintId === sid || t.sprintId === sid);
     
     // Filter tasks so individual employees only see tasks assigned to them (except MANAGER / TEAM_LEAD / ADMIN)
-    const isTeamLeadOrManager = user?.role === 'TEAM_LEAD' || user?.role === 'MANAGER' || user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
+    const rawRole = (user?.role || '').toUpperCase().replace(' ', '_');
+    const isTeamLeadOrManager = ['TEAM_LEAD', 'LEAD', 'MANAGER', 'SUPER_ADMIN', 'ADMIN', 'COMPANY-ADMIN', 'COMPANY_ADMIN'].includes(rawRole);
     if (user && !isTeamLeadOrManager) {
       filtered = filtered.filter(t => 
         t.assigneeId === user.id || 
