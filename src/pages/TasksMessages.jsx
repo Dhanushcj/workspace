@@ -1,18 +1,12 @@
 import React from 'react';
 import TasksLayout from '../components/TasksLayout';
+import { MessagesView } from '../components/tasks/MessagesView';
 
 const TasksMessages = () => {
   return (
     <TasksLayout title="Team Messages" subtitle="TEAM">
-      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-3xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] p-8">
-        <div className="w-16 h-16 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center mb-4">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
-        <h2 className="text-lg font-bold text-slate-800">Sprint Discussions</h2>
-        <p className="text-sm text-slate-400 mt-2 max-w-sm text-center">Communicate in real-time about sprint goals, blocked tasks, and PRs.</p>
-        <button className="mt-6 px-6 py-2.5 rounded-xl bg-[#0F5A3E] text-white text-sm font-bold shadow-md hover:bg-[#0B4A3F] transition-colors">
-          New Channel
-        </button>
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden h-[calc(100vh-140px)]">
+        <MessagesView />
       </div>
     </TasksLayout>
   );
