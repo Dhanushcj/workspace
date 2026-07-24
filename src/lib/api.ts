@@ -16,6 +16,11 @@ export const getApiUrl = () => {
     url = `https://${url}`;
   }
 
+  // Ensure /api suffix
+  if (url && !url.endsWith('/api') && !url.endsWith('/api/')) {
+    url = url.endsWith('/') ? `${url}api` : `${url}/api`;
+  }
+
   // Ensure trailing slash for Axios baseURL compatibility
   if (url && !url.endsWith('/')) {
     url = `${url}/`;

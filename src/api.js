@@ -35,6 +35,9 @@ export const getApiUrl = (path) => {
   if (API_BASE_URL.endsWith('/api') && cleanPath.startsWith('/api')) {
     return `${API_BASE_URL.slice(0, -4)}${cleanPath}`;
   }
+  if (!API_BASE_URL.endsWith('/api') && !cleanPath.startsWith('/api')) {
+    return `${API_BASE_URL}/api${cleanPath}`;
+  }
   return `${API_BASE_URL}${cleanPath}`;
 };
 
