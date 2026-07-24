@@ -44,17 +44,10 @@ const DashboardLayout = ({ children, isAdmin = false }) => {
 
   const navItems = !workspaceId ? superNav : isAdmin ? adminNav : workspaceNav;
 
-  const handleLogout = async () => {
-    try {
-      const { unregisterWebPush } = await import('../utils/webPushHelper');
-      await unregisterWebPush();
-    } catch (e) {
-      console.warn('[DashboardLayout] Push unregistration failed:', e);
-    }
-    localStorage.removeItem('auth');
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    navigate('/');
+  const handleLogout = () => {
+    import('../store/authStore').then(({ useAuthStore }) => {
+      useAuthStore.getState().logout();
+    });
   };
 
   return (

@@ -605,7 +605,7 @@ function validatePasswordStrength(password) {
 
 // src/middlewares/auth.ts
 var getJwtSecret = () => loadSecurityConfig().jwtSecret;
-async function authenticate(request, reply) {
+async function authenticate2(request, reply) {
   try {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -1139,7 +1139,7 @@ async function authRoutes(fastify2) {
       return reply.code(401).send({ error: "Token rotation failed." });
     }
   });
-  fastify2.post("/mfa/setup", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/mfa/setup", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       let user = await User.findById(request.user.id);
       if (!user && request.user?.email) {
@@ -1156,7 +1156,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to initialize MFA secrets.", details: err.message });
     }
   });
-  fastify2.post("/mfa/enable", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/mfa/enable", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { token } = request.body;
       if (!token) {
@@ -1211,7 +1211,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "OAuth exchange process failed.", details: err.message });
     }
   });
-  fastify2.put("/update-profile", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.put("/update-profile", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { avatarUrl } = request.body;
       if (!avatarUrl) {
@@ -1227,7 +1227,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to update profile.", details: err.message });
     }
   });
-  fastify2.put("/change-password", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.put("/change-password", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { currentPassword, newPassword } = request.body;
       if (!currentPassword || !newPassword) {
@@ -1260,7 +1260,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to change password.", details: err.message });
     }
   });
-  fastify2.post("/push-token", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/push-token", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { token } = request.body;
       if (!token) {
@@ -1288,7 +1288,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to fetch VAPID public key.", details: err.message });
     }
   });
-  fastify2.post("/web-push/subscribe", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/web-push/subscribe", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { subscription } = request.body;
       if (!subscription || !subscription.endpoint || !subscription.keys) {
@@ -1321,7 +1321,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to register web push subscription.", details: err.message });
     }
   });
-  fastify2.post("/web-push/unsubscribe", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/web-push/unsubscribe", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { endpoint } = request.body;
       if (!endpoint) {
@@ -1888,7 +1888,7 @@ async function meetingRoutes(fastify2) {
     }
     return Meeting.findOne({ joinCode: normalizeJoinCode(value) });
   }
-  fastify2.post("/", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const {
         title,
@@ -2058,7 +2058,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to create meeting room.", details: err.message });
     }
   });
-  fastify2.get("/join/:code", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.get("/join/:code", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       if (request.user?.role === "demo") {
         return reply.code(403).send({ error: "Demo accounts cannot join meetings." });
@@ -2150,7 +2150,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Error resolving meeting join code.", details: err.message });
     }
   });
-  fastify2.get("/history", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.get("/history", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { page = 1, limit = 10 } = request.query;
       const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -2180,7 +2180,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to retrieve history logs.", details: err.message });
     }
   });
-  fastify2.get("/rooms", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.get("/rooms", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const workspaceId = request.user?.workspaceId || "forge-india-connect";
       const rooms2 = await Room.find({ workspaceId }).sort({ createdAt: -1 });
@@ -2189,7 +2189,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to fetch rooms", details: err.message });
     }
   });
-  fastify2.post("/rooms", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/rooms", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { title, tag, color } = request.body;
       const workspaceId = request.user?.workspaceId || "forge-india-connect";
@@ -2206,7 +2206,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to create room", details: err.message });
     }
   });
-  fastify2.delete("/rooms/:id", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.delete("/rooms/:id", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       const room = await Room.findById(id);
@@ -2220,7 +2220,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to delete room", details: err.message });
     }
   });
-  fastify2.get("/:id", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.get("/:id", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       if (request.user?.role === "demo") {
         return reply.code(403).send({ error: "Demo accounts cannot join meetings." });
@@ -2245,7 +2245,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Error fetching meeting properties.", details: err.message });
     }
   });
-  fastify2.patch("/:id", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.patch("/:id", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       const { title, scheduledAt, durationMinutes, recordingEnabled } = request.body;
@@ -2269,7 +2269,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to update meeting configs.", details: err.message });
     }
   });
-  fastify2.post("/:id/start", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/:id/start", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await Meeting.findById(id);
@@ -2331,7 +2331,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to boot meeting session.", details: err.message });
     }
   });
-  fastify2.post("/:id/start-ai", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/:id/start-ai", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await resolveMeetingIdentifier(id);
@@ -2348,7 +2348,7 @@ async function meetingRoutes(fastify2) {
     }
   });
   fastify2.post("/:id/audio-chunk", {
-    preHandler: authenticate,
+    preHandler: authenticate2,
     config: { rawBody: true }
   }, async (request, reply) => {
     try {
@@ -2379,7 +2379,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to process audio chunk.", details: err.message });
     }
   });
-  fastify2.post("/:id/end", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/:id/end", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await Meeting.findById(id);
@@ -2455,7 +2455,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to end meeting properly.", details: err.message });
     }
   });
-  fastify2.post("/:id/leave", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/:id/leave", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       if (!id || !id.trim()) {
@@ -2510,7 +2510,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to leave meeting.", details: err.message || "Unknown server error" });
     }
   });
-  fastify2.get("/:id/participants", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.get("/:id/participants", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await resolveMeetingIdentifier(id);
@@ -2540,7 +2540,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to retrieve active participants.", details: err.message });
     }
   });
-  fastify2.post("/:id/summarize", { preHandler: authenticate }, async (request, reply) => {
+  fastify2.post("/:id/summarize", { preHandler: authenticate2 }, async (request, reply) => {
     try {
       const { id } = request.params;
       if (!id || !id.trim()) {
@@ -2610,7 +2610,7 @@ function buildLocalEmailDraft(prompt, subject, context) {
   ].join("\n");
 }
 async function mailRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.get("/", async (request, reply) => {
     try {
       const folder = request.query.folder || "inbox";
@@ -3219,7 +3219,7 @@ async function ensureDirectConversation(workspaceId, currentEmail, peerEmail) {
   return conversation;
 }
 async function channelRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.post("/upload", async (request, reply) => {
     try {
       const file = await resolveMultipartFile(request);
@@ -3310,7 +3310,7 @@ async function channelRoutes(fastify2) {
   });
 }
 async function kuralRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.post("/upload", async (request, reply) => {
     try {
       const file = await resolveMultipartFile(request);
@@ -3809,7 +3809,7 @@ function publicUser(user) {
   };
 }
 async function memberRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
@@ -3896,7 +3896,7 @@ var Task = (0, import_mongoose17.model)("Task", TaskSchema);
 // src/routes/tasks.ts
 var defaultWorkspaceId3 = "forge-india-connect";
 async function taskRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
@@ -3998,7 +3998,7 @@ var WorkspaceDocument = (0, import_mongoose18.model)("WorkspaceDocument", Docume
 // src/routes/docs.ts
 var defaultWorkspaceId4 = "forge-india-connect";
 async function docsRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
@@ -4189,7 +4189,7 @@ Generate 5 to 7 slides with rich, professional content following the flow in the
 
 // src/routes/superadmin.ts
 async function superadminRoutes(fastify2) {
-  fastify2.addHook("preHandler", authenticate);
+  fastify2.addHook("preHandler", authenticate2);
   fastify2.addHook("preHandler", async (request, reply) => {
     if (request.user?.role !== "super-admin") {
       return reply.code(403).send({ error: "Access denied. Super Admin privileges required." });
@@ -4211,7 +4211,7 @@ function normalizeEmail2(value) {
   return String(value || "").trim().toLowerCase();
 }
 async function statusRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
@@ -4567,7 +4567,7 @@ function resolveUploadName2(file, uploaded) {
   return `upload.file`;
 }
 async function threadsRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate);
+  fastify2.addHook("preValidation", authenticate2);
   fastify2.post("/upload", async (request, reply) => {
     try {
       const file = await resolveMultipartFile2(request);
@@ -4851,6 +4851,9 @@ async function threadsRoutes(fastify2) {
     }
   });
 }
+
+// src/index.ts
+var import_groq_sdk3 = __toESM(require("groq-sdk"));
 
 // src/services/webrtc.ts
 var import_ws2 = require("ws");
@@ -5470,6 +5473,105 @@ async function bootstrap() {
   await server.register(threadsRoutes, { prefix: "/api/threads" });
   server.get("/api/meet/ice-servers", async () => {
     return getIceServers();
+  });
+  server.post("/api/meet/transcribe", { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const groqKey = process.env.GROQ_API_KEY;
+      if (!groqKey) {
+        return reply.code(503).send({ error: "Transcription service unavailable. GROQ_API_KEY is not configured." });
+      }
+      let audioBuffer = null;
+      let mimetype = "audio/webm";
+      let filename = "recording.webm";
+      for await (const part of request.parts()) {
+        if (part.type === "file") {
+          mimetype = part.mimetype || "audio/webm";
+          filename = part.filename || "recording.webm";
+          const chunks = [];
+          for await (const chunk of part.file) {
+            chunks.push(chunk);
+          }
+          audioBuffer = Buffer.concat(chunks);
+          break;
+        }
+      }
+      if (!audioBuffer || audioBuffer.length === 0) {
+        return reply.code(400).send({ error: 'No audio file uploaded or the file is empty. Use field name "audio".' });
+      }
+      const groqClient = new import_groq_sdk3.default({ apiKey: groqKey });
+      const blob = new Blob([audioBuffer], { type: mimetype });
+      const file = new File([blob], filename, { type: mimetype });
+      const transcription = await groqClient.audio.transcriptions.create({
+        file,
+        model: "whisper-large-v3",
+        prompt: "This is a meeting conversation. Transcribe accurately, preserving both English and Tamil words.",
+        temperature: 0,
+        response_format: "text"
+      });
+      const transcript = typeof transcription === "string" ? transcription : transcription.text || "";
+      return reply.code(200).send({ transcript });
+    } catch (err) {
+      console.error("[Transcribe] Error:", err.message);
+      return reply.code(500).send({ error: "Transcription failed.", details: err.message });
+    }
+  });
+  server.post("/api/meet/summarize", { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const groqKey = process.env.GROQ_API_KEY;
+      if (!groqKey) {
+        return reply.code(503).send({ error: "Summarization service unavailable. GROQ_API_KEY is not configured." });
+      }
+      const { transcript, meetingTitle } = request.body;
+      if (!transcript || !transcript.trim()) {
+        return reply.code(400).send({ error: "Missing required field: transcript." });
+      }
+      const groqClient = new import_groq_sdk3.default({ apiKey: groqKey });
+      const systemPrompt = `You are an expert meeting analyst. Analyze the provided meeting transcript and return a structured JSON object ONLY \u2014 no markdown, no code fences, no extra text.
+
+Return valid JSON with exactly these fields:
+{
+  "meetingTitle": string,
+  "summary": string (2-4 sentences executive overview),
+  "keyPoints": string[] (5-8 main discussion points),
+  "decisions": string[] (concrete decisions reached),
+  "actionItems": [{"task": string, "owner": string, "deadline": string}],
+  "risks": string[] (potential risks or concerns identified),
+  "followUps": string[] (follow-up items or open questions)
+}
+
+If the transcript is in Tamil, translate everything to English in the output.`;
+      const completion = await groqClient.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Meeting Title: ${meetingTitle || "Untitled Meeting"}
+
+Transcript:
+${transcript}` }
+        ],
+        temperature: 0.3,
+        max_tokens: 2048,
+        response_format: { type: "json_object" }
+      });
+      const rawText = completion.choices[0]?.message?.content || "{}";
+      let parsedSummary;
+      try {
+        parsedSummary = JSON.parse(rawText);
+      } catch {
+        return reply.code(500).send({ error: "AI returned malformed JSON. Please try again." });
+      }
+      parsedSummary.meetingTitle = parsedSummary.meetingTitle || meetingTitle || "Meeting Summary";
+      parsedSummary.summary = parsedSummary.summary || "";
+      parsedSummary.keyPoints = Array.isArray(parsedSummary.keyPoints) ? parsedSummary.keyPoints : [];
+      parsedSummary.decisions = Array.isArray(parsedSummary.decisions) ? parsedSummary.decisions : [];
+      parsedSummary.actionItems = Array.isArray(parsedSummary.actionItems) ? parsedSummary.actionItems : [];
+      parsedSummary.risks = Array.isArray(parsedSummary.risks) ? parsedSummary.risks : [];
+      parsedSummary.followUps = Array.isArray(parsedSummary.followUps) ? parsedSummary.followUps : [];
+      return reply.code(200).send(parsedSummary);
+    } catch (err) {
+      console.error("[Summarize] Error:", err.message);
+      return reply.code(500).send({ error: "Summarization failed.", details: err.message });
+    }
   });
   function authenticateWs(connection, req) {
     const ws = connection.socket || connection;

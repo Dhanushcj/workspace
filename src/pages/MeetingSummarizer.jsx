@@ -72,7 +72,10 @@ const MeetingSummarizer = () => {
         }),
       });
 
-      if (!summarizeRes.ok) throw new Error('Summarization failed.');
+      if (!summarizeRes.ok) {
+        const errData = await summarizeRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Summarization failed.');
+      }
       const summarizeData = await summarizeRes.json();
       setSummary(summarizeData);
       setStage('results');

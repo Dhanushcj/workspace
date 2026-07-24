@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getApiUrl } from '../api';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 import LogoImage from '../assets/landing-logo.png';
 
 const LoginPage = () => {
@@ -29,7 +31,15 @@ const LoginPage = () => {
       } else {
         const params = new URLSearchParams(location.search);
         const targetApp = params.get('app') || 'chat';
-        navigate(`/w/${savedAuth.workspaceId || 'demo'}/${targetApp}`, { replace: true });
+        const isTasksApp = !params.has('app') || params.get('app') === 'tasks';
+        
+        if (isTasksApp) {
+          if (savedAuth.email?.includes('manager')) navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/manager`, { replace: true });
+          else if (savedAuth.email?.includes('lead')) navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/lead`, { replace: true });
+          else navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/member`, { replace: true });
+        } else {
+          navigate(`/w/${savedAuth.workspaceId || 'demo'}/${targetApp}`, { replace: true });
+        }
       }
     }
   }, [location, navigate]);
@@ -57,18 +67,28 @@ const LoginPage = () => {
         role: data.user?.role || data.role,
         user: data.user?.name || data.user,
         email: data.user?.email || data.email,
-        workspaceId: data.user?.workspaceId || data.workspaceId
+        workspaceId: data.user?.workspaceId || data.workspaceId,
+        id: data.user?.id || data.userId || (data.user && data.user._id)
       };
 
       localStorage.setItem('token', normalizedAuthData.token);
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
-      localStorage.setItem('auth', JSON.stringify({
+      const userPayload = {
+        id: normalizedAuthData.id,
         role: normalizedAuthData.role,
         user: normalizedAuthData.user,
         email: normalizedAuthData.email,
         workspaceId: normalizedAuthData.workspaceId,
         avatarUrl: data.user?.avatarUrl
-      }));
+      };
+      
+      localStorage.setItem('auth', JSON.stringify(userPayload));
+
+      useAuthStore.getState().setAuth(
+        userPayload, 
+        normalizedAuthData.token, 
+        data.refreshToken || ''
+      );
 
       const params = new URLSearchParams(location.search);
       const targetApp = params.get('app') || 'chat';
@@ -79,11 +99,14 @@ const LoginPage = () => {
         navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
       } else {
         // Role-specific redirection
-        if (email.includes('dev')) navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
-        else if (email.includes('test')) navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
-        else if (email.includes('manager')) navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
-        else if (email.includes('lead')) navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
-        else navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
+        const isTasksApp = !params.has('app') || params.get('app') === 'tasks';
+        if (isTasksApp) {
+          if (email.includes('manager')) navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/manager`);
+          else if (email.includes('lead')) navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/lead`);
+          else navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/member`);
+        } else {
+          navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
+        }
       }
     } catch (err) {
       setError(err.message);

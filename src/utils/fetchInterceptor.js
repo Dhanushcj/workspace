@@ -91,7 +91,17 @@ export function setupFetchInterceptor() {
               localStorage.removeItem('token');
               localStorage.removeItem('auth');
               localStorage.removeItem('refreshToken');
-              window.location.href = '/login';
+              
+              const currentPath = window.location.pathname;
+              let app = 'chat';
+              if (currentPath.includes('/tasks')) app = 'tasks';
+              else if (currentPath.includes('/mail')) app = 'mail';
+              else if (currentPath.includes('/meet')) app = 'meet';
+              else if (currentPath.includes('/docs')) app = 'docs';
+              else if (currentPath.includes('/sheets')) app = 'sheets';
+              else if (currentPath.includes('/show')) app = 'show';
+              
+              window.location.href = `/login?app=${app}`;
               throw new Error('Session expired');
             }
           } catch (refreshErr) {

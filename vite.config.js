@@ -23,6 +23,14 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/issues': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api/projects': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api/sprints': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api/blockers': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api/pull-requests': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api/bug-reports': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api/tester-hub': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api/releases': { target: 'http://localhost:4000', changeOrigin: true },
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,

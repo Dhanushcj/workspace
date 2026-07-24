@@ -74,7 +74,7 @@ export async function launchAIBot(meetingId: string, joinCode: string, backendBa
 
   const renderUrl = process.env.RENDER_EXTERNAL_URL || '';
   const port = process.env.PORT || 3001;
-  const wsUrl = `ws://127.0.0.1:${port}/ws/webrtc?token=${auth.token}`;
+  const wsUrl = `ws://127.0.0.1:${port}/api/ws/webrtc?token=${auth.token}`;
 
   console.log(`[AIBot] Connecting to signaling server at ${wsUrl}`);
 

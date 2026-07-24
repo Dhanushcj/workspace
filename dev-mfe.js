@@ -13,18 +13,18 @@ const SERVICES = [
   { name: 'Meet-Service  ', command: 'node', args: ['microservices/meet/server.js'], color: '\x1b[36m' },       // Cyan
   { name: 'Chat-Service  ', command: 'node', args: ['microservices/chat/server.js'], color: '\x1b[32m' },       // Green
   { name: 'Socket-Service', command: 'node', args: ['microservices/sockets/server.js'], color: '\x1b[96m' },    // Bright Cyan
-  { name: 'API-Gateway   ', command: 'node', args: ['microservices/gateway/server.js'], color: '\x1b[91m' },    // Bright Red
-  { name: 'Tasks-Service ', command: 'node', args: ['microservices/tasks/server.js'], color: '\x1b[34m' },       // Blue
+  // { name: 'API-Gateway   ', command: 'node', args: ['microservices/gateway/server.js'], color: '\x1b[91m' },    // Bright Red (Disabled: Port 3001 used by backend-fastify)
+  { name: 'Tasks-Service ', command: 'npx.cmd', args: ['ts-node', '--transpile-only', 'src/index.ts'], color: '\x1b[34m', cwd: 'D:\\workspace-cd3a8115cc802d7496cdab2ae4e14193ba0428c1\\nexus-pm\\apps\\backend' },
 
   // ─── Frontend Microfrontends ───
-  { name: 'Shell-MFE     ', command: 'npx', args: ['vite', '--config', 'vite.config.shell.js'], color: '\x1b[94m' }, // Bright Blue
-  { name: 'Mail-MFE      ', command: 'npx', args: ['vite', '--config', 'vite.config.mail.js'], color: '\x1b[95m' },  // Bright Magenta
-  { name: 'Meet-MFE      ', command: 'npx', args: ['vite', '--config', 'vite.config.meet.js'], color: '\x1b[92m' },  // Bright Green
-  { name: 'Chat-MFE      ', command: 'npx', args: ['vite', '--config', 'vite.config.chat.js'], color: '\x1b[93m' },  // Bright Yellow
-  { name: 'Docs-MFE      ', command: 'npx', args: ['vite', '--config', 'vite.config.docs.js'], color: '\x1b[97m' },  // White
-  { name: 'Tasks-MFE     ', command: 'npx', args: ['vite', '--config', 'vite.config.tasks.js'], color: '\x1b[36m' }, // Cyan
-  { name: 'Sheets-MFE    ', command: 'npx', args: ['vite', '--config', 'vite.config.sheets.js'], color: '\x1b[92m' }, // Green
-  { name: 'Show-MFE      ', command: 'npx', args: ['vite', '--config', 'vite.config.show.js'], color: '\x1b[91m' }   // Red
+  { name: 'Shell-MFE     ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.shell.js'], color: '\x1b[94m' }, // Bright Blue
+  { name: 'Mail-MFE      ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.mail.js'], color: '\x1b[95m' },  // Bright Magenta
+  { name: 'Meet-MFE      ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.meet.js'], color: '\x1b[92m' },  // Bright Green
+  { name: 'Chat-MFE      ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.chat.js'], color: '\x1b[93m' },  // Bright Yellow
+  { name: 'Docs-MFE      ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.docs.js'], color: '\x1b[97m' },  // White
+  { name: 'Tasks-MFE     ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.tasks.js'], color: '\x1b[36m' }, // Cyan
+  { name: 'Sheets-MFE    ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.sheets.js'], color: '\x1b[92m' }, // Green
+  { name: 'Show-MFE      ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.show.js'], color: '\x1b[91m' }   // Red
 ];
 
 const children = [];
@@ -34,12 +34,12 @@ console.log('=================================================================='
 console.log('🌌  FORGE NEXUS - CONCURRENT MFE & MICROSERVICES ORCHESTRATOR    ');
 console.log('==================================================================\x1b[0m\n');
 
-function runService({ name, command, args, color }) {
+function runService({ name, command, args, color, cwd }) {
   console.log(`\x1b[90m[Orchestrator] Starting ${name.trim()}...\x1b[0m`);
   
   // Use shell options to ensure compatibility on Windows command shell
   const child = spawn(command, args, {
-    cwd: __dirname,
+    cwd: cwd || __dirname,
     shell: true,
     env: { ...process.env, FORCE_COLOR: 'true' }
   });

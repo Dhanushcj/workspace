@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 
 console.log("Attempting to connect to local WebSocket server...");
-const ws = new WebSocket("ws://localhost:3001/ws/mail?email=test@test.com");
+const ws = new WebSocket("ws://localhost:3001/api/ws/mail?email=test@test.com");
 
 ws.on('open', () => {
   console.log("WebSocket connection successfully opened!");

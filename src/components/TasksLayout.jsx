@@ -17,11 +17,16 @@ import {
   Bell,
   Zap,
   CheckCircle2,
-  ChevronDown
+  ChevronDown,
+  ListChecks,
+  GitBranch,
+  Bug,
+  History,
+  Clock
 } from 'lucide-react';
 import LogoImage from '../assets/landing-logo.png';
 
-const TasksLayout = ({ children, title, subtitle, headerActions }) => {
+const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = false }) => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,11 +43,14 @@ const TasksLayout = ({ children, title, subtitle, headerActions }) => {
   const profileInitial = profileName?.charAt(0)?.toUpperCase() || 'D';
 
   const handleLogout = () => {
-    localStorage.removeItem('auth');
-    navigate('/');
+    import('../store/authStore').then(({ useAuthStore }) => {
+      useAuthStore.getState().logout();
+    });
   };
 
-  const navGroups = [
+  const activeColorBg = role === 'Developer' ? 'bg-[#1A3A8F]' : 'bg-[#0F5A3E]';
+
+  const leadNavGroups = [
     {
       title: 'OVERVIEW',
       items: [
@@ -72,10 +80,45 @@ const TasksLayout = ({ children, title, subtitle, headerActions }) => {
       title: 'SYSTEM',
       items: [
         { label: 'Settings', icon: Settings, path: `/w/${workspaceId}/tasks/settings`, isActive: location.pathname.includes('/tasks/settings') },
-        { label: 'Logout', icon: LogOut, path: '/login' },
+        { label: 'Logout', icon: LogOut, path: '/login?app=tasks' },
       ]
     }
   ];
+
+  const developerNavGroups = [
+    {
+      title: 'CORE ARCHITECTURE',
+      items: [
+        { label: 'Overview', icon: LayoutDashboard, path: `/w/${workspaceId}/tasks`, isActive: location.pathname.includes('/dashboard/') || location.pathname === `/w/${workspaceId}/tasks` },
+        { label: 'Projects', icon: FolderOpen, path: `/w/${workspaceId}/tasks/projects`, isActive: location.pathname.includes('/tasks/projects') },
+        { label: 'Sprint Board', icon: Columns, path: `/w/${workspaceId}/tasks/board`, isActive: location.pathname.includes('/tasks/board') },
+      ]
+    },
+    {
+      title: 'MY WORK',
+      items: [
+        { label: 'My Tasks', icon: ListChecks, path: `/w/${workspaceId}/tasks/board`, isActive: location.pathname.includes('/tasks/board') },
+        { label: 'Pull Requests', icon: GitBranch, path: `/w/${workspaceId}/tasks/prs`, isActive: location.pathname.includes('/tasks/prs') },
+        { label: 'Blockers', icon: Bug, path: `/w/${workspaceId}/tasks/blockers`, isActive: location.pathname.includes('/tasks/blockers') },
+      ]
+    },
+    {
+      title: 'COLLABORATION',
+      items: [
+        { label: 'Team', icon: Users, path: `/w/${workspaceId}/tasks/team`, isActive: location.pathname.includes('/tasks/team') },
+        { label: 'Discussions', icon: MessageSquare, path: `/w/${workspaceId}/tasks/messages`, isActive: location.pathname.includes('/tasks/messages') },
+      ]
+    },
+    {
+      title: 'SYSTEM',
+      items: [
+        { label: 'Settings', icon: Settings, path: `/w/${workspaceId}/tasks/settings`, isActive: location.pathname.includes('/tasks/settings') },
+        { label: 'Logout', icon: LogOut, path: '/login?app=tasks' },
+      ]
+    }
+  ];
+
+  const navGroups = role === 'Developer' ? developerNavGroups : leadNavGroups;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#FAFAFA] font-sans">
@@ -108,7 +151,7 @@ const TasksLayout = ({ children, title, subtitle, headerActions }) => {
                     to={item.path}
                     className={() => `
                       flex items-center justify-between px-3 py-2.5 rounded-xl transition-all
-                      ${item.isActive ? 'bg-[#0F5A3E] text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}
+                      ${item.isActive ? `${activeColorBg} text-white shadow-md` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}
                     `}
                   >
                     <div className="flex items-center gap-3">
@@ -130,7 +173,7 @@ const TasksLayout = ({ children, title, subtitle, headerActions }) => {
         {/* Bottom Profile */}
         <div className="p-4 border-t border-slate-100">
           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#0F5A3E] text-white flex items-center justify-center font-bold text-lg shadow-inner">
+            <div className={`w-10 h-10 rounded-xl ${activeColorBg} text-white flex items-center justify-center font-bold text-lg shadow-inner`}>
               {profileInitial}
             </div>
             <div>
@@ -188,17 +231,19 @@ const TasksLayout = ({ children, title, subtitle, headerActions }) => {
 
         {/* Content View */}
         <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-[1200px] mx-auto">
+          <div className={fullWidth ? 'h-full flex flex-col' : 'max-w-[1200px] mx-auto'}>
             {/* Page Header Area */}
-            <div className="flex items-start justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-800">{title}</h1>
-                {subtitle && <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">{subtitle}</p>}
+            {(title || headerActions) && (
+              <div className="flex items-start justify-between mb-8 shrink-0">
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight text-slate-800">{title}</h1>
+                  {subtitle && <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">{subtitle}</p>}
+                </div>
+                <div className="flex items-center gap-3">
+                  {headerActions}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                {headerActions}
-              </div>
-            </div>
+            )}
             
             {/* Main Children */}
             {children}

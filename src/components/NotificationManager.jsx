@@ -71,6 +71,10 @@ export default function NotificationManager() {
         try {
           const data = JSON.parse(event.data);
           
+          if (data.type === 'presence-update') {
+            window.latestOnlineEmails = data.onlineEmails || [];
+          }
+          
           // Dispatch global event for other components (Mail, Chat, Dashboard)
           window.dispatchEvent(new CustomEvent('ws-message', { detail: data }));
           

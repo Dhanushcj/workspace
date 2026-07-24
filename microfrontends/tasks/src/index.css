@@ -1,29 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
 @import "tailwindcss";
 
 :root {
-  --background: #090d16;
-  --foreground: #f8fafc;
+  --background: #F7F6F3;
+  --foreground: #1A1916;
+  --bg: #F7F6F3;
+  --bg2: #EEECEA;
+  --bg3: #E5E3DF;
+  --surface: #FFFFFF;
+  --border: #DDD9D4;
+  --border2: #CCC8C2;
+  --text: #1A1916;
+  --text2: #5A5750;
+  --text3: #9A9690;
+  
+  --accent-m: #534AB7;
+  --accent-tl: #0F6E56;
+  --accent-d: #1A3A8F;
+  --accent-t: #854F0B;
+
+  --red: #E24B4A;
+  --redbg: #FCEBEB;
+  --redtext: #A32D2D;
+  --amber: #BA7517;
+  --amberbg: #FAEEDA;
+  --ambertext: #633806;
+  --green: #3B6D11;
+  --greenbg: #EAF3DE;
+  --greentext: #27500A;
+  --blue: #185FA5;
+  --bluebg: #E6F1FB;
+  --bluetext: #0C447C;
+  --purple: #534AB7;
+  --purplebg: #EEEDFE;
+  --purpletext: #3C3489;
+
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, .10), 0 2px 6px rgba(0, 0, 0, .07);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, .12), 0 4px 12px rgba(0, 0, 0, .08);
+
+  --sidebar-w: 260px;
+  --topbar-h: 56px;
+}
+
+@theme {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'DM Sans', sans-serif;
+  
+  --color-slate-50: #F7F6F3;
+  --color-slate-100: #EEECEA;
+  --color-slate-200: #E5E3DF;
+  --color-slate-300: #DDD9D4;
+  --color-slate-400: #CCC8C2;
+  --color-slate-500: #9A9690;
+  --color-slate-600: #5A5750;
+  --color-slate-700: #1A1916;
+}
+
+* {
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
 }
 
 body {
   background-color: var(--background);
-  color: var(--foreground);
-  margin: 0;
-  padding: 0;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
 }
 
-/* Hide scrollbar for cleaner look */
+/* Custom Scrollbar - Premium Minimal */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
 }

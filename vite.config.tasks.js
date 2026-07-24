@@ -18,7 +18,10 @@ export default defineConfig({
     'process.env': {},
   },
   server: {
-    port: 3040,
+    port: 3050,
+    proxy: {
+      '/api': 'http://localhost:3106'
+    },
     host: '0.0.0.0'
   },
 })
