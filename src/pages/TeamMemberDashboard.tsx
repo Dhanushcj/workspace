@@ -331,7 +331,8 @@ export default function DeveloperDashboard() {
     if (e.key === 'Enter') handleSendMessage();
   };
 
-  if (loading || !data) return <Preloader />;
+  // Removed Preloader to prevent the dashboard from getting stuck on loading screen
+  // if (loading || !data) return <Preloader />;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#FAFAFA] font-sans">
