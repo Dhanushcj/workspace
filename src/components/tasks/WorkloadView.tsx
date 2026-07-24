@@ -51,7 +51,9 @@ export const WorkloadView = () => {
       const transformed = rawUsers.map((u: any) => {
         const userId = u.id || u._id;
         const userTasks = tasks.filter(t => (t.assigneeId === userId || (t as any)._id === userId));
-        const load = Math.min(100, (userTasks.length * 15) + 20);
+        const activeTasks = userTasks.filter(t => t.status !== 'DONE' && t.status !== 'CANCELLED');
+        const totalStoryPoints = activeTasks.reduce((sum, t) => sum + (Number(t.storyPoints) || 2), 0);
+        const load = Math.min(100, Math.round((totalStoryPoints / 20) * 100));
         let currentTaskString = 'Available';
         const inProgress = userTasks.filter(t => t.status === 'IN_PROGRESS');
         if (inProgress.length > 0) {
