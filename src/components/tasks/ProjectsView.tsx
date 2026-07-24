@@ -187,26 +187,7 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-50">
-                    <button
-                      onClick={() => openSprintBoard(project)}
-                      className={`px-4 py-1.5 ${accentColor} text-white rounded-lg text-[10px] font-bold flex items-center gap-1.5 ${accentHover} transition-all`}
-                    >
-                      <Kanban size={13} /> Board
-                    </button>
-                    <button
-                      onClick={() => openPRs(project)}
-                      className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1.5 hover:bg-slate-50 transition-all"
-                    >
-                      <List size={13} /> Backlog
-                    </button>
-                    <button
-                      onClick={() => openBurndown(project)}
-                      className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1.5 hover:bg-slate-50 transition-all"
-                    >
-                      <Users size={13} /> Team
-                    </button>
-                  </div>
+
                 </div>
               );
             })}
