@@ -151,13 +151,7 @@ const Sidebar = React.memo(function Sidebar() {
             { label: 'Bug Inbox', icon: Bug, href: `${baseUrl}?tab=BugInbox`, badge: openBugsCount > 0 ? openBugsCount : null },
           ]
         },
-        {
-          title: 'COLLABORATION',
-          items: [
-            { label: 'Team', icon: Users, href: `${baseUrl}?tab=Team` },
-            { label: 'Messages', icon: MessageSquare, href: `${baseUrl}?tab=Messages` },
-          ]
-        },
+
         {
           title: 'INSIGHTS',
           items: [
