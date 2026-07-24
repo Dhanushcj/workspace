@@ -90,7 +90,8 @@ export const TaskAssignmentView = () => {
     
     try {
       // Modernized to PUT for Native backend compatibility
-      await api.put(`/issues/${taskId}`, { assigneeId: userId });
+      // Use PATCH instead of PUT
+      await api.patch(`/issues/${taskId}`, { assigneeId: userId });
       addToast({ title: 'Success', message: 'Task assigned successfully', type: 'SUCCESS' });
       
       // Optimistic update

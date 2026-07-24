@@ -120,7 +120,7 @@ export const BacklogView = ({ onNavigate = (tab: string) => {} }: { onNavigate?:
   const handleMoveTask = async (taskId: string, targetSprintId: string | null) => {
     try {
       setIsUpdating(true);
-      await api.put(`/issues/${taskId}`, { sprintId: targetSprintId });
+      await api.patch(`/issues/${taskId}`, { sprintId: targetSprintId });
       addToast({ type: 'SUCCESS', title: 'Task Updated', message: targetSprintId ? 'Task added to sprint.' : 'Task moved to backlog.' });
       await fetchTasks({ projectId: currentProject?.id || (currentProject as any)?._id });
     } catch (err) {

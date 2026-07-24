@@ -295,8 +295,8 @@ export const useWorkflowStore = create<WorkflowState>()(
         const task = tasks.find((t) => t.id === taskId || (t as any)._id === taskId);
         if (task && canTransition(task.status, nextStatus, role)) {
           try {
-            // Modernized to use unified PUT /issues/:id endpoint
-            await api.put(`/issues/${taskId}`, { status: nextStatus });
+            // Modernized to use unified PATCH /issues/:id endpoint
+            await api.patch(`/issues/${taskId}`, { status: nextStatus });
             set((state) => ({
               tasks: state.tasks.map((t) => (t.id === taskId || (t as any)._id === taskId) ? { ...t, status: nextStatus, updatedAt: new Date().toISOString() } : t),
             }));
@@ -552,7 +552,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       updateTaskAssignee: async (taskId, assigneeId) => {
         try {
-          await api.put(`/issues/${taskId}`, { assigneeId });
+          await api.patch(`/issues/${taskId}`, { assigneeId });
           set(state => ({
             tasks: state.tasks.map(t => 
               (t.id === taskId || (t as any)._id === taskId) ? { ...t, assigneeId, updatedAt: new Date().toISOString() } as any : t
@@ -579,7 +579,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       updateTaskEpic: async (taskId, epicId) => {
         try {
-          await api.put(`/issues/${taskId}`, { epicId });
+          await api.patch(`/issues/${taskId}`, { epicId });
           set(state => ({
             tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, epicId } : t)
           }));
@@ -592,7 +592,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       updateTaskEstimation: async (taskId, storyPoints) => {
         try {
-          await api.put(`/issues/${taskId}`, { storyPoints });
+          await api.patch(`/issues/${taskId}`, { storyPoints });
           set(state => ({
             tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, storyPoints } : t)
           }));
