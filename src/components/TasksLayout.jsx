@@ -55,7 +55,7 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
       title: 'OVERVIEW',
       items: [
         { label: 'Dashboard', icon: LayoutDashboard, path: `/w/${workspaceId}/tasks`, isActive: location.pathname.includes('/dashboard/') || location.pathname === `/w/${workspaceId}/tasks` },
-        { label: 'Projects', icon: FolderOpen, path: `/w/${workspaceId}/tasks/projects`, badge: 5, isActive: location.pathname.includes('/tasks/projects') },
+        { label: 'Projects', icon: FolderOpen, path: `/w/${workspaceId}/tasks/projects`, isActive: location.pathname.includes('/tasks/projects') },
         { label: 'Sprint Board', icon: Columns, path: `/w/${workspaceId}/tasks/board`, isActive: location.pathname.includes('/tasks/board') },
       ]
     },
