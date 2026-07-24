@@ -83,6 +83,7 @@ interface WorkflowState {
   fetchTasks: (filters?: { projectId?: string, sprintId?: string }, silent?: boolean) => Promise<void>;
   fetchProjects: (silent?: boolean) => Promise<void>;
   createProject: (data: { name: string, description: string }) => Promise<void>;
+  updateProject: (projectId: string, updates: any) => Promise<void>;
   updateTask: (taskId: string, updates: any) => Promise<boolean>;
   updateTaskStatus: (taskId: string, status: string, role: string) => Promise<boolean>;
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
