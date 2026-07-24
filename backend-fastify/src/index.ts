@@ -190,9 +190,10 @@ async function bootstrap() {
   });
   
   // DUMMY WEBSOCKET ROUTE to prevent socket.io 404s
-  server.get('/socket.io/', { websocket: true }, (connection, req) => {
+  server.get('/socket.io/', { websocket: true }, (connection: any, req) => {
     // Just accept connection and do nothing to stop errors in console
-    connection.socket.on('message', (message) => {
+    const ws = connection.socket || connection;
+    ws.on('message', (message: any) => {
       // Ignore
     });
   });
