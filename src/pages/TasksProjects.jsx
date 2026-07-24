@@ -1,61 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import TasksLayout from '../components/TasksLayout';
 import { FolderOpen, Plus, MoreHorizontal, Calendar, Users, ArrowRight, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useWorkflowStore } from '../store/workflowStore';
 
 const TasksProjects = () => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState([]);
+  const { workspaceId } = useParams();
+  
+  // Use Zustand store instead of localStorage
+  const projects = useWorkflowStore(state => state.projects);
+  const fetchProjects = useWorkflowStore(state => state.fetchProjects);
+  const createProject = useWorkflowStore(state => state.createProject);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProject, setNewProject] = useState({ name: '', description: '' });
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
-    // Load projects from local storage since backend doesn't have a explicit Project model
-    const stored = JSON.parse(localStorage.getItem('my_tasks_projects') || '[]');
-    if (stored.length === 0) {
-      // Create a default if empty
-      const defaultProj = {
-        id: 'forge-india-connect',
-        name: 'AI Interior Design',
-        description: 'Q2 Milestone for the AI design integration.',
-        members: 4,
-        date: new Date().toLocaleDateString()
-      };
-      localStorage.setItem('my_tasks_projects', JSON.stringify([defaultProj]));
-      setProjects([defaultProj]);
-    } else {
-      setProjects(stored);
-    }
-  }, []);
+    fetchProjects();
+  }, [fetchProjects, workspaceId]);
 
-  const handleCreateProject = (e) => {
+  const handleCreateProject = async (e) => {
     e.preventDefault();
     if (!newProject.name.trim()) return;
-
-    const id = newProject.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const proj = {
-      id,
-      name: newProject.name,
-      description: newProject.description,
-      members: 1,
-      date: new Date().toLocaleDateString()
-    };
     
-    const updated = [proj, ...projects];
-    setProjects(updated);
-    localStorage.setItem('my_tasks_projects', JSON.stringify(updated));
-    
-    setIsModalOpen(false);
-    setNewProject({ name: '', description: '' });
+    setIsCreating(true);
+    try {
+      // Assuming createProject expects { name, description, workspaceId }
+      await createProject({
+        name: newProject.name,
+        description: newProject.description,
+        workspaceId: workspaceId || 'forge-india-connect'
+      });
+      setIsModalOpen(false);
+      setNewProject({ name: '', description: '' });
+      // Refetch to get the latest
+      fetchProjects();
+    } catch (err) {
+      console.error('Failed to create project', err);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleOpenProject = (id) => {
-    // Update the auth workspace context and navigate
-    const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-    auth.workspaceId = id;
-    localStorage.setItem('auth', JSON.stringify(auth));
+  const setCurrentProject = useWorkflowStore(state => state.setCurrentProject);
+
+  const handleOpenProject = (proj) => {
+    // Set the current project in the global store
+    setCurrentProject(proj);
     
-    navigate(`/w/${id}/tasks`);
+    // Open the tasks dashboard for this workspace
+    // The TasksRouter will automatically direct them to the appropriate role dashboard
+    navigate(`/w/${workspaceId || 'forge-india-connect'}/tasks`);
   };
 
   const headerActions = (
@@ -87,17 +84,23 @@ const TasksProjects = () => {
             <p className="text-sm font-medium text-slate-500 mb-6 flex-1">{proj.description}</p>
             
             <div className="flex items-center gap-4 text-xs font-bold text-slate-400 mb-6">
-              <div className="flex items-center gap-1.5"><Calendar size={14} /> {proj.date}</div>
-              <div className="flex items-center gap-1.5"><Users size={14} /> {proj.members} Members</div>
+              <div className="flex items-center gap-1.5"><Calendar size={14} /> {proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}</div>
+              <div className="flex items-center gap-1.5"><Users size={14} /> {proj.members || 1} Members</div>
             </div>
             
             <div className="pt-5 border-t border-slate-100 mt-auto">
-              <button onClick={() => handleOpenProject(proj.id)} className="w-full py-3 rounded-xl bg-slate-50 text-[#0F5A3E] text-sm font-bold group-hover:bg-[#0F5A3E] group-hover:text-white transition-colors flex items-center justify-center gap-2">
+              <button onClick={() => handleOpenProject(proj)} className="w-full py-3 rounded-xl bg-slate-50 text-[#0F5A3E] text-sm font-bold group-hover:bg-[#0F5A3E] group-hover:text-white transition-colors flex items-center justify-center gap-2">
                 Open Workspace <ArrowRight size={16} />
               </button>
             </div>
           </div>
         ))}
+        {projects.length === 0 && (
+          <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400">
+            <FolderOpen size={48} className="mb-4 text-slate-200" />
+            <p className="font-medium">No projects found. Create one to get started.</p>
+          </div>
+        )}
       </div>
 
       {/* Create Modal */}
@@ -114,15 +117,17 @@ const TasksProjects = () => {
             <form onSubmit={handleCreateProject} className="p-6 space-y-5">
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Project Name</label>
-                <input type="text" value={newProject.name} onChange={e => setNewProject({...newProject, name: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20 focus:border-[#0F5A3E] transition-all" placeholder="e.g. Mobile App Redesign" required autoFocus />
+                <input type="text" value={newProject.name} onChange={e => setNewProject({...newProject, name: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20 focus:border-[#0F5A3E] transition-all" placeholder="e.g. Mobile App Redesign" required autoFocus disabled={isCreating} />
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Description (Optional)</label>
-                <textarea rows="3" value={newProject.description} onChange={e => setNewProject({...newProject, description: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20 focus:border-[#0F5A3E] transition-all resize-none" placeholder="What is this project about?" />
+                <textarea rows="3" value={newProject.description} onChange={e => setNewProject({...newProject, description: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20 focus:border-[#0F5A3E] transition-all resize-none" placeholder="What is this project about?" disabled={isCreating} />
               </div>
               <div className="flex gap-3 pt-4 border-t border-slate-100">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-[#0F5A3E] text-white text-sm font-bold shadow-md hover:bg-[#0B4A3F] transition-colors">Create Project</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors" disabled={isCreating}>Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-[#0F5A3E] text-white text-sm font-bold shadow-md hover:bg-[#0B4A3F] transition-colors" disabled={isCreating}>
+                  {isCreating ? 'Creating...' : 'Create Project'}
+                </button>
               </div>
             </form>
           </div>
