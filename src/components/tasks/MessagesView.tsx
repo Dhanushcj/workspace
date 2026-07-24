@@ -19,27 +19,10 @@ export const MessagesView = () => {
 
   const { currentSprint } = useWorkflowStore();
 
-  const pinned = [
-    { id: 'announcements', name: 'Announcements', type: 'channel', icon: <Flag size={14} className="text-emerald-500" />, unread: 2, meta: `${currentSprint?.name || 'Current Sprint'} ends soon — all ...` }
-  ];
-
-  const channels = [
-    { id: 'e-commerce', name: '# e-commerce', unread: 5, active: true, meta: 'Priya: Bug #9 logged on cart...' },
-    { id: 'api-gateway', name: '# api-gateway', unread: 0, meta: 'You: Can you check the hotfi...', time: '2m' },
-    { id: 'mobile-redesign', name: '# mobile-redesign', unread: 0, meta: 'Sneha: Onboarding flow pus...', time: '1h' }
-  ];
-
-  const dms = [
-    { id: 'nd', name: 'Nexus Developer', initials: 'N', color: 'bg-blue-600', online: true, time: '34m', meta: 'Hey, the cart total is off by...' },
-    { id: 'am', name: 'Anand M. (Manager)', initials: 'AM', color: 'bg-indigo-600', online: true, time: '2h', meta: 'Please expedite the hotfix PR' },
-    { id: 'pr', name: 'Priya Rao (Tester)', initials: 'PR', color: 'bg-amber-500', online: true, time: '3h', meta: 'Bug #9 — can you confirm t...' },
-    { id: 'sm', name: 'Sneha Menon', initials: 'SM', color: 'bg-emerald-600', online: true, time: '5h', meta: 'Working on onboarding scree...' }
-  ];
-
-  const threads = [
-    { id: 'standup', name: 'Sprint 3 standup', unread: 3, online: true, meta: 'Arjun: Done — payment gat...', initials: 'N', initials2: 'AP' },
-    { id: 'hotfix-resp', name: 'Hotfix HF-07 response', unread: 0, meta: 'Dev: Fix deployed to staging', time: '1h', initials: 'DV' }
-  ];
+  const pinned: any[] = [];
+  const channels: any[] = [];
+  const dms: any[] = [];
+  const threads: any[] = [];
 
   return (
     <div className="flex h-full bg-white overflow-hidden font-sans">
@@ -161,105 +144,18 @@ export const MessagesView = () => {
                 <Layout size={16} />
               </div>
               <p className="text-[12px] font-bold text-slate-700">
-                This channel is linked to <span className="font-black text-slate-900">API Gateway Service</span> · Sprint 2 · Hotfix HF-07 active
+                This channel will be linked to your active projects
               </p>
            </div>
-           <button className="text-[11px] font-black text-emerald-700 uppercase tracking-widest hover:underline flex items-center gap-1">
-             Open project <ArrowUpRight size={14} />
-           </button>
         </div>
 
         {/* Message Feed */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-[#FDFBF7]/30">
-          <div className="flex justify-center">
-             <div className="px-4 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] shadow-sm">
-               Today · 12 May 2026
-             </div>
-          </div>
-
-          {/* Manager Message */}
-          <Message 
-            initials="AM" 
-            color="bg-indigo-100 text-indigo-700" 
-            name="Anand M. (Manager)" 
-            time="9:14 AM"
-            content="Dev Vikram, the payment timeout is impacting prod customers. Please prioritise the hotfix and get it to staging ASAP."
-            reactions={[{ emoji: '👍', count: 2 }, { emoji: '✅', count: 1 }]}
-          />
-
-          {/* Dev Response */}
-          <Message 
-            initials="DV" 
-            color="bg-blue-100 text-blue-700" 
-            name="Dev Vikram" 
-            time="9:31 AM"
-            content={
-              <div className="space-y-4">
-                <p>On it. Created hotfix branch <span className="font-black">hotfix/HF-07-payment-timeout</span>. Will push fix within the hour.</p>
-                {/* Embedded Task Card */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-between group cursor-pointer hover:border-indigo-300 transition-all shadow-sm">
-                   <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                        <GitPullRequest size={20} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">#HF-07</span>
-                           <h4 className="text-[13px] font-black text-slate-900">Payment gateway — request timeout fix</h4>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                           <span className="px-2 py-0.5 bg-rose-50 text-rose-600 rounded text-[9px] font-black uppercase">Critical</span>
-                           <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-black uppercase">In progress</span>
-                        </div>
-                      </div>
-                   </div>
-                   <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-600 flex items-center gap-1">
-                     Linked task <ArrowUpRight size={12} />
-                   </span>
-                </div>
-              </div>
-            }
-          />
-
-          {/* Dev Update */}
-          <Message 
-            initials="DV" 
-            color="bg-blue-100 text-blue-700" 
-            name="Dev Vikram" 
-            time="10:47 AM"
-            content={
-              <div className="space-y-4">
-                <p>Fix pushed. Increased timeout threshold to 30s and added retry logic. Deployed to staging. PR #11 ready for review.</p>
-                {/* File Card */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 w-fit min-w-[280px] shadow-sm">
-                   <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                      <FileText size={20} />
-                   </div>
-                   <div className="flex-1">
-                      <p className="text-[13px] font-black text-slate-900">hotfix-deploy-log.txt</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">12 KB · staging · 10:45 AM</p>
-                   </div>
-                   <button className="p-2 text-slate-400 hover:text-slate-900">
-                      <Download size={16} />
-                   </button>
-                </div>
-              </div>
-            }
-          />
-
-          {/* Current User Response */}
-          <div className="flex justify-end relative">
-            <div className="flex flex-col items-end gap-1 group">
-               <span className="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">You (Ravi Kumar)</span>
-               <div className="bg-[#065F46] text-white p-6 rounded-[32px] rounded-tr-none shadow-xl max-w-[440px]">
-                  <p className="text-[15px] font-bold leading-relaxed">
-                    Good work. Reviewing PR now. Can you check the hotfix PR before I approve and merge to main?
-                  </p>
-               </div>
-               <span className="text-[10px] text-slate-400 font-bold mt-1">10:58 AM</span>
-            </div>
-            <div className="ml-4 w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 text-[12px] font-black shadow-sm">RK</div>
-          </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-[#FDFBF7]/30 flex flex-col items-center justify-center">
+           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
+             <MessageSquare size={24} />
+           </div>
+           <p className="text-slate-500 font-medium">No messages yet</p>
+           <p className="text-sm text-slate-400">Start a conversation to get started.</p>
         </div>
 
         {/* Message Input Area */}
