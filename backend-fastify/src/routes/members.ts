@@ -27,8 +27,10 @@ export async function memberRoutes(fastify: FastifyInstance) {
       const { workspaceId } = request.params as any;
       const targetWorkspace = workspaceId || defaultWorkspaceId;
       const query = targetWorkspace === defaultWorkspaceId
-        ? { $or: [{ workspaceId: targetWorkspace }, { workspaceId: { $exists: false } }, { workspaceId: null }] }
+        ? { $or: [{ workspaceId: targetWorkspace }, { workspaceId: { $exists: false } }, { workspaceId: null }, { workspaceId: "" }] }
         : { workspaceId: targetWorkspace };
+        
+      request.server.log.info(`[Members] Querying for workspaceId: ${targetWorkspace}`);
 
       const users = await User.find(query)
         .sort({ createdAt: -1 })

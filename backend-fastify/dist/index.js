@@ -391,19 +391,19 @@ var MutedUser_exports = {};
 __export(MutedUser_exports, {
   MutedUser: () => MutedUser
 });
-var import_mongoose19, MutedUserSchema, MutedUser;
+var import_mongoose24, MutedUserSchema, MutedUser;
 var init_MutedUser = __esm({
   "src/models/MutedUser.ts"() {
     "use strict";
-    import_mongoose19 = require("mongoose");
-    MutedUserSchema = new import_mongoose19.Schema({
+    import_mongoose24 = require("mongoose");
+    MutedUserSchema = new import_mongoose24.Schema({
       userId: { type: String, required: true },
       userEmail: { type: String, required: true },
       mutedUserEmail: { type: String, required: true },
       createdAt: { type: Date, default: Date.now }
     });
     MutedUserSchema.index({ userEmail: 1, mutedUserEmail: 1 }, { unique: true });
-    MutedUser = (0, import_mongoose19.model)("MutedUser", MutedUserSchema);
+    MutedUser = (0, import_mongoose24.model)("MutedUser", MutedUserSchema);
   }
 });
 
@@ -416,39 +416,6 @@ var import_fs6 = __toESM(require("fs"));
 var import_path5 = __toESM(require("path"));
 var import_jsonwebtoken6 = __toESM(require("jsonwebtoken"));
 var import_multipart = __toESM(require("@fastify/multipart"));
-
-// src/routes/auth.ts
-var import_bcrypt = __toESM(require("bcrypt"));
-var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
-init_User();
-
-// src/models/Tenant.ts
-var import_mongoose2 = require("mongoose");
-var TenantSchema = new import_mongoose2.Schema({
-  name: { type: String, required: true },
-  organisationName: { type: String, required: true, unique: true },
-  workspaceId: { type: String, required: true, unique: true },
-  domain: { type: String, required: true, unique: true },
-  adminEmail: { type: String, required: true, unique: true, index: true },
-  password: { type: String },
-  paymentStatus: { type: String, default: "active" },
-  subscriptionTier: { type: String, default: "starter" },
-  maxUsers: { type: Number, default: 20 },
-  subscriptionExpiryDate: { type: Date },
-  createdAt: { type: Date, default: Date.now }
-}, { collection: "tenants" });
-var Tenant = (0, import_mongoose2.model)("Tenant", TenantSchema);
-
-// src/models/RefreshToken.ts
-var import_mongoose3 = require("mongoose");
-var RefreshTokenSchema = new import_mongoose3.Schema({
-  userId: { type: import_mongoose3.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  token: { type: String, required: true, unique: true },
-  expiresAt: { type: Date, required: true, index: { expires: 0 } },
-  // Mongoose auto TTL cleanup
-  createdAt: { type: Date, default: Date.now }
-});
-var RefreshToken = (0, import_mongoose3.model)("RefreshToken", RefreshTokenSchema);
 
 // src/middlewares/auth.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
@@ -605,7 +572,7 @@ function validatePasswordStrength(password) {
 
 // src/middlewares/auth.ts
 var getJwtSecret = () => loadSecurityConfig().jwtSecret;
-async function authenticate2(request, reply) {
+async function authenticate(request, reply) {
   try {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -633,6 +600,39 @@ async function authenticate2(request, reply) {
     });
   }
 }
+
+// src/routes/auth.ts
+var import_bcrypt = __toESM(require("bcrypt"));
+var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
+init_User();
+
+// src/models/Tenant.ts
+var import_mongoose2 = require("mongoose");
+var TenantSchema = new import_mongoose2.Schema({
+  name: { type: String, required: true },
+  organisationName: { type: String, required: true, unique: true },
+  workspaceId: { type: String, required: true, unique: true },
+  domain: { type: String, required: true, unique: true },
+  adminEmail: { type: String, required: true, unique: true, index: true },
+  password: { type: String },
+  paymentStatus: { type: String, default: "active" },
+  subscriptionTier: { type: String, default: "starter" },
+  maxUsers: { type: Number, default: 20 },
+  subscriptionExpiryDate: { type: Date },
+  createdAt: { type: Date, default: Date.now }
+}, { collection: "tenants" });
+var Tenant = (0, import_mongoose2.model)("Tenant", TenantSchema);
+
+// src/models/RefreshToken.ts
+var import_mongoose3 = require("mongoose");
+var RefreshTokenSchema = new import_mongoose3.Schema({
+  userId: { type: import_mongoose3.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  token: { type: String, required: true, unique: true },
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
+  // Mongoose auto TTL cleanup
+  createdAt: { type: Date, default: Date.now }
+});
+var RefreshToken = (0, import_mongoose3.model)("RefreshToken", RefreshTokenSchema);
 
 // src/routes/auth.ts
 init_webPush();
@@ -1139,7 +1139,7 @@ async function authRoutes(fastify2) {
       return reply.code(401).send({ error: "Token rotation failed." });
     }
   });
-  fastify2.post("/mfa/setup", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/mfa/setup", { preHandler: authenticate }, async (request, reply) => {
     try {
       let user = await User.findById(request.user.id);
       if (!user && request.user?.email) {
@@ -1156,7 +1156,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to initialize MFA secrets.", details: err.message });
     }
   });
-  fastify2.post("/mfa/enable", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/mfa/enable", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { token } = request.body;
       if (!token) {
@@ -1211,7 +1211,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "OAuth exchange process failed.", details: err.message });
     }
   });
-  fastify2.put("/update-profile", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.put("/update-profile", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { avatarUrl } = request.body;
       if (!avatarUrl) {
@@ -1227,7 +1227,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to update profile.", details: err.message });
     }
   });
-  fastify2.put("/change-password", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.put("/change-password", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { currentPassword, newPassword } = request.body;
       if (!currentPassword || !newPassword) {
@@ -1260,7 +1260,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to change password.", details: err.message });
     }
   });
-  fastify2.post("/push-token", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/push-token", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { token } = request.body;
       if (!token) {
@@ -1288,7 +1288,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to fetch VAPID public key.", details: err.message });
     }
   });
-  fastify2.post("/web-push/subscribe", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/web-push/subscribe", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { subscription } = request.body;
       if (!subscription || !subscription.endpoint || !subscription.keys) {
@@ -1321,7 +1321,7 @@ async function authRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to register web push subscription.", details: err.message });
     }
   });
-  fastify2.post("/web-push/unsubscribe", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/web-push/unsubscribe", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { endpoint } = request.body;
       if (!endpoint) {
@@ -1607,9 +1607,9 @@ Focus on capturing the real essence of the conversation accurately.`;
         displayName: `meeting_audio_${meetingId}`
       });
       console.log(`[Summarizer] Uploaded to Gemini: ${uploadedFile.file.uri}`);
-      const model17 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model22 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       console.log("[Summarizer] Requesting generation...");
-      const result = await model17.generateContent([
+      const result = await model22.generateContent([
         {
           fileData: {
             mimeType: uploadedFile.file.mimeType,
@@ -1722,7 +1722,7 @@ async function launchAIBot(meetingId, joinCode, backendBaseUrl) {
   }
   const renderUrl = process.env.RENDER_EXTERNAL_URL || "";
   const port = process.env.PORT || 3001;
-  const wsUrl = `ws://127.0.0.1:${port}/ws/webrtc?token=${auth.token}`;
+  const wsUrl = `ws://127.0.0.1:${port}/api/ws/webrtc?token=${auth.token}`;
   console.log(`[AIBot] Connecting to signaling server at ${wsUrl}`);
   let ws;
   try {
@@ -1888,7 +1888,7 @@ async function meetingRoutes(fastify2) {
     }
     return Meeting.findOne({ joinCode: normalizeJoinCode(value) });
   }
-  fastify2.post("/", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/", { preHandler: authenticate }, async (request, reply) => {
     try {
       const {
         title,
@@ -2058,7 +2058,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to create meeting room.", details: err.message });
     }
   });
-  fastify2.get("/join/:code", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.get("/join/:code", { preHandler: authenticate }, async (request, reply) => {
     try {
       if (request.user?.role === "demo") {
         return reply.code(403).send({ error: "Demo accounts cannot join meetings." });
@@ -2150,7 +2150,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Error resolving meeting join code.", details: err.message });
     }
   });
-  fastify2.get("/history", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.get("/history", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { page = 1, limit = 10 } = request.query;
       const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -2180,7 +2180,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to retrieve history logs.", details: err.message });
     }
   });
-  fastify2.get("/rooms", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.get("/rooms", { preHandler: authenticate }, async (request, reply) => {
     try {
       const workspaceId = request.user?.workspaceId || "forge-india-connect";
       const rooms2 = await Room.find({ workspaceId }).sort({ createdAt: -1 });
@@ -2189,7 +2189,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to fetch rooms", details: err.message });
     }
   });
-  fastify2.post("/rooms", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/rooms", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { title, tag, color } = request.body;
       const workspaceId = request.user?.workspaceId || "forge-india-connect";
@@ -2206,7 +2206,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to create room", details: err.message });
     }
   });
-  fastify2.delete("/rooms/:id", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.delete("/rooms/:id", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       const room = await Room.findById(id);
@@ -2220,7 +2220,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to delete room", details: err.message });
     }
   });
-  fastify2.get("/:id", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.get("/:id", { preHandler: authenticate }, async (request, reply) => {
     try {
       if (request.user?.role === "demo") {
         return reply.code(403).send({ error: "Demo accounts cannot join meetings." });
@@ -2245,7 +2245,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Error fetching meeting properties.", details: err.message });
     }
   });
-  fastify2.patch("/:id", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.patch("/:id", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       const { title, scheduledAt, durationMinutes, recordingEnabled } = request.body;
@@ -2269,7 +2269,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to update meeting configs.", details: err.message });
     }
   });
-  fastify2.post("/:id/start", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/:id/start", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await Meeting.findById(id);
@@ -2331,7 +2331,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to boot meeting session.", details: err.message });
     }
   });
-  fastify2.post("/:id/start-ai", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/:id/start-ai", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await resolveMeetingIdentifier(id);
@@ -2348,7 +2348,7 @@ async function meetingRoutes(fastify2) {
     }
   });
   fastify2.post("/:id/audio-chunk", {
-    preHandler: authenticate2,
+    preHandler: authenticate,
     config: { rawBody: true }
   }, async (request, reply) => {
     try {
@@ -2379,7 +2379,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to process audio chunk.", details: err.message });
     }
   });
-  fastify2.post("/:id/end", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/:id/end", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await Meeting.findById(id);
@@ -2455,7 +2455,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to end meeting properly.", details: err.message });
     }
   });
-  fastify2.post("/:id/leave", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/:id/leave", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       if (!id || !id.trim()) {
@@ -2510,7 +2510,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to leave meeting.", details: err.message || "Unknown server error" });
     }
   });
-  fastify2.get("/:id/participants", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.get("/:id/participants", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       const meeting = await resolveMeetingIdentifier(id);
@@ -2540,7 +2540,7 @@ async function meetingRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to retrieve active participants.", details: err.message });
     }
   });
-  fastify2.post("/:id/summarize", { preHandler: authenticate2 }, async (request, reply) => {
+  fastify2.post("/:id/summarize", { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params;
       if (!id || !id.trim()) {
@@ -2610,7 +2610,7 @@ function buildLocalEmailDraft(prompt, subject, context) {
   ].join("\n");
 }
 async function mailRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.get("/", async (request, reply) => {
     try {
       const folder = request.query.folder || "inbox";
@@ -3219,7 +3219,7 @@ async function ensureDirectConversation(workspaceId, currentEmail, peerEmail) {
   return conversation;
 }
 async function channelRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.post("/upload", async (request, reply) => {
     try {
       const file = await resolveMultipartFile(request);
@@ -3310,7 +3310,7 @@ async function channelRoutes(fastify2) {
   });
 }
 async function kuralRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.post("/upload", async (request, reply) => {
     try {
       const file = await resolveMultipartFile(request);
@@ -3809,11 +3809,13 @@ function publicUser(user) {
   };
 }
 async function memberRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
-      const users = await User.find({ workspaceId: workspaceId || defaultWorkspaceId2 }).sort({ createdAt: -1 }).select("-password -passwordHash -mfaSecret");
+      const targetWorkspace = workspaceId || defaultWorkspaceId2;
+      const query = targetWorkspace === defaultWorkspaceId2 ? { $or: [{ workspaceId: targetWorkspace }, { workspaceId: { $exists: false } }, { workspaceId: null }] } : { workspaceId: targetWorkspace };
+      const users = await User.find(query).sort({ createdAt: -1 }).select("-password -passwordHash -mfaSecret");
       return reply.code(200).send(users.map(publicUser));
     } catch (err) {
       return reply.code(500).send({ error: "Failed to fetch workspace members.", details: err.message });
@@ -3861,9 +3863,424 @@ async function memberRoutes(fastify2) {
   });
 }
 
-// src/models/Task.ts
+// src/models/Project.ts
 var import_mongoose17 = require("mongoose");
-var TaskSchema = new import_mongoose17.Schema({
+var ProjectSchema = new import_mongoose17.Schema({
+  workspaceId: { type: String, required: true, index: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+ProjectSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Project = (0, import_mongoose17.model)("Project", ProjectSchema);
+
+// src/models/Sprint.ts
+var import_mongoose18 = require("mongoose");
+var SprintSchema = new import_mongoose18.Schema({
+  projectId: { type: String, required: true, index: true },
+  name: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ["PLANNING", "ACTIVE", "CLOSED"],
+    default: "PLANNING"
+  },
+  startDate: { type: Date },
+  endDate: { type: Date },
+  goal: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+SprintSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Sprint = (0, import_mongoose18.model)("Sprint", SprintSchema);
+
+// src/models/Epic.ts
+var import_mongoose19 = require("mongoose");
+var EpicSchema = new import_mongoose19.Schema({
+  projectId: { type: String, required: true, index: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  color: { type: String, default: "#6366f1" },
+  status: { type: String, default: "TODO" },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+EpicSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Epic = (0, import_mongoose19.model)("Epic", EpicSchema);
+
+// src/models/Status.ts
+var import_mongoose20 = require("mongoose");
+var StatusSchema = new import_mongoose20.Schema({
+  projectId: { type: String, required: true, index: true },
+  name: { type: String, required: true },
+  key: { type: String, required: true },
+  color: { type: String, default: "#94a3b8" },
+  order: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+StatusSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Status = (0, import_mongoose20.model)("Status", StatusSchema);
+
+// src/routes/projects.ts
+var defaultWorkspaceId3 = "forge-india-connect";
+async function projectRoutes(fastify2) {
+  fastify2.addHook("preValidation", authenticate);
+  fastify2.get("/", async (request, reply) => {
+    try {
+      const { workspaceId } = request.query;
+      const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId3;
+      const projects = await Project.find({ workspaceId: activeWorkspaceId }).sort({ createdAt: -1 });
+      if (projects.length === 0) {
+        const defaultProject = await Project.create({
+          workspaceId: activeWorkspaceId,
+          name: "Platform",
+          description: "Default project for platform development"
+        });
+        await Sprint.create({
+          projectId: defaultProject.id,
+          name: "Backlog (Unplanned)",
+          status: "PLANNING"
+        });
+        const statuses = [
+          { name: "To Do", key: "TO_DO", color: "#94a3b8", order: 1 },
+          { name: "In Progress", key: "IN_PROGRESS", color: "#3b82f6", order: 2 },
+          { name: "In Review", key: "PR_SUBMITTED", color: "#eab308", order: 3 },
+          { name: "Testing", key: "TESTING", color: "#a855f7", order: 4 },
+          { name: "Done", key: "DONE", color: "#22c55e", order: 5 },
+          { name: "Blocked", key: "BLOCKED", color: "#ef4444", order: 6 }
+        ];
+        for (const status of statuses) {
+          await Status.create({
+            projectId: defaultProject.id,
+            ...status
+          });
+        }
+        projects.push(defaultProject);
+      }
+      const populatedProjects = await Promise.all(projects.map(async (project) => {
+        const sprints = await Sprint.find({ projectId: project._id }).sort({ createdAt: -1 }).lean();
+        const pObj = project.toObject ? project.toObject() : project;
+        pObj.sprints = sprints;
+        return pObj;
+      }));
+      return reply.code(200).send(populatedProjects);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch projects.", details: err.message });
+    }
+  });
+  fastify2.post("/", async (request, reply) => {
+    try {
+      const body = request.body;
+      const workspaceId = request.user?.workspaceId || defaultWorkspaceId3;
+      const project = await Project.create({
+        workspaceId,
+        name: body.name,
+        description: body.description
+      });
+      await Sprint.create({
+        projectId: project.id,
+        name: "Backlog (Unplanned)",
+        status: "PLANNING"
+      });
+      return reply.code(201).send(project);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to create project", details: err.message });
+    }
+  });
+  fastify2.get("/:projectId/sprints", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const sprints = await Sprint.find({ projectId }).sort({ createdAt: -1 });
+      return reply.code(200).send(sprints);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch sprints" });
+    }
+  });
+  fastify2.post("/:projectId/sprints", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const sprint = await Sprint.create({ projectId, ...request.body });
+      return reply.code(201).send(sprint);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to create sprint" });
+    }
+  });
+  fastify2.get("/:projectId/epics", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const epics = await Epic.find({ projectId }).sort({ createdAt: -1 });
+      return reply.code(200).send(epics);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch epics" });
+    }
+  });
+  fastify2.post("/:projectId/epics", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const epic = await Epic.create({ projectId, ...request.body });
+      return reply.code(201).send(epic);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to create epic" });
+    }
+  });
+  fastify2.get("/:projectId/statuses", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const statuses = await Status.find({ projectId }).sort({ order: 1 });
+      return reply.code(200).send(statuses);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch statuses" });
+    }
+  });
+  fastify2.post("/:projectId/statuses", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const status = await Status.create({ projectId, ...request.body });
+      return reply.code(201).send(status);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to create status" });
+    }
+  });
+  fastify2.get("/:projectId/velocity", async (request, reply) => {
+    return reply.code(200).send([]);
+  });
+  fastify2.get("/:projectId/cfd", async (request, reply) => {
+    return reply.code(200).send([]);
+  });
+}
+
+// src/models/Issue.ts
+var import_mongoose21 = require("mongoose");
+var IssueSchema = new import_mongoose21.Schema({
+  workspaceId: { type: String, required: true, index: true },
+  projectId: { type: String, required: true, index: true },
+  sprintId: { type: String, index: true },
+  epicId: { type: String },
+  title: { type: String, required: true },
+  description: { type: String },
+  type: { type: String, default: "FEATURE" },
+  status: { type: String, default: "TO_DO" },
+  priority: { type: String, default: "MEDIUM" },
+  assigneeId: { type: String },
+  creatorId: { type: String, required: true },
+  storyPoints: { type: Number },
+  estimate: { type: Number },
+  blockerInfo: {
+    reason: { type: String },
+    raisedAt: { type: String }
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+IssueSchema.index({ projectId: 1, status: 1 });
+IssueSchema.index({ projectId: 1, sprintId: 1 });
+IssueSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Issue = (0, import_mongoose21.model)("Issue", IssueSchema);
+
+// src/routes/issues.ts
+init_User();
+var defaultWorkspaceId4 = "forge-india-connect";
+async function issueRoutes(fastify2) {
+  fastify2.addHook("preValidation", authenticate);
+  fastify2.get("/", async (request, reply) => {
+    try {
+      const { projectId, sprintId, workspaceId, type, status, assigneeId } = request.query;
+      const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId4;
+      const filter = { workspaceId: activeWorkspaceId };
+      if (projectId) filter.projectId = projectId;
+      if (sprintId) filter.sprintId = sprintId;
+      if (type) filter.type = type;
+      if (status) filter.status = status;
+      if (assigneeId) filter.assigneeId = assigneeId;
+      const issues = await Issue.find(filter).sort({ createdAt: -1 }).lean();
+      const populatedIssues = await Promise.all(issues.map(async (issue) => {
+        if (issue.assigneeId) {
+          const user = await User.findById(issue.assigneeId).lean();
+          if (user) {
+            issue.assignee = {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              avatar: user.avatarUrl
+            };
+          }
+        }
+        issue.id = issue._id;
+        return issue;
+      }));
+      return reply.code(200).send(populatedIssues);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch issues.", details: err.message });
+    }
+  });
+  fastify2.post("/", async (request, reply) => {
+    try {
+      const body = request.body;
+      const title = String(body.title || "").trim();
+      if (!title) {
+        return reply.code(400).send({ error: "Issue title is required." });
+      }
+      if (!body.projectId) {
+        return reply.code(400).send({ error: "Project ID is required." });
+      }
+      const workspaceId = String(
+        body.workspaceId || request.user?.workspaceId || defaultWorkspaceId4
+      ).trim();
+      const issue = await Issue.create({
+        workspaceId,
+        projectId: body.projectId,
+        sprintId: body.sprintId,
+        epicId: body.epicId,
+        title,
+        description: body.description || "",
+        status: body.status || "TO_DO",
+        priority: body.priority || "MEDIUM",
+        type: body.type || "FEATURE",
+        assigneeId: body.assigneeId,
+        creatorId: request.user?.id || "system",
+        storyPoints: body.storyPoints
+      });
+      return reply.code(201).send(issue);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to create issue.", details: err.message });
+    }
+  });
+  fastify2.patch("/:id", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const body = request.body;
+      const issue = await Issue.findByIdAndUpdate(id, body, { new: true });
+      if (!issue) {
+        return reply.code(404).send({ error: "Issue not found." });
+      }
+      return reply.code(200).send(issue);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update issue.", details: err.message });
+    }
+  });
+  fastify2.delete("/:id", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const issue = await Issue.findByIdAndDelete(id);
+      if (!issue) {
+        return reply.code(404).send({ error: "Issue not found." });
+      }
+      return reply.code(200).send({ message: "Issue deleted successfully." });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to delete issue.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/blocker", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { description } = request.body;
+      const issue = await Issue.findByIdAndUpdate(id, {
+        status: "BLOCKED",
+        blockerInfo: {
+          reason: description,
+          raisedAt: (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        }
+      }, { new: true });
+      if (!issue) {
+        return reply.code(404).send({ error: "Issue not found." });
+      }
+      return reply.code(200).send(issue);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to raise blocker.", details: err.message });
+    }
+  });
+  fastify2.patch("/:id/estimate", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { estimate } = request.body;
+      const issue = await Issue.findByIdAndUpdate(id, { estimate }, { new: true });
+      return reply.code(200).send(issue);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update estimate.", details: err.message });
+    }
+  });
+  fastify2.patch("/bulk", async (request, reply) => {
+    try {
+      const { ids, ...updates } = request.body;
+      if (!ids || !Array.isArray(ids)) return reply.code(400).send({ error: "Missing ids array" });
+      await Issue.updateMany({ _id: { $in: ids } }, { $set: updates });
+      return reply.code(200).send({ message: "Issues updated successfully" });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to bulk update issues", details: err.message });
+    }
+  });
+}
+
+// src/routes/sprints.ts
+var sprintRoutes = async (fastify2) => {
+  fastify2.addHook("onRequest", authenticate);
+  fastify2.get("/:sprintId", async (request, reply) => {
+    try {
+      const { sprintId } = request.params;
+      const sprint = await Sprint.findById(sprintId);
+      if (!sprint) {
+        return reply.code(404).send({ error: "Sprint not found" });
+      }
+      return reply.code(200).send(sprint);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch sprint" });
+    }
+  });
+  fastify2.put("/:sprintId", async (request, reply) => {
+    try {
+      const { sprintId } = request.params;
+      const updateData = request.body;
+      const sprint = await Sprint.findByIdAndUpdate(
+        sprintId,
+        { $set: updateData },
+        { new: true }
+      );
+      if (!sprint) {
+        return reply.code(404).send({ error: "Sprint not found" });
+      }
+      return reply.code(200).send(sprint);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update sprint" });
+    }
+  });
+  fastify2.put("/:sprintId/status", async (request, reply) => {
+    try {
+      const { sprintId } = request.params;
+      const { status } = request.body;
+      const sprint = await Sprint.findByIdAndUpdate(
+        sprintId,
+        { $set: { status } },
+        { new: true }
+      );
+      if (!sprint) {
+        return reply.code(404).send({ error: "Sprint not found" });
+      }
+      return reply.code(200).send(sprint);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update sprint status" });
+    }
+  });
+};
+
+// src/models/Task.ts
+var import_mongoose22 = require("mongoose");
+var TaskSchema = new import_mongoose22.Schema({
   workspaceId: { type: String, required: true, index: true },
   title: { type: String, required: true },
   description: { type: String },
@@ -3891,17 +4308,17 @@ TaskSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var Task = (0, import_mongoose17.model)("Task", TaskSchema);
+var Task = (0, import_mongoose22.model)("Task", TaskSchema);
 
 // src/routes/tasks.ts
-var defaultWorkspaceId3 = "forge-india-connect";
+var defaultWorkspaceId5 = "forge-india-connect";
 async function taskRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
       const { status } = request.query;
-      const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId3;
+      const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId5;
       const filter = { workspaceId: activeWorkspaceId };
       if (status) filter.status = status;
       const tasks = await Task.find(filter).sort({ createdAt: -1 });
@@ -3918,7 +4335,7 @@ async function taskRoutes(fastify2) {
         return reply.code(400).send({ error: "Task title is required." });
       }
       const workspaceId = String(
-        body.workspaceId || request.user?.workspaceId || defaultWorkspaceId3
+        body.workspaceId || request.user?.workspaceId || defaultWorkspaceId5
       ).trim();
       const task = await Task.create({
         workspaceId,
@@ -3971,8 +4388,8 @@ async function taskRoutes(fastify2) {
 }
 
 // src/models/Document.ts
-var import_mongoose18 = require("mongoose");
-var DocumentSchema = new import_mongoose18.Schema({
+var import_mongoose23 = require("mongoose");
+var DocumentSchema = new import_mongoose23.Schema({
   workspaceId: { type: String, required: true, index: true },
   title: { type: String, required: true },
   type: {
@@ -3984,7 +4401,7 @@ var DocumentSchema = new import_mongoose18.Schema({
   ownerName: { type: String },
   sizeBytes: { type: Number, default: 0 },
   url: { type: String },
-  content: { type: import_mongoose18.Schema.Types.Mixed },
+  content: { type: import_mongoose23.Schema.Types.Mixed },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -3993,17 +4410,17 @@ DocumentSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var WorkspaceDocument = (0, import_mongoose18.model)("WorkspaceDocument", DocumentSchema);
+var WorkspaceDocument = (0, import_mongoose23.model)("WorkspaceDocument", DocumentSchema);
 
 // src/routes/docs.ts
-var defaultWorkspaceId4 = "forge-india-connect";
+var defaultWorkspaceId6 = "forge-india-connect";
 async function docsRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
       const { type } = request.query;
-      const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId4;
+      const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId6;
       const filter = { workspaceId: activeWorkspaceId };
       if (type) filter.type = type;
       const docs = await WorkspaceDocument.find(filter).sort({ createdAt: -1 });
@@ -4020,7 +4437,7 @@ async function docsRoutes(fastify2) {
         return reply.code(400).send({ error: "Document title is required." });
       }
       const workspaceId = String(
-        body.workspaceId || request.user?.workspaceId || defaultWorkspaceId4
+        body.workspaceId || request.user?.workspaceId || defaultWorkspaceId6
       ).trim();
       const doc = await WorkspaceDocument.create({
         workspaceId,
@@ -4189,7 +4606,7 @@ Generate 5 to 7 slides with rich, professional content following the flow in the
 
 // src/routes/superadmin.ts
 async function superadminRoutes(fastify2) {
-  fastify2.addHook("preHandler", authenticate2);
+  fastify2.addHook("preHandler", authenticate);
   fastify2.addHook("preHandler", async (request, reply) => {
     if (request.user?.role !== "super-admin") {
       return reply.code(403).send({ error: "Access denied. Super Admin privileges required." });
@@ -4206,12 +4623,12 @@ async function superadminRoutes(fastify2) {
 }
 
 // src/routes/status.ts
-var import_mongoose20 = require("mongoose");
+var import_mongoose25 = require("mongoose");
 function normalizeEmail2(value) {
   return String(value || "").trim().toLowerCase();
 }
 async function statusRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.get("/:workspaceId", async (request, reply) => {
     try {
       const { workspaceId } = request.params;
@@ -4275,7 +4692,7 @@ async function statusRoutes(fastify2) {
     try {
       const { id } = request.params;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose20.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const existingStatus = await Story.findById(id);
@@ -4295,7 +4712,7 @@ async function statusRoutes(fastify2) {
       const { id } = request.params;
       const { emoji } = request.body;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose20.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findByIdAndUpdate(
@@ -4314,7 +4731,7 @@ async function statusRoutes(fastify2) {
       const { id } = request.params;
       const { text } = request.body;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose20.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findById(id);
@@ -4393,7 +4810,7 @@ async function statusRoutes(fastify2) {
     try {
       const { id } = request.params;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose20.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findById(id);
@@ -4413,8 +4830,8 @@ async function statusRoutes(fastify2) {
 var import_cloudinary2 = require("cloudinary");
 
 // src/models/ThreadPost.ts
-var import_mongoose21 = require("mongoose");
-var ThreadPostSchema = new import_mongoose21.Schema({
+var import_mongoose26 = require("mongoose");
+var ThreadPostSchema = new import_mongoose26.Schema({
   workspaceId: { type: String, required: true, index: true },
   authorEmail: { type: String, required: true },
   authorName: { type: String, required: true },
@@ -4430,11 +4847,11 @@ var ThreadPostSchema = new import_mongoose21.Schema({
   isPinned: { type: Boolean, default: false },
   isReported: { type: Boolean, default: false }
 }, { timestamps: true });
-var ThreadPost = (0, import_mongoose21.model)("ThreadPost", ThreadPostSchema);
+var ThreadPost = (0, import_mongoose26.model)("ThreadPost", ThreadPostSchema);
 
 // src/models/ThreadComment.ts
-var import_mongoose22 = require("mongoose");
-var ThreadCommentSchema = new import_mongoose22.Schema({
+var import_mongoose27 = require("mongoose");
+var ThreadCommentSchema = new import_mongoose27.Schema({
   postId: { type: String, required: true, index: true },
   parentCommentId: { type: String, index: true },
   authorEmail: { type: String, required: true },
@@ -4442,7 +4859,7 @@ var ThreadCommentSchema = new import_mongoose22.Schema({
   content: { type: String, required: true },
   likes: [{ type: String }]
 }, { timestamps: true });
-var ThreadComment = (0, import_mongoose22.model)("ThreadComment", ThreadCommentSchema);
+var ThreadComment = (0, import_mongoose27.model)("ThreadComment", ThreadCommentSchema);
 
 // src/routes/threads.ts
 init_User();
@@ -4567,7 +4984,7 @@ function resolveUploadName2(file, uploaded) {
   return `upload.file`;
 }
 async function threadsRoutes(fastify2) {
-  fastify2.addHook("preValidation", authenticate2);
+  fastify2.addHook("preValidation", authenticate);
   fastify2.post("/upload", async (request, reply) => {
     try {
       const file = await resolveMultipartFile2(request);
@@ -4859,7 +5276,7 @@ var import_groq_sdk3 = __toESM(require("groq-sdk"));
 var import_ws2 = require("ws");
 var import_jsonwebtoken4 = __toESM(require("jsonwebtoken"));
 init_User();
-var import_mongoose23 = require("mongoose");
+var import_mongoose28 = require("mongoose");
 var JWT_SECRET2 = process.env.JWT_SECRET || "nexus-jwt-secret-key";
 var rooms = /* @__PURE__ */ new Map();
 function send(ws, payload) {
@@ -5007,7 +5424,7 @@ function handleWebRtcSignalling(ws) {
     }
     if (type === "end-meeting-all") {
       broadcastToRoom(meetingId, peerId, { type: "meeting-ended" });
-      const query = import_mongoose23.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
+      const query = import_mongoose28.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
       Meeting.updateOne(query, { status: "ended" }).catch((err) => console.error("[WebRTC] Failed to update meeting status:", err));
       return;
     }
@@ -5053,7 +5470,7 @@ async function cleanupPeer(roomId, pid) {
   const baseUserId = pid.split("_")[0];
   try {
     let meetingQuery = { _id: roomId };
-    if (!import_mongoose23.Types.ObjectId.isValid(roomId)) {
+    if (!import_mongoose28.Types.ObjectId.isValid(roomId)) {
       meetingQuery = { joinCode: roomId };
     }
     const meeting = await Meeting.findOne(meetingQuery);
@@ -5466,11 +5883,27 @@ async function bootstrap() {
   await server.register(kuralRoutes, { prefix: "/api/chat" });
   await server.register(memberRoutes, { prefix: "/api/members" });
   await server.register(taskRoutes, { prefix: "/api/tasks" });
+  await server.register(projectRoutes, { prefix: "/api/projects" });
+  await server.register(issueRoutes, { prefix: "/api/issues" });
+  await server.register(sprintRoutes, { prefix: "/api/sprints" });
   await server.register(docsRoutes, { prefix: "/api/docs" });
   await server.register(showRoutes, { prefix: "/api/show" });
   await server.register(superadminRoutes, { prefix: "/api/superadmin" });
   await server.register(statusRoutes, { prefix: "/api/status" });
   await server.register(threadsRoutes, { prefix: "/api/threads" });
+  server.get("/api/notifications/unread-count", async () => {
+    return { count: 0 };
+  });
+  server.get("/api/bug-reports", async () => {
+    return [];
+  });
+  server.get("/api/pull-requests", async () => {
+    return [];
+  });
+  server.get("/socket.io/", { websocket: true }, (connection, req) => {
+    connection.socket.on("message", (message) => {
+    });
+  });
   server.get("/api/meet/ice-servers", async () => {
     return getIceServers();
   });
@@ -5499,7 +5932,7 @@ async function bootstrap() {
         return reply.code(400).send({ error: 'No audio file uploaded or the file is empty. Use field name "audio".' });
       }
       const groqClient = new import_groq_sdk3.default({ apiKey: groqKey });
-      const blob = new Blob([audioBuffer], { type: mimetype });
+      const blob = new Blob([new Uint8Array(audioBuffer)], { type: mimetype });
       const file = new File([blob], filename, { type: mimetype });
       const transcription = await groqClient.audio.transcriptions.create({
         file,
@@ -5593,7 +6026,7 @@ ${transcript}` }
       return null;
     }
   }
-  server.get("/ws/webrtc", { websocket: true }, (connection, req) => {
+  server.get("/api/ws/webrtc", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     server.log.info(`Authenticated WebRTC client: ${auth.user.email}`);
@@ -5601,7 +6034,7 @@ ${transcript}` }
     return new Promise(() => {
     });
   });
-  server.get("/ws/mail", { websocket: true }, (connection, req) => {
+  server.get("/api/ws/mail", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     server.log.info(`Authenticated Mail Socket: ${auth.user.email}`);
@@ -5609,21 +6042,21 @@ ${transcript}` }
     return new Promise(() => {
     });
   });
-  server.get("/ws/audio", { websocket: true }, (connection, req) => {
+  server.get("/api/ws/audio", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     handleAudioSocket(auth.ws);
     return new Promise(() => {
     });
   });
-  server.get("/ws/threads", { websocket: true }, (connection, req) => {
+  server.get("/api/ws/threads", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     handleThreadsSocket(auth.ws, req);
     return new Promise(() => {
     });
   });
-  server.get("/ws/calls", { websocket: true }, (connection, req) => {
+  server.get("/api/ws/calls", { websocket: true }, (connection, req) => {
     const auth = authenticateWs(connection, req);
     if (!auth) return;
     server.log.info(`Authenticated voice call signaling: ${auth.user.email}`);
@@ -5647,7 +6080,7 @@ ${transcript}` }
 ======================================================`);
     console.log(` NEXUS ZOOM MEETINGS BACKEND SERVER RUNNING LIVE!`);
     console.log(` REST API Root : http://localhost:${PORT}/api`);
-    console.log(` WebRTC Socket : ws://localhost:${PORT}/ws/webrtc`);
+    console.log(` WebRTC Socket : ws://localhost:${PORT}/api/ws/webrtc`);
     console.log(` Health Status : http://localhost:${PORT}/health`);
     console.log(`======================================================
 `);
