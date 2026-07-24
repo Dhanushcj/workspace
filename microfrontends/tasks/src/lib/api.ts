@@ -6,7 +6,7 @@ export const getApiUrl = () => {
     (window.location.hostname === 'localhost' || 
      window.location.hostname === '127.0.0.1');
 
-  let url = process.env.NEXT_PUBLIC_API_URL || import.meta.env.VITE_API_URL || (isLocalhost ? 'http://localhost:3001/api' : 'https://workspace-backend-r9f8.onrender.com/api');
+  let url = process.env.NEXT_PUBLIC_API_URL || (import.meta as any).env.VITE_API_URL || (isLocalhost ? 'http://localhost:3001/api' : 'https://workspace-backend-r9f8.onrender.com/api');
   if (typeof window !== 'undefined') {
     // console.log('[NEXUS-DEBUG] Raw API URL:', url);
   }
