@@ -29,6 +29,7 @@ interface ProjectsViewProps {
   projects: Project[]; 
   isLoading?: boolean; 
   onNewProject?: () => void;
+  onOpenProject?: (project: Project) => void;
 }
 
 type FilterMode = 'All' | 'Active' | 'At risk' | 'Completed';
@@ -53,7 +54,7 @@ const activityFeed = [
   { id: 5, type: 'BUG',        title: 'Bug #9 logged — Cart total mismatch on update',     desc: 'E-Commerce Platform · Logged by Priya Rao · Assigned to Nexus Dev',  status: 'Bug · High',   time: 'Yesterday',  icon: Flame,          color: 'text-rose-600',  bg: 'bg-rose-50',    route: '?tab=Blockers' },
 ];
 
-export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsViewProps) => {
+export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject }: ProjectsViewProps) => {
   const router = useRouter();
   const { setCurrentProject } = useWorkflowStore();
   const { user } = useAuthStore();
@@ -187,6 +188,16 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
                     </div>
                   </div>
 
+                  {onOpenProject && (
+                    <div className="pt-2 border-t border-slate-100 mt-auto">
+                      <button 
+                        onClick={() => onOpenProject(project)} 
+                        className={`w-full py-2.5 rounded-xl bg-slate-50 ${h.text} text-sm font-bold hover:${h.bg} transition-colors flex items-center justify-center gap-2`}
+                      >
+                        Open Workspace <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  )}
 
                 </div>
               );
@@ -233,6 +244,14 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
                       <div className="text-[13px] font-semibold text-slate-900">{project.prCount ?? h.prs}</div>
                       <div className="text-[9px] font-medium text-slate-400 uppercase">PRs</div>
                     </div>
+                    {onOpenProject && (
+                      <button 
+                        onClick={() => onOpenProject(project)}
+                        className={`p-2 rounded-lg ${h.bg} ${h.text} hover:opacity-80 transition-opacity`}
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
