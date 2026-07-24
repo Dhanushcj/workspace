@@ -58,11 +58,19 @@ const Sidebar = React.memo(function Sidebar() {
       fetchPRs();
       fetchBugs();
       fetchUnreadCount();
-      fetchTasks(); // Fetch tasks to get "My Tasks" count
+      // Removed fetchTasks() to prevent overwriting dashboard's task filter
     }
-  }, [user, fetchPRs, fetchBugs, fetchUnreadCount, fetchTasks]);
+  }, [user, fetchPRs, fetchBugs, fetchUnreadCount]);
 
-  const myTasksCount = tasks.filter(t => t.assigneeId === user?.id && t.status !== 'DONE').length;
+  const currentSprint = useWorkflowStore(state => state.currentSprint);
+  const sprintId = currentSprint?.id || (currentSprint as any)?._id;
+  
+  const myTasksCount = tasks.filter(t => 
+    t.assigneeId === user?.id && 
+    t.status !== 'DONE' &&
+    (sprintId ? (t.sprintId === sprintId || (t as any).sprintId === sprintId) : true)
+  ).length;
+  
   const blockerCount = tasks.filter(t => t.status === 'BLOCKED').length;
   const projectCount = projects.length;
   const openPrsCount = prs.length;

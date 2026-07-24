@@ -92,7 +92,8 @@ export default function DeveloperDashboard() {
       inProgress: sprintTasksList.filter(t => t?.status === 'IN_PROGRESS').length,
       dueToday: sprintTasksList.filter(t => t?.status !== 'DONE' && t?.priority === 'HIGH').length,
       doneSprint: sprintTasksList.filter(t => t?.status === 'DONE').length,
-      myTasks: sprintTasksList.filter(t => t && t.assigneeId === user?.id).slice(0, 5)
+      myTasks: sprintTasksList.filter(t => t && t.assigneeId === user?.id),
+      recentTasks: sprintTasksList.filter(t => t && t.assigneeId === user?.id).slice(0, 5)
     };
   }, [tasks, user?.id, currentSprint]);
 
@@ -419,7 +420,7 @@ export default function DeveloperDashboard() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {stats.myTasks.map(task => (
+                  {stats.recentTasks.map(task => (
                     <MyTaskListItem 
                       key={task.id}
                       task={task}
@@ -431,7 +432,7 @@ export default function DeveloperDashboard() {
                       }}
                     />
                   ))}
-                  {stats.myTasks.length === 0 && (
+                  {stats.recentTasks.length === 0 && (
                     <div className="p-8 border-2 border-dashed border-slate-100 rounded-2xl text-center">
                        <p className="text-[12px] text-slate-400 italic">No active tasks assigned to you in this project.</p>
                     </div>
