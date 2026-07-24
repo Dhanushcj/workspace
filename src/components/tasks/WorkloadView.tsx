@@ -75,7 +75,7 @@ export const WorkloadView = () => {
           initials: u.name.split(' ').map((n: string) => n[0]).join(''),
           load: load,
           currentTask: currentTaskString,
-          status: 'online'
+          status: 'online' as const
         };
       });
       
