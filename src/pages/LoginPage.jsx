@@ -34,8 +34,8 @@ const LoginPage = () => {
         const isTasksApp = !params.has('app') || params.get('app') === 'tasks';
         
         if (isTasksApp) {
-          if (savedAuth.email?.includes('manager')) navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/manager`, { replace: true });
-          else if (savedAuth.email?.includes('lead')) navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/lead`, { replace: true });
+          if (savedAuth.role === 'MANAGER' || savedAuth.email?.includes('manager') || savedAuth.email === 'avinash@fic.com') navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/manager`, { replace: true });
+          else if (savedAuth.role === 'TEAM_LEAD' || savedAuth.email?.includes('lead') || savedAuth.email === 'agila@fic.com' || savedAuth.email === 'akila@fic.com') navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/lead`, { replace: true });
           else navigate(`/w/${savedAuth.workspaceId || 'demo'}/dashboard/member`, { replace: true });
         } else {
           navigate(`/w/${savedAuth.workspaceId || 'demo'}/${targetApp}`, { replace: true });
@@ -101,8 +101,8 @@ const LoginPage = () => {
         // Role-specific redirection
         const isTasksApp = !params.has('app') || params.get('app') === 'tasks';
         if (isTasksApp) {
-          if (email.includes('manager')) navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/manager`);
-          else if (email.includes('lead')) navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/lead`);
+          if (normalizedAuthData.role === 'MANAGER' || email.includes('manager') || email === 'avinash@fic.com') navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/manager`);
+          else if (normalizedAuthData.role === 'TEAM_LEAD' || email.includes('lead') || email === 'agila@fic.com' || email === 'akila@fic.com') navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/lead`);
           else navigate(`/w/${normalizedAuthData.workspaceId}/dashboard/member`);
         } else {
           navigate(`/w/${normalizedAuthData.workspaceId}/${targetApp}`);
