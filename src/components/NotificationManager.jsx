@@ -56,7 +56,7 @@ export default function NotificationManager() {
       }
 
       const wsBase = getSocketUrl().replace('http', 'ws');
-      const wsUrl = `${wsBase}/ws/mail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+      const wsUrl = `${wsBase}/api/ws/mail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
       console.log('[NotificationManager] Connecting global notifications socket:', wsUrl);
 
       ws = new WebSocket(wsUrl);
