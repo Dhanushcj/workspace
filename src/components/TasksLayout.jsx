@@ -169,8 +169,8 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
         </div>
 
         {/* Bottom Profile */}
-        <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl mb-2">
+        <div className="p-4 border-t border-slate-100 mb-4">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
             <div className={`w-10 h-10 rounded-xl ${activeColorBg} text-white flex items-center justify-center font-bold text-lg shadow-inner`}>
               {profileInitial}
             </div>
@@ -179,9 +179,6 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
               <div className="text-[11px] font-semibold text-slate-400">{role}</div>
             </div>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 w-full text-slate-400 hover:text-slate-700 transition-colors text-sm font-semibold">
-            <LogOut size={16} /> Neural Logout
-          </button>
         </div>
       </aside>
 
