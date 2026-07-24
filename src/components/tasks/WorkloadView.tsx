@@ -23,21 +23,27 @@ interface MemberLoad {
 }
 
 export const WorkloadView = () => {
-  const { currentProject, tasks } = useWorkflowStore();
+  const { currentProject, tasks, members: storeMembers, fetchMembers } = useWorkflowStore();
   const [members, setMembers] = useState<MemberLoad[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Ensure members are fetched
+    if (storeMembers.length === 0) {
+      fetchMembers();
+    }
+  }, [fetchMembers, storeMembers.length]);
+
+  useEffect(() => {
     loadWorkloadData();
-  }, [currentProject, tasks]);
+  }, [currentProject, tasks, storeMembers]);
 
   const loadWorkloadData = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/users');
-      const rawUsers = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      const rawUsers = storeMembers;
       
-      if (!Array.isArray(rawUsers)) {
+      if (!Array.isArray(rawUsers) || rawUsers.length === 0) {
         setMembers([]);
         return;
       }
@@ -77,7 +83,7 @@ export const WorkloadView = () => {
     }
   };
 
-  if (loading) {
+  if (loading && storeMembers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Loader2 className="animate-spin text-emerald-500" size={32} />
