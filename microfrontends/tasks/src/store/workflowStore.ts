@@ -498,7 +498,9 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       fetchMembers: async () => {
         try {
-          const response = await api.get('/users');
+          const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+          const workspaceId = auth.workspaceId || 'forge-india-connect';
+          const response = await api.get(`/members/${workspaceId}`);
           let apiData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
           
           // Normalize IDs
