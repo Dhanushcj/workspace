@@ -188,6 +188,9 @@ async function bootstrap() {
   server.get('/api/pull-requests', async () => {
     return [];
   });
+  server.get('/api/blockers', async () => {
+    return [];
+  });
   
   // DUMMY WEBSOCKET ROUTE to prevent socket.io 404s
   server.get('/socket.io/', { websocket: true }, (connection: any, req) => {
