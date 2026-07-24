@@ -67,7 +67,7 @@ const LoginPage = () => {
         role: data.user?.role || data.role,
         user: data.user?.name || data.user,
         email: data.user?.email || data.email,
-        workspaceId: data.user?.workspaceId || data.workspaceId,
+        workspaceId: data.user?.workspaceId || data.workspaceId || 'forge-india-connect',
         id: data.user?.id || data.userId || (data.user && data.user._id)
       };
 
