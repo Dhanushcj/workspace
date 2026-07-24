@@ -188,17 +188,6 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                     </div>
                   </div>
 
-                  {onOpenProject && (
-                    <div className="pt-2 border-t border-slate-100 mt-auto">
-                      <button 
-                        onClick={() => onOpenProject(project)} 
-                        className={`w-full py-2.5 rounded-xl bg-slate-50 ${h.text} text-sm font-bold hover:${h.bg} transition-colors flex items-center justify-center gap-2`}
-                      >
-                        Open Workspace <ChevronRight size={16} />
-                      </button>
-                    </div>
-                  )}
-
                 </div>
               );
             })}
