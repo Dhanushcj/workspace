@@ -143,26 +143,43 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
             <div key={idx} className="mb-6">
               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-3">{group.title}</h3>
               <div className="space-y-0.5">
-                {group.items.map((item, i) => (
-                  <NavLink
-                    key={i}
-                    to={item.path}
-                    className={() => `
-                      flex items-center justify-between px-3 py-2.5 rounded-xl transition-all
-                      ${item.isActive ? `${activeColorBg} text-white shadow-md` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}
-                    `}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon size={18} strokeWidth={item.isActive ? 2.5 : 1.5} className={item.isActive ? 'text-white' : 'text-slate-400'} />
-                      <span className="text-sm font-semibold">{item.label}</span>
-                    </div>
-                    {item.badge && (
-                      <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                        {item.badge}
+                {group.items.map((item, i) => {
+                  if (item.label === 'Logout') {
+                    return (
+                      <button
+                        key={i}
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon size={18} strokeWidth={1.5} className="text-slate-400" />
+                          <span className="text-sm font-semibold">{item.label}</span>
+                        </div>
+                      </button>
+                    );
+                  }
+                  
+                  return (
+                    <NavLink
+                      key={i}
+                      to={item.path}
+                      className={() => `
+                        flex items-center justify-between px-3 py-2.5 rounded-xl transition-all
+                        ${item.isActive ? `${activeColorBg} text-white shadow-md` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon size={18} strokeWidth={item.isActive ? 2.5 : 1.5} className={item.isActive ? 'text-white' : 'text-slate-400'} />
+                        <span className="text-sm font-semibold">{item.label}</span>
                       </div>
-                    )}
-                  </NavLink>
-                ))}
+                      {item.badge && (
+                        <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          {item.badge}
+                        </div>
+                      )}
+                    </NavLink>
+                  );
+                })}
               </div>
             </div>
           ))}
