@@ -90,6 +90,28 @@ export async function projectRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // 2.5 UPDATE a project
+  fastify.patch('/:projectId', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { projectId } = request.params as any;
+      const updates = request.body as any;
+      
+      const project = await Project.findByIdAndUpdate(
+        projectId,
+        { $set: updates },
+        { new: true }
+      );
+      
+      if (!project) {
+        return reply.code(404).send({ error: 'Project not found' });
+      }
+      
+      return reply.code(200).send(project);
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to update project', details: err.message });
+    }
+  });
+
   // 3. Sprints for a project
   fastify.get('/:projectId/sprints', async (request: FastifyRequest, reply: FastifyReply) => {
     try {

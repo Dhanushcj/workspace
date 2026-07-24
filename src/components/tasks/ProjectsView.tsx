@@ -153,23 +153,29 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
                         <h3 className="text-[15px] font-semibold text-slate-900 leading-tight">{project.name}</h3>
                         <p className="text-[11px] text-slate-400 font-medium mt-1">{sprint}</p>
                     </div>
-                    <span className={`px-2.5 py-1 ${h.bg} ${h.text} rounded-full text-[9px] font-semibold uppercase tracking-widest whitespace-nowrap`}>
-                      {status}
+                    <span className={`px-2.5 py-1 ${
+                      (project.status || 'TO DO') === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' :
+                      (project.status || 'TO DO') === 'IN PROGRESS' ? 'bg-amber-50 text-amber-600' :
+                      (project.status || 'TO DO') === 'CANCELLED' ? 'bg-rose-50 text-rose-600' :
+                      'bg-slate-100 text-slate-600'
+                    } rounded-full text-[9px] font-semibold uppercase tracking-widest whitespace-nowrap`}>
+                      {project.status || 'TO DO'}
                     </span>
                   </div>
 
-                  {/* Progress bar */}
-                  <div>
-                    <div className="flex justify-between text-[10px] font-medium text-slate-400 mb-1.5">
-                      <span>Progress</span>
-                      <span className="text-slate-900">{completion}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${h.overdue ? 'bg-rose-500' : accentColor}`}
-                        style={{ width: `${completion}%` }}
-                      />
-                    </div>
+                  {/* Status Selection */}
+                  <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-2">Status</span>
+                    <select 
+                      value={project.status || 'TO DO'}
+                      onChange={(e) => useWorkflowStore.getState().updateProject(project.id, { status: e.target.value })}
+                      className="bg-white border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20"
+                    >
+                      <option value="TO DO">To Do</option>
+                      <option value="IN PROGRESS">In Progress</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -220,15 +226,30 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
                       <div className="text-[13px] font-semibold text-slate-900 truncate">{project.name}</div>
                       <div className="text-[11px] text-slate-400 font-medium truncate">{project.description || 'No description'}</div>
                     </div>
-                    <span className={`px-2.5 py-1 ${h.bg} ${h.text} rounded-full text-[9px] font-semibold uppercase tracking-widest whitespace-nowrap`}>{h.status}</span>
+                    <span className={`px-2.5 py-1 ${
+                      (project.status || 'TO DO') === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' :
+                      (project.status || 'TO DO') === 'IN PROGRESS' ? 'bg-amber-50 text-amber-600' :
+                      (project.status || 'TO DO') === 'CANCELLED' ? 'bg-rose-50 text-rose-600' :
+                      'bg-slate-100 text-slate-600'
+                    } rounded-full text-[9px] font-semibold uppercase tracking-widest whitespace-nowrap`}>
+                      {project.status || 'TO DO'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-6 shrink-0 ml-4">
                     <div className="text-center hidden md:block">
-                      <div className="text-[13px] font-semibold text-slate-900">{h.completion}%</div>
-                      <div className="text-[9px] font-medium text-slate-400 uppercase">Done</div>
+                      <select 
+                        value={project.status || 'TO DO'}
+                        onChange={(e) => useWorkflowStore.getState().updateProject(project.id, { status: e.target.value })}
+                        className="bg-white border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20"
+                      >
+                        <option value="TO DO">To Do</option>
+                        <option value="IN PROGRESS">In Progress</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                      </select>
                     </div>
                     <div className="text-center hidden md:block">
-                      <div className="text-[13px] font-semibold text-slate-900">{h.prs}</div>
+                      <div className="text-[13px] font-semibold text-slate-900">{project.prCount ?? h.prs}</div>
                       <div className="text-[9px] font-medium text-slate-400 uppercase">PRs</div>
                     </div>
                   </div>

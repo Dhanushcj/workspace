@@ -4,6 +4,7 @@ export interface IProject extends Document {
   workspaceId: string;
   name: string;
   description?: string;
+  status: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -12,6 +13,7 @@ const ProjectSchema = new Schema<IProject>({
   workspaceId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   description: { type: String },
+  status: { type: String, default: 'TO DO' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

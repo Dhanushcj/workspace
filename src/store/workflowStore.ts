@@ -233,6 +233,22 @@ export const useWorkflowStore = create<WorkflowState>()(
         } catch (error) {}
       },
 
+      updateProject: async (projectId: string, updates: any) => {
+        try {
+          const response = await api.patch(`/projects/${projectId}`, updates);
+          set((state) => ({
+            projects: state.projects.map((p) => 
+              (p.id === projectId || (p as any)._id === projectId) ? { ...p, ...response.data } : p
+            ),
+            currentProject: (state.currentProject?.id === projectId || (state.currentProject as any)?._id === projectId)
+              ? { ...state.currentProject, ...response.data }
+              : state.currentProject
+          }));
+        } catch (error) {
+          console.error('Failed to update project', error);
+        }
+      },
+
       addTask: async (taskData) => {
         try {
           const response = await api.post('/issues', taskData);
