@@ -83,7 +83,7 @@ export default function DeveloperDashboard() {
 
   // OPTIMIZED: Memoize derived statistics to avoid recalculation on every render
   const stats = React.useMemo(() => {
-    if (!tasks || !Array.isArray(tasks)) return { all: 0, inProgress: 0, dueToday: 0, doneSprint: 0, myTasks: [] };
+    if (!tasks || !Array.isArray(tasks)) return { all: 0, inProgress: 0, dueToday: 0, doneSprint: 0, myTasks: [], recentTasks: [] };
     const sprintId = currentSprint?.id || (currentSprint as any)?._id;
     const sprintTasksList = tasks.filter(t => sprintId ? (t.sprintId === sprintId || (t as any).sprintId === sprintId) : true);
     
