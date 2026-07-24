@@ -73,7 +73,6 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
       items: [
         { label: 'Team', icon: Users, path: `/w/${workspaceId}/tasks/team`, isActive: location.pathname.includes('/tasks/team') },
         { label: 'Workload View', icon: BarChart2, path: `/w/${workspaceId}/tasks/workload`, isActive: location.pathname.includes('/tasks/workload') },
-        { label: 'Messages', icon: MessageSquare, path: `/w/${workspaceId}/tasks/messages`, badge: 3, isActive: location.pathname.includes('/tasks/messages') },
       ]
     },
     {
@@ -106,7 +105,6 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
       title: 'COLLABORATION',
       items: [
         { label: 'Team', icon: Users, path: `/w/${workspaceId}/tasks/team`, isActive: location.pathname.includes('/tasks/team') },
-        { label: 'Discussions', icon: MessageSquare, path: `/w/${workspaceId}/tasks/messages`, isActive: location.pathname.includes('/tasks/messages') },
       ]
     },
     {
