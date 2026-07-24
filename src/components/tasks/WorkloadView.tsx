@@ -52,17 +52,21 @@ export const WorkloadView = () => {
         const userId = u.id || u._id;
         const userTasks = tasks.filter(t => (t.assigneeId === userId || (t as any)._id === userId));
         const load = Math.min(100, (userTasks.length * 15) + 20);
-        
-        const tasks_list = [
-          'Working on task #22 — Cart API',
-          'Reviewing PR #14 — Auth module',
-          'Testing build #31 — Checkout flow',
-          'In project review meeting',
-          'Offline · Returns tomorrow',
-          'Away · Last seen 18 min ago'
-        ];
-        
-        const statuses: ('online' | 'offline' | 'away' | 'dnd')[] = ['online', 'away', 'dnd', 'offline'];
+        let currentTaskString = 'Available';
+        const inProgress = userTasks.filter(t => t.status === 'IN_PROGRESS');
+        if (inProgress.length > 0) {
+          const activeTask = inProgress.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+          currentTaskString = `Working on: ${activeTask.title}`;
+        } else if (userTasks.length > 0) {
+          const latestTask = [...userTasks].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+          if (latestTask.status === 'TO_DO') {
+            currentTaskString = `Up next: ${latestTask.title}`;
+          } else if (latestTask.status === 'IN_REVIEW' || latestTask.status === 'TESTING') {
+            currentTaskString = `Reviewing: ${latestTask.title}`;
+          } else {
+            currentTaskString = `Recently finished: ${latestTask.title}`;
+          }
+        }
 
         return {
           id: userId,
@@ -70,8 +74,8 @@ export const WorkloadView = () => {
           role: u.role || 'Developer',
           initials: u.name.split(' ').map((n: string) => n[0]).join(''),
           load: load,
-          currentTask: tasks_list[Math.floor(Math.random() * tasks_list.length)],
-          status: statuses[Math.floor(Math.random() * statuses.length)]
+          currentTask: currentTaskString,
+          status: 'online'
         };
       });
       
