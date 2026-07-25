@@ -110,6 +110,7 @@ async function connectDatabase() {
 
 // 2. REGISTER INJECTED COMPONENT PLUGINS
 async function bootstrap() {
+  console.log('[BOOTSTRAP] Starting bootstrap sequence...');
   // CORS compliance rules — restrict to allowed origins in production
   const corsOrigin = securityConfig.corsAllowedOrigins.length > 0
     ? securityConfig.corsAllowedOrigins
@@ -145,6 +146,7 @@ async function bootstrap() {
     }
   });
 
+  console.log('[BOOTSTRAP] Registering websocket plugin...');
   // Fastify Websocket plugin integration
   await server.register(websocket);
 
@@ -163,6 +165,7 @@ async function bootstrap() {
   server.addContentTypeParser('audio/mp4', { parseAs: 'buffer' }, (_req, body, done) => done(null, body));
   server.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, (_req, body, done) => done(null, body));
 
+  console.log('[BOOTSTRAP] Registering REST API modules...');
   // 3. REGISTER REST API MODULES
   await server.register(authRoutes, { prefix: '/api/auth' });
   await server.register(meetingRoutes, { prefix: '/api/meetings' });
@@ -179,7 +182,7 @@ async function bootstrap() {
   await server.register(superadminRoutes, { prefix: '/api/superadmin' });
   await server.register(statusRoutes, { prefix: '/api/status' });
   await server.register(threadsRoutes, { prefix: '/api/threads' });
-
+  console.log('[BOOTSTRAP] Registering mock routes...');
   // MOCK ROUTES TO FIX 404 ERRORS
   server.get('/api/notifications/unread-count', async () => {
     return { count: 0 };
@@ -460,9 +463,11 @@ If the transcript is in Tamil, translate everything to English in the output.`;
     };
   });
 
+  console.log(`[BOOTSTRAP] Attempting to listen on port ${PORT}...`);
   // Start server listening first, so Render's port scan succeeds immediately
   try {
     await server.listen({ port: PORT, host: '0.0.0.0' });
+    console.log(`[BOOTSTRAP] Listen successful!`);
     console.log(`\n======================================================`);
     console.log(` NEXUS ZOOM MEETINGS BACKEND SERVER RUNNING LIVE!`);
     console.log(` REST API Root : http://localhost:${PORT}/api`);
