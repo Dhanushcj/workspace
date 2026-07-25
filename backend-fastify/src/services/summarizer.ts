@@ -17,7 +17,7 @@ if (process.env.GEMINI_API_KEY) {
   genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
 }
-async function dispatchSummaryMail(meeting: any, summaryHtml: string) {
+export async function dispatchSummaryMail(meeting: any, summaryHtml: string) {
   try {
     // Get all users who participated in this meeting via the Participant collection
     const participantDocs = await Participant.find({ meetingId: meeting._id }).distinct('userId');

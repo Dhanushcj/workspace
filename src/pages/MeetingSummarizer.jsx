@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { getApiUrl } from '../api';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import MeetingLayout from '../components/MeetingLayout';
 import { 
   Upload, FileAudio, FileVideo, Loader2, CheckCircle2, 
@@ -13,14 +13,36 @@ import html2canvas from 'html2canvas';
 const MeetingSummarizer = () => {
   const { workspaceId, meetingId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [stage, setStage] = useState('upload'); // upload, transcribing, summarizing, results
   const [file, setFile] = useState(null);
+  const [isAutoProcessing, setIsAutoProcessing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [transcript, setTranscript] = useState('');
   const [summary, setSummary] = useState(null);
   const fileInputRef = useRef(null);
   const resultsRef = useRef(null);
+
+  React.useEffect(() => {
+    const audioUrl = location.state?.audioUrl;
+    if (audioUrl && !file && !isAutoProcessing) {
+       setIsAutoProcessing(true);
+       fetch(audioUrl)
+         .then(res => res.blob())
+         .then(blob => {
+            const f = new File([blob], "auto_meeting_recording.webm", { type: blob.type });
+            setFile(f);
+         })
+         .catch(err => console.error("Failed to load auto audio", err));
+    }
+  }, [location.state, file, isAutoProcessing]);
+
+  React.useEffect(() => {
+     if (isAutoProcessing && file && stage === 'upload') {
+        startProcessing();
+     }
+  }, [file, isAutoProcessing, stage]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -68,7 +90,8 @@ const MeetingSummarizer = () => {
         },
         body: JSON.stringify({ 
           transcript: transcribeData.transcript,
-          meetingTitle: "Meeting #" + meetingId 
+          meetingTitle: "Meeting #" + meetingId,
+          meetingId: meetingId 
         }),
       });
 

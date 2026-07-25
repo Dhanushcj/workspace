@@ -306,6 +306,10 @@ const MeetingApp = () => {
   const mediaRecorderRef = useRef();
   const recordedChunksRef = useRef([]);
 
+  const autoSummarizerRecorderRef = useRef(null);
+  const autoSummarizerChunksRef = useRef([]);
+  const autoSummarizerUrlRef = useRef(null);
+
   const aiMediaRecorderRef = useRef(null);
   const aiWsRef = useRef(null);
   const autoStartedAiRef = useRef(false);
@@ -315,6 +319,66 @@ const MeetingApp = () => {
   useEffect(() => { videoOnRef.current = videoOn; }, [videoOn]);
   
 
+  const startAutoSummarizerRecording = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = audioCtx.createMediaStreamDestination();
+      
+      // Mix all remote audio
+      peersRef.current.forEach(({ pc }) => {
+        if (!pc) return;
+        const receiver = pc.getReceivers().find(r => r.track?.kind === 'audio');
+        if (receiver && receiver.track && receiver.track.readyState === 'live') {
+          try {
+             const remoteSource = audioCtx.createMediaStreamSource(new MediaStream([receiver.track]));
+             remoteSource.connect(dest);
+          } catch(e) {}
+        }
+      });
+      
+      // Mix local audio
+      if (streamRef.current && streamRef.current.getAudioTracks().length > 0) {
+         try {
+            const localSource = audioCtx.createMediaStreamSource(new MediaStream([streamRef.current.getAudioTracks()[0]]));
+            localSource.connect(dest);
+         } catch(e) {}
+      }
+      
+      if (dest.stream.getAudioTracks().length === 0) {
+         console.warn("[Summarizer] No audio tracks available to record.");
+         return;
+      }
+
+      let mimeType = 'audio/webm';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+      
+      const recorder = new MediaRecorder(dest.stream, { mimeType });
+      
+      autoSummarizerChunksRef.current = [];
+      recorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) autoSummarizerChunksRef.current.push(e.data);
+      };
+      
+      recorder.onstop = () => {
+        if (autoSummarizerChunksRef.current.length === 0) return;
+        const blob = new Blob(autoSummarizerChunksRef.current, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        autoSummarizerUrlRef.current = url;
+      };
+      
+      autoSummarizerRecorderRef.current = recorder;
+      recorder.start(1000);
+      console.log("[Summarizer] Auto audio recording started.");
+    } catch (e) {
+      console.error("[Summarizer] Failed to start auto audio recording", e);
+    }
+  };
+
+  useEffect(() => {
+    if (appState === 'in-call') {
+      startAutoSummarizerRecording();
+    }
+  }, [appState]);
 
   const startLocalRecording = async () => {
     try {
@@ -630,11 +694,17 @@ const m = Math.floor((seconds % 3600) / 60);
 
   const handleEndCall = async () => {
     setFinalStats({ duration, participants: peers.length + 1 });
-    setAppState('ended');
-    localStorage.removeItem('activeMeeting');
+    
+    // Stop local recording if active
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
+    
+    // Stop auto-summarizer recording
+    if (autoSummarizerRecorderRef.current && autoSummarizerRecorderRef.current.state !== 'inactive') {
+      autoSummarizerRecorderRef.current.stop();
+    }
+    
     setAiAssistantActive(false);
     intentionalCloseRef.current = true;
     if (wsRef.current) {
@@ -643,12 +713,24 @@ const m = Math.floor((seconds % 3600) / 60);
       wsRef.current = null;
     }
     const token = localStorage.getItem('token');
-    const meetingId = meetingMetadata?._id || meetingMetadata?.meetingId || meetingMetadata?.joinCode || id;
-    if (token && meetingId) {
-      fetch(getApiUrl(`/api/meetings/${encodeURIComponent(meetingId)}/leave`), {
+    const meetingIdToLeave = meetingMetadata?._id || meetingMetadata?.meetingId || meetingMetadata?.joinCode || id;
+    if (token && meetingIdToLeave) {
+      fetch(getApiUrl(`/api/meetings/${encodeURIComponent(meetingIdToLeave)}/leave`), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       }).catch(err => console.warn('[Meeting] Failed to notify backend leave:', err));
+    }
+
+    // Wait a brief moment for the onstop event to generate the Blob URL, then navigate
+    setTimeout(() => {
+      localStorage.removeItem('activeMeeting');
+      const audioUrl = autoSummarizerUrlRef.current;
+      if (audioUrl && meetingIdToLeave) {
+        navigate(`/w/${workspaceId}/meet/summarize/${meetingIdToLeave}`, { state: { audioUrl } });
+      } else {
+        setAppState('ended');
+      }
+    }, 500);
 
       // Only summarize if the meeting has actually ended (not just a user leaving)
       // The backend will reject with 400 if meeting.status !== 'ended'

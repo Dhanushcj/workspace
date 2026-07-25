@@ -13,6 +13,8 @@ dotenv.config();
 
 import multipart from '@fastify/multipart';
 import { authenticate } from './middlewares/auth';
+import { Meeting } from './models/Meeting';
+import { dispatchSummaryMail } from './services/summarizer';
 import { authRoutes } from './routes/auth';
 import { meetingRoutes } from './routes/meetings';
 import { mailRoutes } from './routes/mail';
@@ -324,6 +326,54 @@ If the transcript is in Tamil, translate everything to English in the output.`;
       parsedSummary.actionItems = Array.isArray(parsedSummary.actionItems) ? parsedSummary.actionItems : [];
       parsedSummary.risks = Array.isArray(parsedSummary.risks) ? parsedSummary.risks : [];
       parsedSummary.followUps = Array.isArray(parsedSummary.followUps) ? parsedSummary.followUps : [];
+
+      const { meetingId } = request.body as any;
+
+      if (meetingId) {
+        const summaryHtml = `
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;border-radius:12px">
+  <div style="background:linear-gradient(135deg,#1e40af,#7c3aed);padding:24px;border-radius:8px;margin-bottom:20px">
+    <h1 style="color:#fff;margin:0;font-size:22px"> Meeting Summary</h1>
+    <p style="color:#bfdbfe;margin:8px 0 0">${parsedSummary.meetingTitle}</p>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Executive Overview</h2>
+    <p style="color:#475569;line-height:1.6">${parsedSummary.summary}</p>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Key Points</h2>
+    <ul style="color:#475569;line-height:1.6;padding-left:20px">
+      ${parsedSummary.keyPoints.map((kp: string) => `<li>${kp}</li>`).join('')}
+    </ul>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Decisions Made</h2>
+    <ul style="color:#475569;line-height:1.6;padding-left:20px">
+      ${parsedSummary.decisions.map((d: string) => `<li>${d}</li>`).join('')}
+    </ul>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Action Items</h2>
+    <ul style="color:#475569;line-height:1.6;padding-left:20px">
+      ${parsedSummary.actionItems.map((a: any) => `<li><strong>${a.owner || 'TBD'}</strong>: ${a.task} <em>(Due: ${a.deadline || 'TBD'})</em></li>`).join('')}
+    </ul>
+  </div>
+</div>`;
+        const validId = mongoose.Types.ObjectId.isValid(meetingId) ? meetingId : null;
+        let meetingDoc = null;
+        
+        if (validId) meetingDoc = await Meeting.findById(validId);
+        if (!meetingDoc) meetingDoc = await Meeting.findOne({ joinCode: meetingId });
+        if (!meetingDoc) meetingDoc = await Meeting.findOne({ meetingId: meetingId });
+
+        if (meetingDoc) {
+           meetingDoc.aiSummary = JSON.stringify(parsedSummary);
+           meetingDoc.summarySent = true;
+           await meetingDoc.save();
+           
+           dispatchSummaryMail(meetingDoc, summaryHtml).catch(e => console.error('[Summarize] Dispatch mail error:', e));
+        }
+      }
 
       return reply.code(200).send(parsedSummary);
     } catch (err: any) {
