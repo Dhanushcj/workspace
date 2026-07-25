@@ -215,21 +215,27 @@ async function bootstrap() {
         return reply.code(503).send({ error: 'Transcription service unavailable. GROQ_API_KEY is not configured.' });
       }
 
-      // With attachFieldsToBody:true, iterate parts() to get the raw file stream
+      // Because attachFieldsToBody: true is enabled globally, we must access the parsed file via request.body
       let audioBuffer: Buffer | null = null;
       let mimetype = 'audio/webm';
       let filename = 'recording.webm';
 
-      for await (const part of request.parts()) {
-        if (part.type === 'file') {
-          mimetype = part.mimetype || 'audio/webm';
-          filename = part.filename || 'recording.webm';
+      let audioPart = request.body?.audio;
+      if (Array.isArray(audioPart)) {
+        audioPart = audioPart[0];
+      }
+
+      if (audioPart) {
+        mimetype = audioPart.mimetype || mimetype;
+        filename = audioPart.filename || filename;
+        if (typeof audioPart.toBuffer === 'function') {
+          audioBuffer = await audioPart.toBuffer();
+        } else if (audioPart.file) {
           const chunks: Buffer[] = [];
-          for await (const chunk of part.file) {
+          for await (const chunk of audioPart.file) {
             chunks.push(chunk);
           }
           audioBuffer = Buffer.concat(chunks);
-          break; // Only process the first file
         }
       }
 
