@@ -250,6 +250,21 @@ export async function meetingRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ error: 'Failed to create meeting room.', details: err.message });
     }
   });
+  // 1b. GET ALL MEETINGS
+  fastify.get('/', { preHandler: authenticate }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const userId = new Types.ObjectId(request.user!.id);
+      const meetings = await Meeting.find({
+        $or: [
+          { hostId: userId },
+          { participantIds: userId }
+        ]
+      }).sort({ scheduledAt: -1 }).populate('hostId', 'name email avatarUrl');
+      return reply.code(200).send(meetings);
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to retrieve meetings', details: err.message });
+    }
+  });
 
   // 2. RESOLVE JOIN CODE -> MEETING DOC
   fastify.get('/join/:code', { preHandler: authenticate }, async (request: FastifyRequest, reply: FastifyReply) => {
