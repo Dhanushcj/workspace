@@ -97,12 +97,15 @@ export async function registerWebPush() {
     const subscribeUrl = getApiUrl('/api/auth/web-push/subscribe');
     const token = localStorage.getItem('token');
     
+    if (!token) {
+      console.log('[WebPush] No auth token found. Skipping subscription registration on backend.');
+      return;
+    }
+    
     const headers = {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
 
     const response = await fetch(subscribeUrl, {
       method: 'POST',
@@ -144,12 +147,15 @@ export async function unregisterWebPush() {
       const unsubscribeUrl = getApiUrl('/api/auth/web-push/unsubscribe');
       const token = localStorage.getItem('token');
       
+      if (!token) {
+        console.log('[WebPush] No auth token found. Skipping backend unsubscribe.');
+        return;
+      }
+      
       const headers = {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
 
       await fetch(unsubscribeUrl, {
         method: 'POST',
