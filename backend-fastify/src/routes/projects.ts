@@ -175,6 +175,29 @@ export async function projectRoutes(fastify: FastifyInstance) {
     }
   });
 
+  fastify.patch('/statuses/:statusId', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { statusId } = request.params as any;
+      const updates = request.body as any;
+      const status = await Status.findByIdAndUpdate(statusId, updates, { new: true });
+      if (!status) return reply.code(404).send({ error: 'Status not found' });
+      return reply.code(200).send(status);
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to update status' });
+    }
+  });
+
+  fastify.delete('/statuses/:statusId', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { statusId } = request.params as any;
+      const status = await Status.findByIdAndDelete(statusId);
+      if (!status) return reply.code(404).send({ error: 'Status not found' });
+      return reply.code(200).send({ message: 'Status deleted' });
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to delete status' });
+    }
+  });
+
   // Velocity / CFD
   fastify.get('/:projectId/velocity', async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(200).send([]);

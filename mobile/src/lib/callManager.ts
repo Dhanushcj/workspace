@@ -131,7 +131,7 @@ class CallManager {
       .replace(/^https:/, 'wss:');
 
     try {
-      const fullUrl = `${wsBase.replace(/\/+$/, '')}/ws/calls?token=${encodeURIComponent(this.token)}`;
+      const fullUrl = `${wsBase.replace(/\/+$/, '')}/api/ws/calls?token=${encodeURIComponent(this.token)}`;
       console.log('[CallManager] Connecting to', fullUrl);
       this.ws = new WebSocket(fullUrl);
     } catch (e) {

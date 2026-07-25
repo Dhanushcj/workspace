@@ -163,4 +163,18 @@ export async function issueRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ error: 'Failed to bulk update issues', details: err.message });
     }
   });
+  // 7. GET comments (mock)
+  fastify.get('/:id/comments', async (request: FastifyRequest, reply: FastifyReply) => {
+    return reply.code(200).send([]);
+  });
+
+  // 8. GET issue links (mock)
+  fastify.get('/:id/links', async (request: FastifyRequest, reply: FastifyReply) => {
+    return reply.code(200).send({ linksTo: [], linksFrom: [] });
+  });
+
+  // 9. GET time entries (mock)
+  fastify.get('/:id/time', async (request: FastifyRequest, reply: FastifyReply) => {
+    return reply.code(200).send([]);
+  });
 }

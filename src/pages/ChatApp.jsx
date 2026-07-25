@@ -416,7 +416,7 @@ const ChatApp = () => {
       }
 
       const wsBase = getSocketUrl().replace('http', 'ws');
-      const wsUrl = `${wsBase}/ws/calls?token=${encodeURIComponent(token)}`;
+      const wsUrl = `${wsBase}/api/ws/calls?token=${encodeURIComponent(token)}`;
       console.log("[ChatApp] Connecting to Call Signaling Server:", wsUrl);
       
       const ws = new WebSocket(wsUrl);
