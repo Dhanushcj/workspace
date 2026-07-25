@@ -102,6 +102,13 @@ export async function registerWebPush() {
       return;
     }
     
+    // Skip backend registration if the user is a Demo user
+    const authData = JSON.parse(localStorage.getItem('auth') || '{}');
+    if (authData.role === 'demo') {
+      console.log('[WebPush] Demo account detected. Skipping subscription registration on backend.');
+      return;
+    }
+    
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`

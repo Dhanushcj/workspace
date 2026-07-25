@@ -734,7 +734,6 @@ const m = Math.floor((seconds % 3600) / 60);
 
       // Only summarize if the meeting has actually ended (not just a user leaving)
       // The backend will reject with 400 if meeting.status !== 'ended'
-    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => { try { track.stop() } catch(e){} });
       streamRef.current = null;

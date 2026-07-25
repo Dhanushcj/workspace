@@ -120,6 +120,29 @@ export function setupFetchInterceptor() {
             resolve(originalFetch(url, currentOptions));
           });
         });
+      } else {
+        // No refresh token available, redirect to login
+        console.warn('[FetchInterceptor] No refresh token found. Redirecting to login.');
+        
+        // Clear session
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth');
+        localStorage.removeItem('refreshToken');
+        
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          const currentPath = window.location.pathname;
+          let app = 'chat';
+          if (currentPath.includes('/tasks')) app = 'tasks';
+          else if (currentPath.includes('/mail')) app = 'mail';
+          else if (currentPath.includes('/meet')) app = 'meet';
+          else if (currentPath.includes('/docs')) app = 'docs';
+          else if (currentPath.includes('/sheets')) app = 'sheets';
+          else if (currentPath.includes('/show')) app = 'show';
+          
+          window.location.href = `/login?app=${app}`;
+        }
+        
+        throw new Error('Session expired');
       }
     }
 

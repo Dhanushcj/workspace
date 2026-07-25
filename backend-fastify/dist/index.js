@@ -31,12 +31,12 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/models/User.ts
-var import_mongoose, UserSchema, User;
+var import_mongoose4, UserSchema, User;
 var init_User = __esm({
   "src/models/User.ts"() {
     "use strict";
-    import_mongoose = require("mongoose");
-    UserSchema = new import_mongoose.Schema({
+    import_mongoose4 = require("mongoose");
+    UserSchema = new import_mongoose4.Schema({
       name: { type: String, required: true },
       email: { type: String, required: true, unique: true, index: true },
       passwordHash: { type: String },
@@ -59,108 +59,7 @@ var init_User = __esm({
       }],
       createdAt: { type: Date, default: Date.now }
     });
-    User = (0, import_mongoose.model)("User", UserSchema);
-  }
-});
-
-// src/services/webPush.ts
-var webPush_exports = {};
-__export(webPush_exports, {
-  getVapidPublicKey: () => getVapidPublicKey,
-  sendWebPush: () => sendWebPush
-});
-function getVapidPublicKey() {
-  return vapidPublicKey;
-}
-async function sendWebPush(recipientEmails, payload) {
-  try {
-    if (!recipientEmails || recipientEmails.length === 0) return;
-    const normalizedEmails = recipientEmails.map((email) => email.trim().toLowerCase());
-    const users = await User.find({
-      email: { $in: normalizedEmails },
-      "webPushSubscriptions.0": { $exists: true }
-    }).select("email webPushSubscriptions");
-    if (users.length === 0) {
-      return;
-    }
-    const payloadString = JSON.stringify(payload);
-    for (const user of users) {
-      if (!user.webPushSubscriptions || user.webPushSubscriptions.length === 0) continue;
-      const activeSubscriptions = [...user.webPushSubscriptions];
-      let hasPruned = false;
-      for (let i = activeSubscriptions.length - 1; i >= 0; i--) {
-        const sub = activeSubscriptions[i];
-        try {
-          const pushSubscription = {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.keys.p256dh,
-              auth: sub.keys.auth
-            }
-          };
-          await import_web_push.default.sendNotification(pushSubscription, payloadString);
-        } catch (err) {
-          if (err.statusCode === 410 || err.statusCode === 404) {
-            console.log(`[WebPush] Pruning expired or revoked subscription for user ${user.email} (Endpoint: ${sub.endpoint})`);
-            activeSubscriptions.splice(i, 1);
-            hasPruned = true;
-          } else {
-            console.error(`[WebPush] Error sending push notification to ${user.email}:`, err.message || err);
-          }
-        }
-      }
-      if (hasPruned) {
-        user.webPushSubscriptions = activeSubscriptions;
-        await user.save();
-      }
-    }
-  } catch (error) {
-    console.error("[WebPush] Failed to dispatch web push notifications:", error);
-  }
-}
-var import_web_push, vapidPublicKey, vapidPrivateKey;
-var init_webPush = __esm({
-  "src/services/webPush.ts"() {
-    "use strict";
-    import_web_push = __toESM(require("web-push"));
-    init_User();
-    vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
-    vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
-    if (!vapidPublicKey || !vapidPrivateKey) {
-      console.log("[WebPush] VAPID keys not configured in environment. Generating dynamic VAPID keys...");
-      const keys = import_web_push.default.generateVAPIDKeys();
-      vapidPublicKey = keys.publicKey;
-      vapidPrivateKey = keys.privateKey;
-      console.log("[WebPush] Generated VAPID Public Key:", vapidPublicKey);
-    }
-    try {
-      import_web_push.default.setVapidDetails(
-        "mailto:admin@fic-workspace.app",
-        vapidPublicKey,
-        vapidPrivateKey
-      );
-      console.log("[WebPush] VAPID details configured successfully.");
-    } catch (e) {
-      console.error("[WebPush] Failed to set VAPID details:", e);
-    }
-  }
-});
-
-// src/models/Transcript.ts
-var import_mongoose10, TranscriptSchema, Transcript;
-var init_Transcript = __esm({
-  "src/models/Transcript.ts"() {
-    "use strict";
-    import_mongoose10 = require("mongoose");
-    TranscriptSchema = new import_mongoose10.Schema({
-      meetingId: { type: String, required: true, index: true },
-      userId: { type: String, required: true },
-      speakerName: { type: String, required: true },
-      text: { type: String, required: true },
-      timestamp: { type: Date, default: Date.now },
-      createdAt: { type: Date, default: Date.now }
-    });
-    Transcript = (0, import_mongoose10.model)("Transcript", TranscriptSchema);
+    User = (0, import_mongoose4.model)("User", UserSchema);
   }
 });
 
@@ -266,6 +165,89 @@ var init_pushNotifications = __esm({
   }
 });
 
+// src/services/webPush.ts
+var webPush_exports = {};
+__export(webPush_exports, {
+  getVapidPublicKey: () => getVapidPublicKey,
+  sendWebPush: () => sendWebPush
+});
+function getVapidPublicKey() {
+  return vapidPublicKey;
+}
+async function sendWebPush(recipientEmails, payload) {
+  try {
+    if (!recipientEmails || recipientEmails.length === 0) return;
+    const normalizedEmails = recipientEmails.map((email) => email.trim().toLowerCase());
+    const users = await User.find({
+      email: { $in: normalizedEmails },
+      "webPushSubscriptions.0": { $exists: true }
+    }).select("email webPushSubscriptions");
+    if (users.length === 0) {
+      return;
+    }
+    const payloadString = JSON.stringify(payload);
+    for (const user of users) {
+      if (!user.webPushSubscriptions || user.webPushSubscriptions.length === 0) continue;
+      const activeSubscriptions = [...user.webPushSubscriptions];
+      let hasPruned = false;
+      for (let i = activeSubscriptions.length - 1; i >= 0; i--) {
+        const sub = activeSubscriptions[i];
+        try {
+          const pushSubscription = {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.keys.p256dh,
+              auth: sub.keys.auth
+            }
+          };
+          await import_web_push.default.sendNotification(pushSubscription, payloadString);
+        } catch (err) {
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            console.log(`[WebPush] Pruning expired or revoked subscription for user ${user.email} (Endpoint: ${sub.endpoint})`);
+            activeSubscriptions.splice(i, 1);
+            hasPruned = true;
+          } else {
+            console.error(`[WebPush] Error sending push notification to ${user.email}:`, err.message || err);
+          }
+        }
+      }
+      if (hasPruned) {
+        user.webPushSubscriptions = activeSubscriptions;
+        await user.save();
+      }
+    }
+  } catch (error) {
+    console.error("[WebPush] Failed to dispatch web push notifications:", error);
+  }
+}
+var import_web_push, vapidPublicKey, vapidPrivateKey;
+var init_webPush = __esm({
+  "src/services/webPush.ts"() {
+    "use strict";
+    import_web_push = __toESM(require("web-push"));
+    init_User();
+    vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
+    vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.log("[WebPush] VAPID keys not configured in environment. Generating dynamic VAPID keys...");
+      const keys = import_web_push.default.generateVAPIDKeys();
+      vapidPublicKey = keys.publicKey;
+      vapidPrivateKey = keys.privateKey;
+      console.log("[WebPush] Generated VAPID Public Key:", vapidPublicKey);
+    }
+    try {
+      import_web_push.default.setVapidDetails(
+        "mailto:admin@fic-workspace.app",
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      console.log("[WebPush] VAPID details configured successfully.");
+    } catch (e) {
+      console.error("[WebPush] Failed to set VAPID details:", e);
+    }
+  }
+});
+
 // src/services/mailSockets.ts
 var mailSockets_exports = {};
 __export(mailSockets_exports, {
@@ -331,6 +313,24 @@ var init_mailSockets = __esm({
     import_fs = __toESM(require("fs"));
     import_path = __toESM(require("path"));
     activeMailSockets = /* @__PURE__ */ new Map();
+  }
+});
+
+// src/models/Transcript.ts
+var import_mongoose10, TranscriptSchema, Transcript;
+var init_Transcript = __esm({
+  "src/models/Transcript.ts"() {
+    "use strict";
+    import_mongoose10 = require("mongoose");
+    TranscriptSchema = new import_mongoose10.Schema({
+      meetingId: { type: String, required: true, index: true },
+      userId: { type: String, required: true },
+      speakerName: { type: String, required: true },
+      text: { type: String, required: true },
+      timestamp: { type: Date, default: Date.now },
+      createdAt: { type: Date, default: Date.now }
+    });
+    Transcript = (0, import_mongoose10.model)("Transcript", TranscriptSchema);
   }
 });
 
@@ -411,6 +411,7 @@ var init_MutedUser = __esm({
 var import_fastify = __toESM(require("fastify"));
 var import_cors = __toESM(require("@fastify/cors"));
 var import_websocket = __toESM(require("@fastify/websocket"));
+var import_mongoose29 = __toESM(require("mongoose"));
 var import_dotenv2 = __toESM(require("dotenv"));
 var import_fs6 = __toESM(require("fs"));
 var import_path5 = __toESM(require("path"));
@@ -601,14 +602,297 @@ async function authenticate(request, reply) {
   }
 }
 
+// src/models/Meeting.ts
+var import_mongoose = require("mongoose");
+var MeetingSchema = new import_mongoose.Schema({
+  title: { type: String, required: true },
+  hostId: { type: import_mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  joinCode: { type: String, required: true, unique: true, index: true },
+  passcodeHash: { type: String },
+  scheduledAt: { type: Date, default: Date.now },
+  durationMinutes: { type: Number, default: 60 },
+  status: { type: String, enum: ["scheduled", "live", "ended"], default: "scheduled" },
+  recordingEnabled: { type: Boolean, default: false },
+  participantIds: [{ type: import_mongoose.Schema.Types.ObjectId, ref: "User" }],
+  aiEnabled: { type: Boolean, default: false },
+  aiSummary: { type: String },
+  summarySent: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+var Meeting = (0, import_mongoose.model)("Meeting", MeetingSchema);
+
+// src/services/summarizer.ts
+var import_fs2 = __toESM(require("fs"));
+var import_path2 = __toESM(require("path"));
+var import_os = __toESM(require("os"));
+var import_generative_ai = require("@google/generative-ai");
+var import_server = require("@google/generative-ai/server");
+
+// src/models/Participant.ts
+var import_mongoose2 = require("mongoose");
+var ParticipantSchema = new import_mongoose2.Schema({
+  meetingId: { type: import_mongoose2.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
+  userId: { type: import_mongoose2.Schema.Types.ObjectId, ref: "User", required: true },
+  role: { type: String, enum: ["host", "co-host", "attendee"], default: "attendee" },
+  joinedAt: { type: Date, default: Date.now },
+  leftAt: { type: Date },
+  audioMuted: { type: Boolean, default: false },
+  videoMuted: { type: Boolean, default: false }
+});
+var Participant = (0, import_mongoose2.model)("Participant", ParticipantSchema);
+
+// src/models/Mail.ts
+var import_mongoose3 = __toESM(require("mongoose"));
+var mailSchema = new import_mongoose3.default.Schema({
+  workspaceId: { type: String, required: true, default: "forge-india-connect" },
+  ownerEmail: { type: String, required: true },
+  // The user who owns this specific copy of the email
+  folder: { type: String, enum: ["inbox", "sent", "drafts", "trash", "archive"], default: "inbox" },
+  senderName: { type: String, required: true },
+  senderEmail: { type: String, required: true },
+  recipientEmails: [{ type: String, required: true }],
+  subject: { type: String, default: "(No Subject)" },
+  body: { type: String, default: "" },
+  isRead: { type: Boolean, default: false },
+  isStarred: { type: Boolean, default: false },
+  label: { type: String, default: null },
+  attachments: [{
+    name: String,
+    url: String,
+    size: Number,
+    type: String
+  }],
+  sentAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+mailSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Mail = import_mongoose3.default.model("Mail", mailSchema);
+
+// src/services/summarizer.ts
+init_User();
+init_pushNotifications();
+init_webPush();
+var genAI = null;
+var fileManager = null;
+if (process.env.GEMINI_API_KEY) {
+  genAI = new import_generative_ai.GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  fileManager = new import_server.GoogleAIFileManager(process.env.GEMINI_API_KEY);
+}
+async function dispatchSummaryMail(meeting, summaryHtml) {
+  try {
+    const participantDocs = await Participant.find({ meetingId: meeting._id }).distinct("userId");
+    const allUserIds = [.../* @__PURE__ */ new Set([...participantDocs.map((id) => id.toString()), meeting.hostId?.toString()])].filter(Boolean);
+    const users = await User.find({
+      _id: { $in: allUserIds },
+      email: { $ne: "ai-assistant@nexus.app" }
+      // exclude the bot itself
+    });
+    if (users.length === 0) {
+      console.warn("[Summarizer] No human participants found  skipping mail dispatch.");
+      return;
+    }
+    const recipientEmails = users.map((u) => u.email);
+    const mailDoc = {
+      workspaceId: "forge-india-connect",
+      senderName: "Forge India Connect AI",
+      senderEmail: "ai-assistant@nexus.app",
+      recipientEmails,
+      subject: ` Meeting Summary: ${meeting.title}`,
+      body: summaryHtml,
+      isRead: false,
+      isStarred: false,
+      sentAt: /* @__PURE__ */ new Date()
+    };
+    await Mail.create({ ...mailDoc, ownerEmail: "ai-assistant@nexus.app", folder: "sent" });
+    for (const email of recipientEmails) {
+      try {
+        const summaryMail = await Mail.create({ ...mailDoc, ownerEmail: email, folder: "inbox" });
+        const { activeMailSockets: activeMailSockets2 } = (init_mailSockets(), __toCommonJS(mailSockets_exports));
+        if (activeMailSockets2 && activeMailSockets2.has(email)) {
+          const ws = activeMailSockets2.get(email);
+          if (ws?.readyState === 1) {
+            ws.send(JSON.stringify({ type: "NEW_MAIL", mail: summaryMail }));
+          }
+        }
+        sendPushNotification(
+          [email],
+          `New Email: Meeting Summary: ${meeting.title}`,
+          `From: Forge India Connect AI`,
+          {
+            type: "mail",
+            mailId: summaryMail._id.toString(),
+            senderEmail: "ai-assistant@nexus.app"
+          }
+        ).catch((err) => console.error("[Summarizer] Push error:", err));
+        sendWebPush(
+          [email],
+          {
+            title: `New Email: Meeting Summary: ${meeting.title}`,
+            body: `From: Forge India Connect AI`,
+            url: `/w/${meeting.workspaceId || "forge-india-connect"}/mail`
+          }
+        ).catch((err) => console.error("[Summarizer] Web push error:", err));
+      } catch (e) {
+        console.error("[Summarizer] Failed to dispatch summary mail notifications for", email, e);
+      }
+    }
+    console.log(`[Summarizer]  Summary mail dispatched to ${recipientEmails.length} participant(s): ${recipientEmails.join(", ")}`);
+  } catch (err) {
+    console.error("[Summarizer] Mail dispatch failed:", err.message);
+  }
+}
+async function summarizeMeeting(meetingId) {
+  console.log(`[Summarizer] Starting summarization for meeting ${meetingId}`);
+  const meeting = await Meeting.findById(meetingId);
+  if (!meeting) {
+    console.warn("[Summarizer] Meeting not found:", meetingId);
+    return null;
+  }
+  if (meeting.aiSummary) {
+    console.log("[Summarizer] Summary already exists, skipping.");
+    return meeting.aiSummary;
+  }
+  if (meeting.summarySent) {
+    console.log("[Summarizer] Summary email already sent for this meeting, skipping.");
+    return meeting.aiSummary || null;
+  }
+  const lockResult = await Meeting.findOneAndUpdate(
+    { _id: meetingId, summarySent: { $ne: true } },
+    { $set: { summarySent: true } },
+    { new: true }
+  );
+  if (!lockResult) {
+    console.log("[Summarizer] Another process already claimed this summary, skipping.");
+    return null;
+  }
+  const tmpDir = import_os.default.tmpdir();
+  const audioFilePath = import_path2.default.join(tmpDir, `meeting_audio_${meetingId}.webm`);
+  const hasAudioFile = import_fs2.default.existsSync(audioFilePath);
+  let summaryHtml;
+  if (!hasAudioFile || !process.env.GEMINI_API_KEY || !genAI || !fileManager) {
+    console.log(`[Summarizer] No audio file found (or no API key/client). Sending completion notification.`);
+    let duration = 0;
+    if (meeting.scheduledAt) {
+      duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 6e4));
+    }
+    summaryHtml = `
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;border-radius:12px">
+  <div style="background:linear-gradient(135deg,#1e40af,#7c3aed);padding:24px;border-radius:8px;margin-bottom:20px">
+    <h1 style="color:#fff;margin:0;font-size:22px"> Meeting Completed</h1>
+    <p style="color:#bfdbfe;margin:8px 0 0">${meeting.title}</p>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0">
+    <h2 style="color:#1e293b;margin-top:0">Meeting Details</h2>
+    <ul style="color:#475569;line-height:1.8">
+      <li><strong>Title:</strong> ${meeting.title}</li>
+      <li><strong>Duration:</strong> ~${duration} minutes</li>
+      <li><strong>Date:</strong> ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</li>
+      <li><strong>Status:</strong> Completed</li>
+    </ul>
+    <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;margin-top:16px;border-radius:4px">
+      <p style="margin:0;color:#92400e;font-size:14px">
+        <strong>Note:</strong> No audio transcript was captured for this meeting. 
+        To receive full AI-generated summaries, ensure your microphone is active and AI Assistant is enabled when the meeting starts.
+      </p>
+    </div>
+  </div>
+  <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:16px">Sent by Forge India Connect AI</p>
+</div>`;
+  } else {
+    console.log(`[Summarizer] Summarizing audio file ${audioFilePath}...`);
+    const prompt = `You are an expert Executive Assistant. Summarize the provided meeting audio.
+The audio may contain a mix of English and Tamil.
+Your summary MUST be entirely in English.
+Your response MUST be formatted in clean HTML suitable for an email body.
+Do NOT use markdown. Use bold tags, lists, and headers (h2, h3).
+Do NOT use a predefined rigid template. Dynamically analyze the meeting context and generate appropriate sections (e.g. Executive Summary, Main Discussion Points, Key Takeaways, Action Items, Ideas, etc.) based ONLY on what was actually discussed.
+Focus on capturing the real essence of the conversation accurately.`;
+    let uploadedFile = null;
+    try {
+      console.log("[Summarizer] Uploading audio to Gemini...");
+      uploadedFile = await fileManager.uploadFile(audioFilePath, {
+        mimeType: "audio/webm",
+        displayName: `meeting_audio_${meetingId}`
+      });
+      console.log(`[Summarizer] Uploaded to Gemini: ${uploadedFile.file.uri}`);
+      const model22 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      console.log("[Summarizer] Requesting generation...");
+      const result = await model22.generateContent([
+        {
+          fileData: {
+            mimeType: uploadedFile.file.mimeType,
+            fileUri: uploadedFile.file.uri
+          }
+        },
+        { text: prompt }
+      ]);
+      const rawSummary = result.response.text() || "";
+      let duration = meeting.durationMinutes || 60;
+      if (meeting.scheduledAt) {
+        duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 6e4));
+      }
+      const uniqueSpeakers = await Participant.countDocuments({ meetingId });
+      summaryHtml = `
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;border-radius:12px">
+  <div style="background:linear-gradient(135deg,#1e40af,#7c3aed);padding:24px;border-radius:8px;margin-bottom:20px">
+    <h1 style="color:#fff;margin:0;font-size:22px">Meeting Summary</h1>
+    <p style="color:#bfdbfe;margin:8px 0 0">${meeting.title}</p>
+  </div>
+  
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0;font-size:16px;margin-bottom:12px">Meeting Details</h2>
+    <ul style="color:#475569;line-height:1.8;margin:0;padding-left:20px">
+      <li><strong>Date:</strong> ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</li>
+      <li><strong>Duration:</strong> ~${duration} minutes</li>
+      <li><strong>Speakers:</strong> ${uniqueSpeakers}</li>
+    </ul>
+  </div>
+
+  <div style="background:#fff;padding:24px;border-radius:8px;border:1px solid #e2e8f0;color:#1e293b;line-height:1.6">
+    ${rawSummary.replace(/<h2>/g, '<h2 style="color:#1e40af;font-size:18px;margin-top:24px;margin-bottom:12px;border-bottom:2px solid #e2e8f0;padding-bottom:8px">').replace(/<h3>/g, '<h3 style="color:#334155;font-size:16px;margin-top:20px;margin-bottom:8px">').replace(/<ul>/g, '<ul style="color:#475569;padding-left:20px;margin-bottom:16px">').replace(/<li>/g, '<li style="margin-bottom:8px">')}
+  </div>
+  
+  <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px">Sent by Forge India Connect AI</p>
+</div>`;
+      console.log(`[Summarizer] AI summary generated and formatted.`);
+    } catch (err) {
+      console.error("[Summarizer] Gemini API failed:", err.message);
+      return null;
+    } finally {
+      if (uploadedFile && fileManager) {
+        try {
+          await fileManager.deleteFile(uploadedFile.file.name);
+          console.log(`[Summarizer] Deleted ${uploadedFile.file.name} from Gemini API`);
+        } catch (e) {
+          console.warn("[Summarizer] Failed to delete file from Gemini API", e);
+        }
+      }
+      try {
+        import_fs2.default.unlinkSync(audioFilePath);
+        console.log(`[Summarizer] Deleted local file ${audioFilePath}`);
+      } catch (e) {
+        console.warn("[Summarizer] Failed to delete local audio file", e);
+      }
+    }
+  }
+  if (summaryHtml) {
+    await Meeting.findByIdAndUpdate(meetingId, { aiSummary: summaryHtml });
+    await dispatchSummaryMail(meeting, summaryHtml);
+  }
+  return summaryHtml;
+}
+
 // src/routes/auth.ts
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
 init_User();
 
 // src/models/Tenant.ts
-var import_mongoose2 = require("mongoose");
-var TenantSchema = new import_mongoose2.Schema({
+var import_mongoose5 = require("mongoose");
+var TenantSchema = new import_mongoose5.Schema({
   name: { type: String, required: true },
   organisationName: { type: String, required: true, unique: true },
   workspaceId: { type: String, required: true, unique: true },
@@ -621,18 +905,18 @@ var TenantSchema = new import_mongoose2.Schema({
   subscriptionExpiryDate: { type: Date },
   createdAt: { type: Date, default: Date.now }
 }, { collection: "tenants" });
-var Tenant = (0, import_mongoose2.model)("Tenant", TenantSchema);
+var Tenant = (0, import_mongoose5.model)("Tenant", TenantSchema);
 
 // src/models/RefreshToken.ts
-var import_mongoose3 = require("mongoose");
-var RefreshTokenSchema = new import_mongoose3.Schema({
-  userId: { type: import_mongoose3.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+var import_mongoose6 = require("mongoose");
+var RefreshTokenSchema = new import_mongoose6.Schema({
+  userId: { type: import_mongoose6.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   token: { type: String, required: true, unique: true },
   expiresAt: { type: Date, required: true, index: { expires: 0 } },
   // Mongoose auto TTL cleanup
   createdAt: { type: Date, default: Date.now }
 });
-var RefreshToken = (0, import_mongoose3.model)("RefreshToken", RefreshTokenSchema);
+var RefreshToken = (0, import_mongoose6.model)("RefreshToken", RefreshTokenSchema);
 
 // src/routes/auth.ts
 init_webPush();
@@ -748,7 +1032,7 @@ function verifyMfaToken(secret, token) {
 }
 
 // src/utils/mongo.ts
-var import_mongoose4 = __toESM(require("mongoose"));
+var import_mongoose7 = __toESM(require("mongoose"));
 var lastConnectError = null;
 function validateMongoUri(uri) {
   if (!uri || !uri.startsWith("mongodb")) {
@@ -771,9 +1055,9 @@ async function connectMongo(uri, log) {
     log.error(uriError);
     throw new Error(uriError);
   }
-  import_mongoose4.default.set("strictQuery", true);
+  import_mongoose7.default.set("strictQuery", true);
   try {
-    await import_mongoose4.default.connect(uri, {
+    await import_mongoose7.default.connect(uri, {
       serverSelectionTimeoutMS: 1e4,
       connectTimeoutMS: 1e4
     });
@@ -791,7 +1075,7 @@ async function connectMongo(uri, log) {
   }
 }
 function isMongoConnected() {
-  return import_mongoose4.default.connection.readyState === 1;
+  return import_mongoose7.default.connection.readyState === 1;
 }
 
 // src/routes/auth.ts
@@ -1353,42 +1637,10 @@ async function authRoutes(fastify2) {
 var import_bcrypt3 = __toESM(require("bcrypt"));
 var import_mongoose11 = require("mongoose");
 
-// src/models/Meeting.ts
-var import_mongoose5 = require("mongoose");
-var MeetingSchema = new import_mongoose5.Schema({
-  title: { type: String, required: true },
-  hostId: { type: import_mongoose5.Schema.Types.ObjectId, ref: "User", required: true },
-  joinCode: { type: String, required: true, unique: true, index: true },
-  passcodeHash: { type: String },
-  scheduledAt: { type: Date, default: Date.now },
-  durationMinutes: { type: Number, default: 60 },
-  status: { type: String, enum: ["scheduled", "live", "ended"], default: "scheduled" },
-  recordingEnabled: { type: Boolean, default: false },
-  participantIds: [{ type: import_mongoose5.Schema.Types.ObjectId, ref: "User" }],
-  aiEnabled: { type: Boolean, default: false },
-  aiSummary: { type: String },
-  summarySent: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
-var Meeting = (0, import_mongoose5.model)("Meeting", MeetingSchema);
-
-// src/models/Participant.ts
-var import_mongoose6 = require("mongoose");
-var ParticipantSchema = new import_mongoose6.Schema({
-  meetingId: { type: import_mongoose6.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
-  userId: { type: import_mongoose6.Schema.Types.ObjectId, ref: "User", required: true },
-  role: { type: String, enum: ["host", "co-host", "attendee"], default: "attendee" },
-  joinedAt: { type: Date, default: Date.now },
-  leftAt: { type: Date },
-  audioMuted: { type: Boolean, default: false },
-  videoMuted: { type: Boolean, default: false }
-});
-var Participant = (0, import_mongoose6.model)("Participant", ParticipantSchema);
-
 // src/models/Recording.ts
-var import_mongoose7 = require("mongoose");
-var RecordingSchema = new import_mongoose7.Schema({
-  meetingId: { type: import_mongoose7.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
+var import_mongoose8 = require("mongoose");
+var RecordingSchema = new import_mongoose8.Schema({
+  meetingId: { type: import_mongoose8.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
   r2Key: { type: String, required: true },
   durationSeconds: { type: Number, default: 0 },
   sizeBytes: { type: Number, default: 0 },
@@ -1396,40 +1648,10 @@ var RecordingSchema = new import_mongoose7.Schema({
   transcriptUrl: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
-var Recording = (0, import_mongoose7.model)("Recording", RecordingSchema);
+var Recording = (0, import_mongoose8.model)("Recording", RecordingSchema);
 
 // src/routes/meetings.ts
 init_User();
-
-// src/models/Mail.ts
-var import_mongoose8 = __toESM(require("mongoose"));
-var mailSchema = new import_mongoose8.default.Schema({
-  workspaceId: { type: String, required: true, default: "forge-india-connect" },
-  ownerEmail: { type: String, required: true },
-  // The user who owns this specific copy of the email
-  folder: { type: String, enum: ["inbox", "sent", "drafts", "trash", "archive"], default: "inbox" },
-  senderName: { type: String, required: true },
-  senderEmail: { type: String, required: true },
-  recipientEmails: [{ type: String, required: true }],
-  subject: { type: String, default: "(No Subject)" },
-  body: { type: String, default: "" },
-  isRead: { type: Boolean, default: false },
-  isStarred: { type: Boolean, default: false },
-  label: { type: String, default: null },
-  attachments: [{
-    name: String,
-    url: String,
-    size: Number,
-    type: String
-  }],
-  sentAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-mailSchema.pre("save", function(next) {
-  this.updatedAt = /* @__PURE__ */ new Date();
-  next();
-});
-var Mail = import_mongoose8.default.model("Mail", mailSchema);
 
 // src/models/Room.ts
 var import_mongoose9 = require("mongoose");
@@ -1454,227 +1676,6 @@ var import_os2 = __toESM(require("os"));
 var import_jsonwebtoken3 = __toESM(require("jsonwebtoken"));
 var import_bcrypt2 = __toESM(require("bcrypt"));
 init_User();
-
-// src/services/summarizer.ts
-var import_fs2 = __toESM(require("fs"));
-var import_path2 = __toESM(require("path"));
-var import_os = __toESM(require("os"));
-var import_generative_ai = require("@google/generative-ai");
-var import_server = require("@google/generative-ai/server");
-init_User();
-init_pushNotifications();
-init_webPush();
-var genAI = null;
-var fileManager = null;
-if (process.env.GEMINI_API_KEY) {
-  genAI = new import_generative_ai.GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  fileManager = new import_server.GoogleAIFileManager(process.env.GEMINI_API_KEY);
-}
-async function dispatchSummaryMail(meeting, summaryHtml) {
-  try {
-    const participantDocs = await Participant.find({ meetingId: meeting._id }).distinct("userId");
-    const allUserIds = [.../* @__PURE__ */ new Set([...participantDocs.map((id) => id.toString()), meeting.hostId?.toString()])].filter(Boolean);
-    const users = await User.find({
-      _id: { $in: allUserIds },
-      email: { $ne: "ai-assistant@nexus.app" }
-      // exclude the bot itself
-    });
-    if (users.length === 0) {
-      console.warn("[Summarizer] No human participants found  skipping mail dispatch.");
-      return;
-    }
-    const recipientEmails = users.map((u) => u.email);
-    const mailDoc = {
-      workspaceId: "forge-india-connect",
-      senderName: "Forge India Connect AI",
-      senderEmail: "ai-assistant@nexus.app",
-      recipientEmails,
-      subject: ` Meeting Summary: ${meeting.title}`,
-      body: summaryHtml,
-      isRead: false,
-      isStarred: false,
-      sentAt: /* @__PURE__ */ new Date()
-    };
-    await Mail.create({ ...mailDoc, ownerEmail: "ai-assistant@nexus.app", folder: "sent" });
-    for (const email of recipientEmails) {
-      try {
-        const summaryMail = await Mail.create({ ...mailDoc, ownerEmail: email, folder: "inbox" });
-        const { activeMailSockets: activeMailSockets2 } = (init_mailSockets(), __toCommonJS(mailSockets_exports));
-        if (activeMailSockets2 && activeMailSockets2.has(email)) {
-          const ws = activeMailSockets2.get(email);
-          if (ws?.readyState === 1) {
-            ws.send(JSON.stringify({ type: "NEW_MAIL", mail: summaryMail }));
-          }
-        }
-        sendPushNotification(
-          [email],
-          `New Email: Meeting Summary: ${meeting.title}`,
-          `From: Forge India Connect AI`,
-          {
-            type: "mail",
-            mailId: summaryMail._id.toString(),
-            senderEmail: "ai-assistant@nexus.app"
-          }
-        ).catch((err) => console.error("[Summarizer] Push error:", err));
-        sendWebPush(
-          [email],
-          {
-            title: `New Email: Meeting Summary: ${meeting.title}`,
-            body: `From: Forge India Connect AI`,
-            url: `/w/${meeting.workspaceId || "forge-india-connect"}/mail`
-          }
-        ).catch((err) => console.error("[Summarizer] Web push error:", err));
-      } catch (e) {
-        console.error("[Summarizer] Failed to dispatch summary mail notifications for", email, e);
-      }
-    }
-    console.log(`[Summarizer]  Summary mail dispatched to ${recipientEmails.length} participant(s): ${recipientEmails.join(", ")}`);
-  } catch (err) {
-    console.error("[Summarizer] Mail dispatch failed:", err.message);
-  }
-}
-async function summarizeMeeting(meetingId) {
-  console.log(`[Summarizer] Starting summarization for meeting ${meetingId}`);
-  const meeting = await Meeting.findById(meetingId);
-  if (!meeting) {
-    console.warn("[Summarizer] Meeting not found:", meetingId);
-    return null;
-  }
-  if (meeting.aiSummary) {
-    console.log("[Summarizer] Summary already exists, skipping.");
-    return meeting.aiSummary;
-  }
-  if (meeting.summarySent) {
-    console.log("[Summarizer] Summary email already sent for this meeting, skipping.");
-    return meeting.aiSummary || null;
-  }
-  const lockResult = await Meeting.findOneAndUpdate(
-    { _id: meetingId, summarySent: { $ne: true } },
-    { $set: { summarySent: true } },
-    { new: true }
-  );
-  if (!lockResult) {
-    console.log("[Summarizer] Another process already claimed this summary, skipping.");
-    return null;
-  }
-  const tmpDir = import_os.default.tmpdir();
-  const audioFilePath = import_path2.default.join(tmpDir, `meeting_audio_${meetingId}.webm`);
-  const hasAudioFile = import_fs2.default.existsSync(audioFilePath);
-  let summaryHtml;
-  if (!hasAudioFile || !process.env.GEMINI_API_KEY || !genAI || !fileManager) {
-    console.log(`[Summarizer] No audio file found (or no API key/client). Sending completion notification.`);
-    let duration = 0;
-    if (meeting.scheduledAt) {
-      duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 6e4));
-    }
-    summaryHtml = `
-<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;border-radius:12px">
-  <div style="background:linear-gradient(135deg,#1e40af,#7c3aed);padding:24px;border-radius:8px;margin-bottom:20px">
-    <h1 style="color:#fff;margin:0;font-size:22px"> Meeting Completed</h1>
-    <p style="color:#bfdbfe;margin:8px 0 0">${meeting.title}</p>
-  </div>
-  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0">
-    <h2 style="color:#1e293b;margin-top:0">Meeting Details</h2>
-    <ul style="color:#475569;line-height:1.8">
-      <li><strong>Title:</strong> ${meeting.title}</li>
-      <li><strong>Duration:</strong> ~${duration} minutes</li>
-      <li><strong>Date:</strong> ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</li>
-      <li><strong>Status:</strong> Completed</li>
-    </ul>
-    <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;margin-top:16px;border-radius:4px">
-      <p style="margin:0;color:#92400e;font-size:14px">
-        <strong>Note:</strong> No audio transcript was captured for this meeting. 
-        To receive full AI-generated summaries, ensure your microphone is active and AI Assistant is enabled when the meeting starts.
-      </p>
-    </div>
-  </div>
-  <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:16px">Sent by Forge India Connect AI</p>
-</div>`;
-  } else {
-    console.log(`[Summarizer] Summarizing audio file ${audioFilePath}...`);
-    const prompt = `You are an expert Executive Assistant. Summarize the provided meeting audio.
-The audio may contain a mix of English and Tamil.
-Your summary MUST be entirely in English.
-Your response MUST be formatted in clean HTML suitable for an email body.
-Do NOT use markdown. Use bold tags, lists, and headers (h2, h3).
-Do NOT use a predefined rigid template. Dynamically analyze the meeting context and generate appropriate sections (e.g. Executive Summary, Main Discussion Points, Key Takeaways, Action Items, Ideas, etc.) based ONLY on what was actually discussed.
-Focus on capturing the real essence of the conversation accurately.`;
-    let uploadedFile = null;
-    try {
-      console.log("[Summarizer] Uploading audio to Gemini...");
-      uploadedFile = await fileManager.uploadFile(audioFilePath, {
-        mimeType: "audio/webm",
-        displayName: `meeting_audio_${meetingId}`
-      });
-      console.log(`[Summarizer] Uploaded to Gemini: ${uploadedFile.file.uri}`);
-      const model22 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      console.log("[Summarizer] Requesting generation...");
-      const result = await model22.generateContent([
-        {
-          fileData: {
-            mimeType: uploadedFile.file.mimeType,
-            fileUri: uploadedFile.file.uri
-          }
-        },
-        { text: prompt }
-      ]);
-      const rawSummary = result.response.text() || "";
-      let duration = meeting.durationMinutes || 60;
-      if (meeting.scheduledAt) {
-        duration = Math.max(1, Math.round((Date.now() - new Date(meeting.scheduledAt).getTime()) / 6e4));
-      }
-      const uniqueSpeakers = await Participant.countDocuments({ meetingId });
-      summaryHtml = `
-<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;border-radius:12px">
-  <div style="background:linear-gradient(135deg,#1e40af,#7c3aed);padding:24px;border-radius:8px;margin-bottom:20px">
-    <h1 style="color:#fff;margin:0;font-size:22px">Meeting Summary</h1>
-    <p style="color:#bfdbfe;margin:8px 0 0">${meeting.title}</p>
-  </div>
-  
-  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
-    <h2 style="color:#1e293b;margin-top:0;font-size:16px;margin-bottom:12px">Meeting Details</h2>
-    <ul style="color:#475569;line-height:1.8;margin:0;padding-left:20px">
-      <li><strong>Date:</strong> ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</li>
-      <li><strong>Duration:</strong> ~${duration} minutes</li>
-      <li><strong>Speakers:</strong> ${uniqueSpeakers}</li>
-    </ul>
-  </div>
-
-  <div style="background:#fff;padding:24px;border-radius:8px;border:1px solid #e2e8f0;color:#1e293b;line-height:1.6">
-    ${rawSummary.replace(/<h2>/g, '<h2 style="color:#1e40af;font-size:18px;margin-top:24px;margin-bottom:12px;border-bottom:2px solid #e2e8f0;padding-bottom:8px">').replace(/<h3>/g, '<h3 style="color:#334155;font-size:16px;margin-top:20px;margin-bottom:8px">').replace(/<ul>/g, '<ul style="color:#475569;padding-left:20px;margin-bottom:16px">').replace(/<li>/g, '<li style="margin-bottom:8px">')}
-  </div>
-  
-  <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px">Sent by Forge India Connect AI</p>
-</div>`;
-      console.log(`[Summarizer] AI summary generated and formatted.`);
-    } catch (err) {
-      console.error("[Summarizer] Gemini API failed:", err.message);
-      return null;
-    } finally {
-      if (uploadedFile && fileManager) {
-        try {
-          await fileManager.deleteFile(uploadedFile.file.name);
-          console.log(`[Summarizer] Deleted ${uploadedFile.file.name} from Gemini API`);
-        } catch (e) {
-          console.warn("[Summarizer] Failed to delete file from Gemini API", e);
-        }
-      }
-      try {
-        import_fs2.default.unlinkSync(audioFilePath);
-        console.log(`[Summarizer] Deleted local file ${audioFilePath}`);
-      } catch (e) {
-        console.warn("[Summarizer] Failed to delete local audio file", e);
-      }
-    }
-  }
-  if (summaryHtml) {
-    await Meeting.findByIdAndUpdate(meetingId, { aiSummary: summaryHtml });
-    await dispatchSummaryMail(meeting, summaryHtml);
-  }
-  return summaryHtml;
-}
-
-// src/services/aiBot.ts
 var JWT_SECRET = process.env.JWT_SECRET || "nexus-jwt-secret-key";
 var AI_BOT_EMAIL = "ai-assistant@nexus.app";
 var AI_BOT_NAME = "Forge India Connect AI";
@@ -2056,6 +2057,20 @@ async function meetingRoutes(fastify2) {
       return reply.code(201).send(meeting);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to create meeting room.", details: err.message });
+    }
+  });
+  fastify2.get("/", { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const userId = new import_mongoose11.Types.ObjectId(request.user.id);
+      const meetings = await Meeting.find({
+        $or: [
+          { hostId: userId },
+          { participantIds: userId }
+        ]
+      }).sort({ scheduledAt: -1 }).populate("hostId", "name email avatarUrl");
+      return reply.code(200).send(meetings);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to retrieve meetings", details: err.message });
     }
   });
   fastify2.get("/join/:code", { preHandler: authenticate }, async (request, reply) => {
@@ -3814,7 +3829,8 @@ async function memberRoutes(fastify2) {
     try {
       const { workspaceId } = request.params;
       const targetWorkspace = workspaceId || defaultWorkspaceId2;
-      const query = targetWorkspace === defaultWorkspaceId2 ? { $or: [{ workspaceId: targetWorkspace }, { workspaceId: { $exists: false } }, { workspaceId: null }] } : { workspaceId: targetWorkspace };
+      const query = targetWorkspace === defaultWorkspaceId2 ? { $or: [{ workspaceId: targetWorkspace }, { workspaceId: { $exists: false } }, { workspaceId: null }, { workspaceId: "" }] } : { workspaceId: targetWorkspace };
+      request.server.log.info(`[Members] Querying for workspaceId: ${targetWorkspace}`);
       const users = await User.find(query).sort({ createdAt: -1 }).select("-password -passwordHash -mfaSecret");
       return reply.code(200).send(users.map(publicUser));
     } catch (err) {
@@ -3869,6 +3885,7 @@ var ProjectSchema = new import_mongoose17.Schema({
   workspaceId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   description: { type: String },
+  status: { type: String, default: "TO DO" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -4000,6 +4017,23 @@ async function projectRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to create project", details: err.message });
     }
   });
+  fastify2.patch("/:projectId", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const updates = request.body;
+      const project = await Project.findByIdAndUpdate(
+        projectId,
+        { $set: updates },
+        { new: true }
+      );
+      if (!project) {
+        return reply.code(404).send({ error: "Project not found" });
+      }
+      return reply.code(200).send(project);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update project", details: err.message });
+    }
+  });
   fastify2.get("/:projectId/sprints", async (request, reply) => {
     try {
       const { projectId } = request.params;
@@ -4052,6 +4086,27 @@ async function projectRoutes(fastify2) {
       return reply.code(201).send(status);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to create status" });
+    }
+  });
+  fastify2.patch("/statuses/:statusId", async (request, reply) => {
+    try {
+      const { statusId } = request.params;
+      const updates = request.body;
+      const status = await Status.findByIdAndUpdate(statusId, updates, { new: true });
+      if (!status) return reply.code(404).send({ error: "Status not found" });
+      return reply.code(200).send(status);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update status" });
+    }
+  });
+  fastify2.delete("/statuses/:statusId", async (request, reply) => {
+    try {
+      const { statusId } = request.params;
+      const status = await Status.findByIdAndDelete(statusId);
+      if (!status) return reply.code(404).send({ error: "Status not found" });
+      return reply.code(200).send({ message: "Status deleted" });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to delete status" });
     }
   });
   fastify2.get("/:projectId/velocity", async (request, reply) => {
@@ -4224,6 +4279,15 @@ async function issueRoutes(fastify2) {
     } catch (err) {
       return reply.code(500).send({ error: "Failed to bulk update issues", details: err.message });
     }
+  });
+  fastify2.get("/:id/comments", async (request, reply) => {
+    return reply.code(200).send([]);
+  });
+  fastify2.get("/:id/links", async (request, reply) => {
+    return reply.code(200).send({ linksTo: [], linksFrom: [] });
+  });
+  fastify2.get("/:id/time", async (request, reply) => {
+    return reply.code(200).send([]);
   });
 }
 
@@ -5900,8 +5964,12 @@ async function bootstrap() {
   server.get("/api/pull-requests", async () => {
     return [];
   });
+  server.get("/api/blockers", async () => {
+    return [];
+  });
   server.get("/socket.io/", { websocket: true }, (connection, req) => {
-    connection.socket.on("message", (message) => {
+    const ws = connection.socket || connection;
+    ws.on("message", (message) => {
     });
   });
   server.get("/api/meet/ice-servers", async () => {
@@ -5916,16 +5984,21 @@ async function bootstrap() {
       let audioBuffer = null;
       let mimetype = "audio/webm";
       let filename = "recording.webm";
-      for await (const part of request.parts()) {
-        if (part.type === "file") {
-          mimetype = part.mimetype || "audio/webm";
-          filename = part.filename || "recording.webm";
+      let audioPart = request.body?.audio;
+      if (Array.isArray(audioPart)) {
+        audioPart = audioPart[0];
+      }
+      if (audioPart) {
+        mimetype = audioPart.mimetype || mimetype;
+        filename = audioPart.filename || filename;
+        if (typeof audioPart.toBuffer === "function") {
+          audioBuffer = await audioPart.toBuffer();
+        } else if (audioPart.file) {
           const chunks = [];
-          for await (const chunk of part.file) {
+          for await (const chunk of audioPart.file) {
             chunks.push(chunk);
           }
           audioBuffer = Buffer.concat(chunks);
-          break;
         }
       }
       if (!audioBuffer || audioBuffer.length === 0) {
@@ -6000,6 +6073,49 @@ ${transcript}` }
       parsedSummary.actionItems = Array.isArray(parsedSummary.actionItems) ? parsedSummary.actionItems : [];
       parsedSummary.risks = Array.isArray(parsedSummary.risks) ? parsedSummary.risks : [];
       parsedSummary.followUps = Array.isArray(parsedSummary.followUps) ? parsedSummary.followUps : [];
+      const { meetingId } = request.body;
+      if (meetingId) {
+        const summaryHtml = `
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;border-radius:12px">
+  <div style="background:linear-gradient(135deg,#1e40af,#7c3aed);padding:24px;border-radius:8px;margin-bottom:20px">
+    <h1 style="color:#fff;margin:0;font-size:22px"> Meeting Summary</h1>
+    <p style="color:#bfdbfe;margin:8px 0 0">${parsedSummary.meetingTitle}</p>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Executive Overview</h2>
+    <p style="color:#475569;line-height:1.6">${parsedSummary.summary}</p>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Key Points</h2>
+    <ul style="color:#475569;line-height:1.6;padding-left:20px">
+      ${parsedSummary.keyPoints.map((kp) => `<li>${kp}</li>`).join("")}
+    </ul>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Decisions Made</h2>
+    <ul style="color:#475569;line-height:1.6;padding-left:20px">
+      ${parsedSummary.decisions.map((d) => `<li>${d}</li>`).join("")}
+    </ul>
+  </div>
+  <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+    <h2 style="color:#1e293b;margin-top:0"> Action Items</h2>
+    <ul style="color:#475569;line-height:1.6;padding-left:20px">
+      ${parsedSummary.actionItems.map((a) => `<li><strong>${a.owner || "TBD"}</strong>: ${a.task} <em>(Due: ${a.deadline || "TBD"})</em></li>`).join("")}
+    </ul>
+  </div>
+</div>`;
+        const validId = import_mongoose29.default.Types.ObjectId.isValid(meetingId) ? meetingId : null;
+        let meetingDoc = null;
+        if (validId) meetingDoc = await Meeting.findById(validId);
+        if (!meetingDoc) meetingDoc = await Meeting.findOne({ joinCode: meetingId });
+        if (!meetingDoc) meetingDoc = await Meeting.findOne({ meetingId });
+        if (meetingDoc) {
+          meetingDoc.aiSummary = JSON.stringify(parsedSummary);
+          meetingDoc.summarySent = true;
+          await meetingDoc.save();
+          dispatchSummaryMail(meetingDoc, summaryHtml).catch((e) => console.error("[Summarize] Dispatch mail error:", e));
+        }
+      }
       return reply.code(200).send(parsedSummary);
     } catch (err) {
       console.error("[Summarize] Error:", err.message);

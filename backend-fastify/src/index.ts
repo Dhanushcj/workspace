@@ -29,6 +29,7 @@ import { showRoutes } from './routes/show';
 import { superadminRoutes } from './routes/superadmin';
 import { statusRoutes } from './routes/status';
 import { threadsRoutes } from './routes/threads';
+import { projectRoutes } from './routes/projects';
 
 import Groq from 'groq-sdk';
 import { handleWebRtcSignalling } from './services/webrtc';
@@ -182,6 +183,7 @@ async function bootstrap() {
   await server.register(superadminRoutes, { prefix: '/api/superadmin' });
   await server.register(statusRoutes, { prefix: '/api/status' });
   await server.register(threadsRoutes, { prefix: '/api/threads' });
+  await server.register(projectRoutes, { prefix: '/api/projects' });
   console.log('[BOOTSTRAP] Registering mock routes...');
   // MOCK ROUTES TO FIX 404 ERRORS
   server.get('/api/notifications/unread-count', async () => {
