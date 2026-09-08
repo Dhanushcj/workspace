@@ -41,23 +41,7 @@ const TeamLeadDashboard = () => {
 
   const activeBlockers = tasks.filter(t => t.status === 'blocked');
 
-  const headerActions = (
-    <>
-      <button 
-        onClick={() => setIsSummaryModalOpen(true)}
-        className="px-5 py-2 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
-      >
-        <Flag size={14} /> Complete Sprint
-      </button>
-      <button 
-        onClick={() => navigate(`/w/${workspaceId}/tasks/assignments`)}
-        className="px-5 py-2 rounded-full bg-[#0F5A3E] text-white text-sm font-bold shadow-md hover:bg-[#0B4A3F] transition-colors flex items-center gap-2"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
-        Assign Tasks
-      </button>
-    </>
-  );
+  const headerActions = null;
 
   return (
     <TasksLayout

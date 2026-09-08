@@ -22,12 +22,15 @@ import { useToastStore } from '../../store/toastStore';
 import api from '../../lib/api';
 import { SprintNavigatorBar } from './SprintNavigatorBar';
 import { CreateSprintModal } from './CreateSprintModal';
+import { CreateTaskModal } from './CreateTaskModal';
+import { Plus } from 'lucide-react';
 
 export default function SprintPlanner() {
   const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint } = useWorkflowStore();
   const { addToast } = useToastStore();
   const [sprints, setSprints] = useState<any[]>([]);
   const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Local state for optimistic updates
@@ -248,6 +251,17 @@ export default function SprintPlanner() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      {isTaskModalOpen && (
+        <CreateTaskModal 
+          isOpen={isTaskModalOpen} 
+          onClose={() => setIsTaskModalOpen(false)}
+          projectId={currentProject?.id || (currentProject as any)?._id}
+          onTaskCreated={(newTask) => {
+            fetchTasks({ projectId: currentProject?.id || (currentProject as any)?._id });
+            setIsTaskModalOpen(false);
+          }}
+        />
+      )}
       <CreateSprintModal 
         isOpen={isSprintModalOpen} 
         onClose={() => setIsSprintModalOpen(false)}
@@ -281,6 +295,12 @@ export default function SprintPlanner() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsTaskModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F5A3E] text-white rounded-lg text-[12px] font-medium hover:bg-[#0B4A3F] transition-all shadow-sm"
+              >
+                <Plus size={14} /> Add Task
+              </button>
               <button 
                 onClick={handleSetGoal}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
