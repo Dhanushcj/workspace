@@ -14,7 +14,7 @@ const SERVICES = [
   { name: 'Chat-Service  ', command: 'node', args: ['microservices/chat/server.js'], color: '\x1b[32m' },       // Green
   { name: 'Socket-Service', command: 'node', args: ['microservices/sockets/server.js'], color: '\x1b[96m' },    // Bright Cyan
   // { name: 'API-Gateway   ', command: 'node', args: ['microservices/gateway/server.js'], color: '\x1b[91m' },    // Bright Red (Disabled: Port 3001 used by backend-fastify)
-  { name: 'Tasks-Service ', command: 'npx.cmd', args: ['ts-node', '--transpile-only', 'src/index.ts'], color: '\x1b[34m', cwd: 'D:\\workspace-cd3a8115cc802d7496cdab2ae4e14193ba0428c1\\nexus-pm\\apps\\backend' },
+  { name: 'Tasks-Service ', command: 'node', args: ['microservices/tasks/server.js'], color: '\x1b[34m' },
 
   // ─── Frontend Microfrontends ───
   { name: 'Shell-MFE     ', command: 'npx.cmd', args: ['vite', '--config', 'vite.config.shell.js'], color: '\x1b[94m' }, // Bright Blue
