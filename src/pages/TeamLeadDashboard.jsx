@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TasksLayout from '../components/TasksLayout';
 import { fetchTasks } from '../api/tasksApi';
 import { Flag, ShieldCheck, AlertOctagon, CheckCircle2 } from 'lucide-react';
+import { useWorkflowStore } from '../store/workflowStore';
+import { SprintSummaryModal } from '../components/tasks/SprintSummaryModal';
 
 const StatCard = ({ title, value, subValue, highlight }) => (
   <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between">
@@ -14,10 +17,13 @@ const StatCard = ({ title, value, subValue, highlight }) => (
 );
 
 const TeamLeadDashboard = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const auth = JSON.parse(localStorage.getItem('auth') || '{}');
   const workspaceId = auth.workspaceId || 'forge-india-connect';
+  const currentSprint = useWorkflowStore(state => state.currentSprint);
 
   useEffect(() => {
     fetchTasks(workspaceId)
@@ -37,10 +43,16 @@ const TeamLeadDashboard = () => {
 
   const headerActions = (
     <>
-      <button className="px-5 py-2 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm">
+      <button 
+        onClick={() => setIsSummaryModalOpen(true)}
+        className="px-5 py-2 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+      >
         <Flag size={14} /> Complete Sprint
       </button>
-      <button className="px-5 py-2 rounded-full bg-[#0F5A3E] text-white text-sm font-bold shadow-md hover:bg-[#0B4A3F] transition-colors flex items-center gap-2">
+      <button 
+        onClick={() => navigate(`/w/${workspaceId}/tasks/assignments`)}
+        className="px-5 py-2 rounded-full bg-[#0F5A3E] text-white text-sm font-bold shadow-md hover:bg-[#0B4A3F] transition-colors flex items-center gap-2"
+      >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
         Assign Tasks
       </button>
@@ -112,6 +124,13 @@ const TeamLeadDashboard = () => {
           )}
         </div>
       </div>
+      {isSummaryModalOpen && currentSprint?.id && (
+        <SprintSummaryModal 
+          isOpen={isSummaryModalOpen} 
+          onClose={() => setIsSummaryModalOpen(false)} 
+          sprintId={currentSprint.id} 
+        />
+      )}
     </TasksLayout>
   );
 };
