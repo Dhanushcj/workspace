@@ -4,9 +4,10 @@ import { aiService } from '../services/aiService';
 import { Epic } from '../models/Epic';
 import { Sprint } from '../models/Sprint';
 import { Issue } from '../models/Issue';
+import { authenticate } from '../middlewares/auth';
 
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.post('/project-plan/analyze', { preValidation: [fastify.authenticate] }, async (request, reply) => {
+  fastify.post('/project-plan/analyze', { preValidation: [authenticate] }, async (request, reply) => {
     const { projectId, requirements, sprintCapacity } = request.body as any;
     try {
       // Clear existing drafts for this project
@@ -32,7 +33,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  fastify.get('/project-plan/:projectId', { preValidation: [fastify.authenticate] }, async (request, reply) => {
+  fastify.get('/project-plan/:projectId', { preValidation: [authenticate] }, async (request, reply) => {
     const { projectId } = request.params as { projectId: string };
     const draft = await AIProjectPlan.findOne({ projectId, status: 'DRAFT' }).sort({ createdAt: -1 });
     if (!draft) {
@@ -41,7 +42,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send(draft);
   });
 
-  fastify.post('/project-plan/regenerate', { preValidation: [fastify.authenticate] }, async (request, reply) => {
+  fastify.post('/project-plan/regenerate', { preValidation: [authenticate] }, async (request, reply) => {
     const { itemId, itemType, context, promptAddition } = request.body as any;
     try {
       const result = await aiService.regenerateItem(itemId, itemType, context, promptAddition);
@@ -52,7 +53,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  fastify.post('/project-plan/approve', { preValidation: [fastify.authenticate] }, async (request, reply) => {
+  fastify.post('/project-plan/approve', { preValidation: [authenticate] }, async (request, reply) => {
     const { planId, approvedEpicIds, approvedStoryIds, approvedTaskIds } = request.body as any;
     const plan = await AIProjectPlan.findById(planId);
     if (!plan) return reply.code(404).send({ message: 'Plan not found' });

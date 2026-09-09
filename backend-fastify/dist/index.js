@@ -5644,7 +5644,7 @@ If it's a Story, return:
 
 // src/routes/ai.ts
 var aiRoutes = async (fastify2) => {
-  fastify2.post("/project-plan/analyze", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+  fastify2.post("/project-plan/analyze", { preValidation: [authenticate] }, async (request, reply) => {
     const { projectId, requirements, sprintCapacity } = request.body;
     try {
       await AIProjectPlan.deleteMany({ projectId, status: "DRAFT" });
@@ -5665,7 +5665,7 @@ var aiRoutes = async (fastify2) => {
       return reply.code(500).send({ message: err.message || "AI Analysis failed" });
     }
   });
-  fastify2.get("/project-plan/:projectId", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+  fastify2.get("/project-plan/:projectId", { preValidation: [authenticate] }, async (request, reply) => {
     const { projectId } = request.params;
     const draft = await AIProjectPlan.findOne({ projectId, status: "DRAFT" }).sort({ createdAt: -1 });
     if (!draft) {
@@ -5673,7 +5673,7 @@ var aiRoutes = async (fastify2) => {
     }
     return reply.send(draft);
   });
-  fastify2.post("/project-plan/regenerate", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+  fastify2.post("/project-plan/regenerate", { preValidation: [authenticate] }, async (request, reply) => {
     const { itemId, itemType, context, promptAddition } = request.body;
     try {
       const result = await aiService.regenerateItem(itemId, itemType, context, promptAddition);
@@ -5683,7 +5683,7 @@ var aiRoutes = async (fastify2) => {
       return reply.code(500).send({ message: err.message || "Regeneration failed" });
     }
   });
-  fastify2.post("/project-plan/approve", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+  fastify2.post("/project-plan/approve", { preValidation: [authenticate] }, async (request, reply) => {
     const { planId, approvedEpicIds, approvedStoryIds, approvedTaskIds } = request.body;
     const plan = await AIProjectPlan.findById(planId);
     if (!plan) return reply.code(404).send({ message: "Plan not found" });

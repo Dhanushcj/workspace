@@ -173,9 +173,7 @@ const DashboardLayout = ({ children, isAdmin = false }) => {
               <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--danger)' }} />
             </button>
 
-            <button onClick={toggleTheme} className="btn btn-ghost btn-icon">
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+
 
             <div className="relative group">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ml-1 text-white cursor-pointer hover:opacity-90 transition-opacity" style={{ background: 'var(--accent)' }}>
