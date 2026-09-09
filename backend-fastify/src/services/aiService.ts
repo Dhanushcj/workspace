@@ -10,7 +10,7 @@ export const aiService = {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    const prompt = `You are an expert Agile Project Manager.
+    const prompt = `You are an expert Scrum Master.
 Analyze the following project requirements and generate a detailed Sprint & Task Plan.
 Return ONLY valid JSON, with NO markdown wrapping or code blocks (i.e. strictly start with { and end with }).
 
