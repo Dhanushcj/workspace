@@ -23,14 +23,18 @@ import api from '../../lib/api';
 import { SprintNavigatorBar } from './SprintNavigatorBar';
 import { CreateSprintModal } from './CreateSprintModal';
 import { CreateTaskModal } from './CreateTaskModal';
-import { Plus } from 'lucide-react';
+import { Plus, Bot } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import AIPlannerModal from './AIPlannerModal';
 
 export default function SprintPlanner() {
+  const { user } = useAuthStore();
   const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint } = useWorkflowStore();
   const { addToast } = useToastStore();
   const [sprints, setSprints] = useState<any[]>([]);
   const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isAIPlannerOpen, setIsAIPlannerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Local state for optimistic updates
@@ -296,7 +300,7 @@ export default function SprintPlanner() {
             </div>
             <div className="flex items-center gap-2">
               {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
-                <button onClick={() => setIsTaskModalOpen(true)}
+                <button onClick={() => setIsAIPlannerOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F5A3E] text-white rounded-lg text-[12px] font-medium hover:bg-[#0B4A3F] transition-all shadow-sm"
               >
                   <Bot size={14} /> ✨ AI Plan Project
@@ -415,6 +419,21 @@ export default function SprintPlanner() {
           </div>
         ) : null}
       </DragOverlay>
+
+      {currentProject && (
+        <AIPlannerModal
+          isOpen={isAIPlannerOpen}
+          onClose={() => setIsAIPlannerOpen(false)}
+          projectId={currentProject.id || (currentProject as any)._id}
+          projectName={currentProject.name}
+          onSuccess={() => {
+            fetchTasks({ projectId: currentProject.id || (currentProject as any)._id });
+            api.get(`/projects/${currentProject.id || (currentProject as any)._id}/sprints`).then(sRes => {
+              setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
+            });
+          }}
+        />
+      )}
     </DndContext>
   );
 }

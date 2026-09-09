@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Bot, Rocket, Settings, CheckSquare, Square, RefreshCw, AlertTriangle, Layers, List, Loader, Save, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
-import api from '../lib/api';
+import api from '../../lib/api';
 import toast from 'react-hot-toast';
 
 interface AIPlannerModalProps {
