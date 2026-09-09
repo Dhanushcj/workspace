@@ -295,6 +295,13 @@ export default function SprintPlanner() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
+                <button onClick={() => setIsTaskModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F5A3E] text-white rounded-lg text-[12px] font-medium hover:bg-[#0B4A3F] transition-all shadow-sm"
+              >
+                  <Bot size={14} /> ✨ AI Plan Project
+                </button>
+              ) : null}
               <button 
                 onClick={() => setIsTaskModalOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F5A3E] text-white rounded-lg text-[12px] font-medium hover:bg-[#0B4A3F] transition-all shadow-sm"
