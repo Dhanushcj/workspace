@@ -12,6 +12,7 @@ import { useNavigate as useRouter } from 'react-router-dom';
 import { useWorkflowStore } from '../store/workflowStore';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
+import AssignMembersModal from './AssignMembersModal';
 
 interface Project { 
   id: string; 
@@ -24,6 +25,7 @@ interface Project {
   completion?: number;
   prCount?: number;
   blockerCount?: number;
+  memberCount?: number;
 }
 interface ProjectsViewProps { 
   projects: Project[]; 
@@ -66,6 +68,7 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterMode>('All');
   const [view, setView] = useState<ViewMode>('grid');
+  const [assignModalProject, setAssignModalProject] = useState<Project | null>(null);
 
   const filtered = useMemo(() => {
     let list = projects || [];
@@ -194,6 +197,14 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
                     >
                       <List size={13} /> Backlog
                     </button>
+                    {role === 'TEAM_LEAD' && (
+                      <button
+                        onClick={() => setAssignModalProject(project as any)}
+                        className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1.5 hover:bg-slate-50 transition-all"
+                      >
+                        <Users size={13} /> Members ({project.memberCount || 0})
+                      </button>
+                    )}
                     <button
                       onClick={() => openBurndown(project)}
                       className="px-4 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1.5 hover:bg-slate-50 transition-all"
@@ -238,7 +249,17 @@ export const ProjectsView = ({ projects, isLoading, onNewProject }: ProjectsView
           </div>
         )}
       </div>
-
+      {assignModalProject && (
+        <AssignMembersModal
+          isOpen={!!assignModalProject}
+          onClose={() => setAssignModalProject(null)}
+          projectId={assignModalProject.id}
+          projectName={assignModalProject.name}
+          onSuccess={() => {
+             // Ideally refresh projects
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -25,7 +25,7 @@ const getBaseUrl = () => {
   }
   
   // Priority 3: Local development
-  return 'http://localhost:3001';
+  return 'https://workspace-backend-r9f8.onrender.com';
 };
 
 const API_BASE_URL = getBaseUrl();

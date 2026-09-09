@@ -63,7 +63,10 @@ const TeamLeadDashboard = () => {
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] min-h-[300px] flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">PR REVIEW QUEUE</h3>
-            <button className="text-[11px] font-bold text-slate-300 hover:text-slate-500 transition-colors flex items-center gap-1">
+            <button 
+              onClick={() => navigate(`/w/${workspaceId}/tasks/board`)}
+              className="text-[11px] font-bold text-slate-300 hover:text-slate-500 transition-colors flex items-center gap-1"
+            >
               All PRs <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </button>
           </div>
@@ -76,7 +79,10 @@ const TeamLeadDashboard = () => {
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] min-h-[300px] flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">ACTIVE BLOCKERS</h3>
-            <button className="text-[11px] font-bold text-slate-300 hover:text-slate-500 transition-colors flex items-center gap-1">
+            <button 
+              onClick={() => navigate(`/w/${workspaceId}/tasks/blockers`)}
+              className="text-[11px] font-bold text-slate-300 hover:text-slate-500 transition-colors flex items-center gap-1"
+            >
               Resolve <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </button>
           </div>

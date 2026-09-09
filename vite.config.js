@@ -32,7 +32,7 @@ export default defineConfig({
       '/api/tester-hub': { target: 'http://localhost:4000', changeOrigin: true },
       '/api/releases': { target: 'http://localhost:4000', changeOrigin: true },
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://workspace-backend-r9f8.onrender.com',
         changeOrigin: true,
       },
     },

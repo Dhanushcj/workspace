@@ -30,10 +30,10 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// backend-fastify/src/models/User.ts
+// src/models/User.ts
 var import_mongoose4, UserSchema, User;
 var init_User = __esm({
-  "backend-fastify/src/models/User.ts"() {
+  "src/models/User.ts"() {
     "use strict";
     import_mongoose4 = require("mongoose");
     UserSchema = new import_mongoose4.Schema({
@@ -63,7 +63,7 @@ var init_User = __esm({
   }
 });
 
-// backend-fastify/src/services/pushNotifications.ts
+// src/services/pushNotifications.ts
 var pushNotifications_exports = {};
 __export(pushNotifications_exports, {
   sendPushNotification: () => sendPushNotification
@@ -133,7 +133,7 @@ async function sendPushNotification(recipientEmails, title, body, data) {
 }
 var import_app, import_messaging;
 var init_pushNotifications = __esm({
-  "backend-fastify/src/services/pushNotifications.ts"() {
+  "src/services/pushNotifications.ts"() {
     "use strict";
     init_User();
     import_app = require("firebase-admin/app");
@@ -165,7 +165,7 @@ var init_pushNotifications = __esm({
   }
 });
 
-// backend-fastify/src/services/webPush.ts
+// src/services/webPush.ts
 var webPush_exports = {};
 __export(webPush_exports, {
   getVapidPublicKey: () => getVapidPublicKey,
@@ -222,7 +222,7 @@ async function sendWebPush(recipientEmails, payload) {
 }
 var import_web_push, vapidPublicKey, vapidPrivateKey;
 var init_webPush = __esm({
-  "backend-fastify/src/services/webPush.ts"() {
+  "src/services/webPush.ts"() {
     "use strict";
     import_web_push = __toESM(require("web-push"));
     init_User();
@@ -248,7 +248,7 @@ var init_webPush = __esm({
   }
 });
 
-// backend-fastify/src/services/mailSockets.ts
+// src/services/mailSockets.ts
 var mailSockets_exports = {};
 __export(mailSockets_exports, {
   activeMailSockets: () => activeMailSockets,
@@ -308,7 +308,7 @@ function handleMailSocket(socket, req) {
 }
 var import_fs, import_path, activeMailSockets;
 var init_mailSockets = __esm({
-  "backend-fastify/src/services/mailSockets.ts"() {
+  "src/services/mailSockets.ts"() {
     "use strict";
     import_fs = __toESM(require("fs"));
     import_path = __toESM(require("path"));
@@ -316,10 +316,10 @@ var init_mailSockets = __esm({
   }
 });
 
-// backend-fastify/src/models/Transcript.ts
+// src/models/Transcript.ts
 var import_mongoose10, TranscriptSchema, Transcript;
 var init_Transcript = __esm({
-  "backend-fastify/src/models/Transcript.ts"() {
+  "src/models/Transcript.ts"() {
     "use strict";
     import_mongoose10 = require("mongoose");
     TranscriptSchema = new import_mongoose10.Schema({
@@ -334,7 +334,7 @@ var init_Transcript = __esm({
   }
 });
 
-// backend-fastify/src/services/transcription.ts
+// src/services/transcription.ts
 var transcription_exports = {};
 __export(transcription_exports, {
   transcribeChunk: () => transcribeChunk
@@ -374,7 +374,7 @@ async function transcribeChunk(meetingId, userId, speakerName, filePath) {
 }
 var import_fs4, import_groq_sdk, groq;
 var init_transcription = __esm({
-  "backend-fastify/src/services/transcription.ts"() {
+  "src/services/transcription.ts"() {
     "use strict";
     import_fs4 = __toESM(require("fs"));
     import_groq_sdk = __toESM(require("groq-sdk"));
@@ -386,42 +386,42 @@ var init_transcription = __esm({
   }
 });
 
-// backend-fastify/src/models/MutedUser.ts
+// src/models/MutedUser.ts
 var MutedUser_exports = {};
 __export(MutedUser_exports, {
   MutedUser: () => MutedUser
 });
-var import_mongoose24, MutedUserSchema, MutedUser;
+var import_mongoose25, MutedUserSchema, MutedUser;
 var init_MutedUser = __esm({
-  "backend-fastify/src/models/MutedUser.ts"() {
+  "src/models/MutedUser.ts"() {
     "use strict";
-    import_mongoose24 = require("mongoose");
-    MutedUserSchema = new import_mongoose24.Schema({
+    import_mongoose25 = require("mongoose");
+    MutedUserSchema = new import_mongoose25.Schema({
       userId: { type: String, required: true },
       userEmail: { type: String, required: true },
       mutedUserEmail: { type: String, required: true },
       createdAt: { type: Date, default: Date.now }
     });
     MutedUserSchema.index({ userEmail: 1, mutedUserEmail: 1 }, { unique: true });
-    MutedUser = (0, import_mongoose24.model)("MutedUser", MutedUserSchema);
+    MutedUser = (0, import_mongoose25.model)("MutedUser", MutedUserSchema);
   }
 });
 
-// backend-fastify/src/index.ts
+// src/index.ts
 var import_fastify = __toESM(require("fastify"));
 var import_cors = __toESM(require("@fastify/cors"));
 var import_websocket = __toESM(require("@fastify/websocket"));
-var import_mongoose29 = __toESM(require("mongoose"));
+var import_mongoose30 = __toESM(require("mongoose"));
 var import_dotenv2 = __toESM(require("dotenv"));
 var import_fs6 = __toESM(require("fs"));
 var import_path5 = __toESM(require("path"));
 var import_jsonwebtoken6 = __toESM(require("jsonwebtoken"));
 var import_multipart = __toESM(require("@fastify/multipart"));
 
-// backend-fastify/src/middlewares/auth.ts
+// src/middlewares/auth.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 
-// backend-fastify/src/utils/securityConfig.ts
+// src/utils/securityConfig.ts
 var import_crypto = __toESM(require("crypto"));
 var INSECURE_JWT_SECRETS = /* @__PURE__ */ new Set([
   "nexus-jwt-secret-key",
@@ -571,7 +571,7 @@ function validatePasswordStrength(password) {
   return null;
 }
 
-// backend-fastify/src/middlewares/auth.ts
+// src/middlewares/auth.ts
 var getJwtSecret = () => loadSecurityConfig().jwtSecret;
 async function authenticate(request, reply) {
   try {
@@ -602,7 +602,7 @@ async function authenticate(request, reply) {
   }
 }
 
-// backend-fastify/src/models/Meeting.ts
+// src/models/Meeting.ts
 var import_mongoose = require("mongoose");
 var MeetingSchema = new import_mongoose.Schema({
   title: { type: String, required: true },
@@ -621,14 +621,14 @@ var MeetingSchema = new import_mongoose.Schema({
 });
 var Meeting = (0, import_mongoose.model)("Meeting", MeetingSchema);
 
-// backend-fastify/src/services/summarizer.ts
+// src/services/summarizer.ts
 var import_fs2 = __toESM(require("fs"));
 var import_path2 = __toESM(require("path"));
 var import_os = __toESM(require("os"));
 var import_generative_ai = require("@google/generative-ai");
 var import_server = require("@google/generative-ai/server");
 
-// backend-fastify/src/models/Participant.ts
+// src/models/Participant.ts
 var import_mongoose2 = require("mongoose");
 var ParticipantSchema = new import_mongoose2.Schema({
   meetingId: { type: import_mongoose2.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
@@ -641,7 +641,7 @@ var ParticipantSchema = new import_mongoose2.Schema({
 });
 var Participant = (0, import_mongoose2.model)("Participant", ParticipantSchema);
 
-// backend-fastify/src/models/Mail.ts
+// src/models/Mail.ts
 var import_mongoose3 = __toESM(require("mongoose"));
 var mailSchema = new import_mongoose3.default.Schema({
   workspaceId: { type: String, required: true, default: "forge-india-connect" },
@@ -671,7 +671,7 @@ mailSchema.pre("save", function(next) {
 });
 var Mail = import_mongoose3.default.model("Mail", mailSchema);
 
-// backend-fastify/src/services/summarizer.ts
+// src/services/summarizer.ts
 init_User();
 init_pushNotifications();
 init_webPush();
@@ -818,9 +818,9 @@ Focus on capturing the real essence of the conversation accurately.`;
         displayName: `meeting_audio_${meetingId}`
       });
       console.log(`[Summarizer] Uploaded to Gemini: ${uploadedFile.file.uri}`);
-      const model22 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model23 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       console.log("[Summarizer] Requesting generation...");
-      const result = await model22.generateContent([
+      const result = await model23.generateContent([
         {
           fileData: {
             mimeType: uploadedFile.file.mimeType,
@@ -885,12 +885,12 @@ Focus on capturing the real essence of the conversation accurately.`;
   return summaryHtml;
 }
 
-// backend-fastify/src/routes/auth.ts
+// src/routes/auth.ts
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
 init_User();
 
-// backend-fastify/src/models/Tenant.ts
+// src/models/Tenant.ts
 var import_mongoose5 = require("mongoose");
 var TenantSchema = new import_mongoose5.Schema({
   name: { type: String, required: true },
@@ -907,7 +907,7 @@ var TenantSchema = new import_mongoose5.Schema({
 }, { collection: "tenants" });
 var Tenant = (0, import_mongoose5.model)("Tenant", TenantSchema);
 
-// backend-fastify/src/models/RefreshToken.ts
+// src/models/RefreshToken.ts
 var import_mongoose6 = require("mongoose");
 var RefreshTokenSchema = new import_mongoose6.Schema({
   userId: { type: import_mongoose6.Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -918,10 +918,10 @@ var RefreshTokenSchema = new import_mongoose6.Schema({
 });
 var RefreshToken = (0, import_mongoose6.model)("RefreshToken", RefreshTokenSchema);
 
-// backend-fastify/src/routes/auth.ts
+// src/routes/auth.ts
 init_webPush();
 
-// backend-fastify/src/utils/redis.ts
+// src/utils/redis.ts
 var import_ioredis = __toESM(require("ioredis"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
@@ -1005,7 +1005,7 @@ async function resetFailedAttempts(email) {
   }
 }
 
-// backend-fastify/src/utils/mfa.ts
+// src/utils/mfa.ts
 var import_speakeasy = __toESM(require("speakeasy"));
 var import_qrcode = __toESM(require("qrcode"));
 async function generateMfaSecret(email) {
@@ -1031,7 +1031,7 @@ function verifyMfaToken(secret, token) {
   });
 }
 
-// backend-fastify/src/utils/mongo.ts
+// src/utils/mongo.ts
 var import_mongoose7 = __toESM(require("mongoose"));
 var lastConnectError = null;
 function validateMongoUri(uri) {
@@ -1078,7 +1078,7 @@ function isMongoConnected() {
   return import_mongoose7.default.connection.readyState === 1;
 }
 
-// backend-fastify/src/routes/auth.ts
+// src/routes/auth.ts
 var getJwtSecret2 = () => loadSecurityConfig().jwtSecret;
 var getJwtRefreshSecret = () => loadSecurityConfig().jwtRefreshSecret;
 var isProduction = () => loadSecurityConfig().isProduction;
@@ -1633,11 +1633,11 @@ async function authRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 var import_bcrypt3 = __toESM(require("bcrypt"));
 var import_mongoose11 = require("mongoose");
 
-// backend-fastify/src/models/Recording.ts
+// src/models/Recording.ts
 var import_mongoose8 = require("mongoose");
 var RecordingSchema = new import_mongoose8.Schema({
   meetingId: { type: import_mongoose8.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
@@ -1650,10 +1650,10 @@ var RecordingSchema = new import_mongoose8.Schema({
 });
 var Recording = (0, import_mongoose8.model)("Recording", RecordingSchema);
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 init_User();
 
-// backend-fastify/src/models/Room.ts
+// src/models/Room.ts
 var import_mongoose9 = require("mongoose");
 var RoomSchema = new import_mongoose9.Schema({
   workspaceId: { type: String, required: true },
@@ -1665,10 +1665,10 @@ var RoomSchema = new import_mongoose9.Schema({
 });
 var Room = (0, import_mongoose9.model)("Room", RoomSchema);
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 init_Transcript();
 
-// backend-fastify/src/services/aiBot.ts
+// src/services/aiBot.ts
 var import_ws = __toESM(require("ws"));
 var import_fs3 = __toESM(require("fs"));
 var import_path3 = __toESM(require("path"));
@@ -1850,7 +1850,7 @@ function handleAudioSocket(ws) {
   });
 }
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 init_pushNotifications();
 init_webPush();
 async function meetingRoutes(fastify2) {
@@ -2586,7 +2586,7 @@ async function meetingRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/mail.ts
+// src/routes/mail.ts
 init_mailSockets();
 init_pushNotifications();
 init_webPush();
@@ -3045,12 +3045,12 @@ Context: "${context || "Professional email"}"`;
   });
 }
 
-// backend-fastify/src/routes/kural.ts
+// src/routes/kural.ts
 var import_mongoose16 = require("mongoose");
 var import_cloudinary = require("cloudinary");
 init_User();
 
-// backend-fastify/src/models/KuralConversation.ts
+// src/models/KuralConversation.ts
 var import_mongoose12 = require("mongoose");
 var KuralConversationSchema = new import_mongoose12.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -3072,7 +3072,7 @@ KuralConversationSchema.pre("save", function(next) {
 });
 var KuralConversation = (0, import_mongoose12.model)("KuralConversation", KuralConversationSchema);
 
-// backend-fastify/src/models/KuralMessage.ts
+// src/models/KuralMessage.ts
 var import_mongoose13 = require("mongoose");
 var KuralMessageSchema = new import_mongoose13.Schema({
   conversationId: { type: import_mongoose13.Schema.Types.ObjectId, ref: "KuralConversation", required: true, index: true },
@@ -3088,7 +3088,7 @@ var KuralMessageSchema = new import_mongoose13.Schema({
 KuralMessageSchema.index({ conversationId: 1, createdAt: 1 });
 var KuralMessage = (0, import_mongoose13.model)("KuralMessage", KuralMessageSchema);
 
-// backend-fastify/src/models/Story.ts
+// src/models/Story.ts
 var import_mongoose14 = require("mongoose");
 var StorySchema = new import_mongoose14.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -3118,7 +3118,7 @@ var StorySchema = new import_mongoose14.Schema({
 StorySchema.index({ workspaceId: 1, createdAt: -1 });
 var Story = (0, import_mongoose14.model)("Story", StorySchema);
 
-// backend-fastify/src/models/CallLog.ts
+// src/models/CallLog.ts
 var import_mongoose15 = __toESM(require("mongoose"));
 var CallLogSchema = new import_mongoose15.Schema(
   {
@@ -3138,7 +3138,7 @@ CallLogSchema.index({ callerEmail: 1, timestamp: -1 });
 CallLogSchema.index({ calleeEmail: 1, timestamp: -1 });
 var CallLog = import_mongoose15.default.model("CallLog", CallLogSchema);
 
-// backend-fastify/src/routes/kural.ts
+// src/routes/kural.ts
 init_pushNotifications();
 init_webPush();
 var cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "chat_uploads";
@@ -3807,7 +3807,7 @@ async function kuralRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/members.ts
+// src/routes/members.ts
 var import_bcrypt4 = __toESM(require("bcrypt"));
 init_User();
 var defaultWorkspaceId2 = "forge-india-connect";
@@ -3879,7 +3879,7 @@ async function memberRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/models/Project.ts
+// src/models/Project.ts
 var import_mongoose17 = require("mongoose");
 var ProjectSchema = new import_mongoose17.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -3895,7 +3895,7 @@ ProjectSchema.pre("save", function(next) {
 });
 var Project = (0, import_mongoose17.model)("Project", ProjectSchema);
 
-// backend-fastify/src/models/Sprint.ts
+// src/models/Sprint.ts
 var import_mongoose18 = require("mongoose");
 var SprintSchema = new import_mongoose18.Schema({
   projectId: { type: String, required: true, index: true },
@@ -3917,7 +3917,7 @@ SprintSchema.pre("save", function(next) {
 });
 var Sprint = (0, import_mongoose18.model)("Sprint", SprintSchema);
 
-// backend-fastify/src/models/Epic.ts
+// src/models/Epic.ts
 var import_mongoose19 = require("mongoose");
 var EpicSchema = new import_mongoose19.Schema({
   projectId: { type: String, required: true, index: true },
@@ -3934,7 +3934,7 @@ EpicSchema.pre("save", function(next) {
 });
 var Epic = (0, import_mongoose19.model)("Epic", EpicSchema);
 
-// backend-fastify/src/models/Status.ts
+// src/models/Status.ts
 var import_mongoose20 = require("mongoose");
 var StatusSchema = new import_mongoose20.Schema({
   projectId: { type: String, required: true, index: true },
@@ -3951,7 +3951,19 @@ StatusSchema.pre("save", function(next) {
 });
 var Status = (0, import_mongoose20.model)("Status", StatusSchema);
 
-// backend-fastify/src/routes/projects.ts
+// src/models/ProjectMember.ts
+var import_mongoose21 = require("mongoose");
+var ProjectMemberSchema = new import_mongoose21.Schema({
+  projectId: { type: String, required: true, index: true },
+  userId: { type: String, required: true, index: true },
+  assignedBy: { type: String, required: true },
+  assignedAt: { type: Date, default: Date.now }
+});
+ProjectMemberSchema.index({ projectId: 1, userId: 1 }, { unique: true });
+var ProjectMember = (0, import_mongoose21.model)("ProjectMember", ProjectMemberSchema);
+
+// src/routes/projects.ts
+init_User();
 var defaultWorkspaceId3 = "forge-india-connect";
 async function projectRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -3959,7 +3971,17 @@ async function projectRoutes(fastify2) {
     try {
       const { workspaceId } = request.query;
       const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId3;
-      const projects = await Project.find({ workspaceId: activeWorkspaceId }).sort({ createdAt: -1 });
+      const role = request.user?.role || "DEVELOPER";
+      let projectIds = null;
+      if (role !== "TEAM_LEAD" && role !== "MANAGER") {
+        const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
+        projectIds = memberships.map((m) => m.projectId);
+      }
+      const filter = { workspaceId: activeWorkspaceId };
+      if (projectIds) {
+        filter._id = { $in: projectIds };
+      }
+      const projects = await Project.find(filter).sort({ createdAt: -1 });
       if (projects.length === 0) {
         const defaultProject = await Project.create({
           workspaceId: activeWorkspaceId,
@@ -3989,8 +4011,10 @@ async function projectRoutes(fastify2) {
       }
       const populatedProjects = await Promise.all(projects.map(async (project) => {
         const sprints = await Sprint.find({ projectId: project._id }).sort({ createdAt: -1 }).lean();
+        const memberCount = await ProjectMember.countDocuments({ projectId: project._id });
         const pObj = project.toObject ? project.toObject() : project;
         pObj.sprints = sprints;
+        pObj.memberCount = memberCount;
         return pObj;
       }));
       return reply.code(200).send(populatedProjects);
@@ -4012,6 +4036,14 @@ async function projectRoutes(fastify2) {
         name: "Backlog (Unplanned)",
         status: "PLANNING"
       });
+      if (body.members && Array.isArray(body.members)) {
+        const memberDocs = body.members.map((userId) => ({
+          projectId: project.id,
+          userId,
+          assignedBy: request.user?.id || "system"
+        }));
+        await ProjectMember.insertMany(memberDocs);
+      }
       return reply.code(201).send(project);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to create project", details: err.message });
@@ -4109,6 +4141,44 @@ async function projectRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to delete status" });
     }
   });
+  fastify2.get("/:projectId/members", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const memberships = await ProjectMember.find({ projectId }).lean();
+      const userIds = memberships.map((m) => m.userId);
+      const users = await User.find({ _id: { $in: userIds } }, "name email avatarUrl role").lean();
+      return reply.code(200).send(users);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch members" });
+    }
+  });
+  fastify2.post("/:projectId/members", async (request, reply) => {
+    try {
+      if (request.user?.role !== "TEAM_LEAD") {
+        return reply.code(403).send({ error: "Only Team Leads can assign members" });
+      }
+      const { projectId } = request.params;
+      const { userIds } = request.body;
+      if (!Array.isArray(userIds)) return reply.code(400).send({ error: "userIds must be an array" });
+      const existing = await ProjectMember.find({ projectId }).lean();
+      const existingIds = new Set(existing.map((m) => m.userId));
+      const newAssignments = userIds.filter((id) => !existingIds.has(id)).map((id) => ({
+        projectId,
+        userId: id,
+        assignedBy: request.user?.id || "system"
+      }));
+      if (newAssignments.length > 0) {
+        await ProjectMember.insertMany(newAssignments);
+      }
+      const toRemove = Array.from(existingIds).filter((id) => !userIds.includes(id));
+      if (toRemove.length > 0) {
+        await ProjectMember.deleteMany({ projectId, userId: { $in: toRemove } });
+      }
+      return reply.code(200).send({ message: "Members updated successfully" });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update members" });
+    }
+  });
   fastify2.get("/:projectId/velocity", async (request, reply) => {
     return reply.code(200).send([]);
   });
@@ -4117,9 +4187,9 @@ async function projectRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/models/Issue.ts
-var import_mongoose21 = require("mongoose");
-var IssueSchema = new import_mongoose21.Schema({
+// src/models/Issue.ts
+var import_mongoose22 = require("mongoose");
+var IssueSchema = new import_mongoose22.Schema({
   workspaceId: { type: String, required: true, index: true },
   projectId: { type: String, required: true, index: true },
   sprintId: { type: String, index: true },
@@ -4146,19 +4216,42 @@ IssueSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var Issue = (0, import_mongoose21.model)("Issue", IssueSchema);
+var Issue = (0, import_mongoose22.model)("Issue", IssueSchema);
 
-// backend-fastify/src/routes/issues.ts
+// src/routes/issues.ts
 init_User();
 var defaultWorkspaceId4 = "forge-india-connect";
 async function issueRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
+  const checkIssueAccess = async (request, issueProjectId) => {
+    const role = request.user?.role || "DEVELOPER";
+    if (role === "TEAM_LEAD" || role === "MANAGER") return true;
+    const member = await ProjectMember.findOne({ projectId: issueProjectId, userId: request.user?.id }).lean();
+    return !!member;
+  };
   fastify2.get("/", async (request, reply) => {
     try {
       const { projectId, sprintId, workspaceId, type, status, assigneeId } = request.query;
       const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId4;
+      const role = request.user?.role || "DEVELOPER";
+      let allowedProjectIds = null;
+      if (role !== "TEAM_LEAD" && role !== "MANAGER") {
+        const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
+        allowedProjectIds = memberships.map((m) => m.projectId);
+      }
       const filter = { workspaceId: activeWorkspaceId };
-      if (projectId) filter.projectId = projectId;
+      if (allowedProjectIds) {
+        if (projectId) {
+          if (!allowedProjectIds.includes(projectId)) {
+            return reply.code(403).send({ error: "Access denied to this project" });
+          }
+          filter.projectId = projectId;
+        } else {
+          filter.projectId = { $in: allowedProjectIds };
+        }
+      } else if (projectId) {
+        filter.projectId = projectId;
+      }
       if (sprintId) filter.sprintId = sprintId;
       if (type) filter.type = type;
       if (status) filter.status = status;
@@ -4194,6 +4287,9 @@ async function issueRoutes(fastify2) {
       if (!body.projectId) {
         return reply.code(400).send({ error: "Project ID is required." });
       }
+      if (!await checkIssueAccess(request, body.projectId)) {
+        return reply.code(403).send({ error: "Access denied to this project" });
+      }
       const workspaceId = String(
         body.workspaceId || request.user?.workspaceId || defaultWorkspaceId4
       ).trim();
@@ -4220,6 +4316,11 @@ async function issueRoutes(fastify2) {
     try {
       const { id } = request.params;
       const body = request.body;
+      const existingIssue = await Issue.findById(id).lean();
+      if (!existingIssue) return reply.code(404).send({ error: "Issue not found." });
+      if (!await checkIssueAccess(request, existingIssue.projectId)) {
+        return reply.code(403).send({ error: "Access denied to this project" });
+      }
       const issue = await Issue.findByIdAndUpdate(id, body, { new: true });
       if (!issue) {
         return reply.code(404).send({ error: "Issue not found." });
@@ -4232,6 +4333,11 @@ async function issueRoutes(fastify2) {
   fastify2.delete("/:id", async (request, reply) => {
     try {
       const { id } = request.params;
+      const existingIssue = await Issue.findById(id).lean();
+      if (!existingIssue) return reply.code(404).send({ error: "Issue not found." });
+      if (!await checkIssueAccess(request, existingIssue.projectId)) {
+        return reply.code(403).send({ error: "Access denied to this project" });
+      }
       const issue = await Issue.findByIdAndDelete(id);
       if (!issue) {
         return reply.code(404).send({ error: "Issue not found." });
@@ -4245,6 +4351,11 @@ async function issueRoutes(fastify2) {
     try {
       const { id } = request.params;
       const { description } = request.body;
+      const existingIssue = await Issue.findById(id).lean();
+      if (!existingIssue) return reply.code(404).send({ error: "Issue not found." });
+      if (!await checkIssueAccess(request, existingIssue.projectId)) {
+        return reply.code(403).send({ error: "Access denied to this project" });
+      }
       const issue = await Issue.findByIdAndUpdate(id, {
         status: "BLOCKED",
         blockerInfo: {
@@ -4264,6 +4375,11 @@ async function issueRoutes(fastify2) {
     try {
       const { id } = request.params;
       const { estimate } = request.body;
+      const existingIssue = await Issue.findById(id).lean();
+      if (!existingIssue) return reply.code(404).send({ error: "Issue not found." });
+      if (!await checkIssueAccess(request, existingIssue.projectId)) {
+        return reply.code(403).send({ error: "Access denied to this project" });
+      }
       const issue = await Issue.findByIdAndUpdate(id, { estimate }, { new: true });
       return reply.code(200).send(issue);
     } catch (err) {
@@ -4274,6 +4390,17 @@ async function issueRoutes(fastify2) {
     try {
       const { ids, ...updates } = request.body;
       if (!ids || !Array.isArray(ids)) return reply.code(400).send({ error: "Missing ids array" });
+      const role = request.user?.role || "DEVELOPER";
+      if (role !== "TEAM_LEAD" && role !== "MANAGER") {
+        const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
+        const allowedProjectIds = memberships.map((m) => m.projectId);
+        const issuesToUpdate = await Issue.find({ _id: { $in: ids } }).lean();
+        for (const issue of issuesToUpdate) {
+          if (!allowedProjectIds.includes(issue.projectId)) {
+            return reply.code(403).send({ error: "Access denied to some of the issues" });
+          }
+        }
+      }
       await Issue.updateMany({ _id: { $in: ids } }, { $set: updates });
       return reply.code(200).send({ message: "Issues updated successfully" });
     } catch (err) {
@@ -4291,7 +4418,7 @@ async function issueRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/sprints.ts
+// src/routes/sprints.ts
 var sprintRoutes = async (fastify2) => {
   fastify2.addHook("onRequest", authenticate);
   fastify2.get("/:sprintId", async (request, reply) => {
@@ -4342,9 +4469,9 @@ var sprintRoutes = async (fastify2) => {
   });
 };
 
-// backend-fastify/src/models/Task.ts
-var import_mongoose22 = require("mongoose");
-var TaskSchema = new import_mongoose22.Schema({
+// src/models/Task.ts
+var import_mongoose23 = require("mongoose");
+var TaskSchema = new import_mongoose23.Schema({
   workspaceId: { type: String, required: true, index: true },
   title: { type: String, required: true },
   description: { type: String },
@@ -4372,9 +4499,9 @@ TaskSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var Task = (0, import_mongoose22.model)("Task", TaskSchema);
+var Task = (0, import_mongoose23.model)("Task", TaskSchema);
 
-// backend-fastify/src/routes/tasks.ts
+// src/routes/tasks.ts
 var defaultWorkspaceId5 = "forge-india-connect";
 async function taskRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -4451,9 +4578,9 @@ async function taskRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/models/Document.ts
-var import_mongoose23 = require("mongoose");
-var DocumentSchema = new import_mongoose23.Schema({
+// src/models/Document.ts
+var import_mongoose24 = require("mongoose");
+var DocumentSchema = new import_mongoose24.Schema({
   workspaceId: { type: String, required: true, index: true },
   title: { type: String, required: true },
   type: {
@@ -4465,7 +4592,7 @@ var DocumentSchema = new import_mongoose23.Schema({
   ownerName: { type: String },
   sizeBytes: { type: Number, default: 0 },
   url: { type: String },
-  content: { type: import_mongoose23.Schema.Types.Mixed },
+  content: { type: import_mongoose24.Schema.Types.Mixed },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -4474,9 +4601,9 @@ DocumentSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var WorkspaceDocument = (0, import_mongoose23.model)("WorkspaceDocument", DocumentSchema);
+var WorkspaceDocument = (0, import_mongoose24.model)("WorkspaceDocument", DocumentSchema);
 
-// backend-fastify/src/routes/docs.ts
+// src/routes/docs.ts
 var defaultWorkspaceId6 = "forge-india-connect";
 async function docsRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -4584,7 +4711,7 @@ async function docsRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/show.ts
+// src/routes/show.ts
 var fs5 = __toESM(require("fs"));
 var path4 = __toESM(require("path"));
 var cachedExamples = "";
@@ -4668,7 +4795,7 @@ Generate 5 to 7 slides with rich, professional content following the flow in the
   });
 }
 
-// backend-fastify/src/routes/superadmin.ts
+// src/routes/superadmin.ts
 async function superadminRoutes(fastify2) {
   fastify2.addHook("preHandler", authenticate);
   fastify2.addHook("preHandler", async (request, reply) => {
@@ -4686,8 +4813,8 @@ async function superadminRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/status.ts
-var import_mongoose25 = require("mongoose");
+// src/routes/status.ts
+var import_mongoose26 = require("mongoose");
 function normalizeEmail2(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -4756,7 +4883,7 @@ async function statusRoutes(fastify2) {
     try {
       const { id } = request.params;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const existingStatus = await Story.findById(id);
@@ -4776,7 +4903,7 @@ async function statusRoutes(fastify2) {
       const { id } = request.params;
       const { emoji } = request.body;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findByIdAndUpdate(
@@ -4795,7 +4922,7 @@ async function statusRoutes(fastify2) {
       const { id } = request.params;
       const { text } = request.body;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findById(id);
@@ -4874,7 +5001,7 @@ async function statusRoutes(fastify2) {
     try {
       const { id } = request.params;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose25.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findById(id);
@@ -4890,12 +5017,12 @@ async function statusRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/threads.ts
+// src/routes/threads.ts
 var import_cloudinary2 = require("cloudinary");
 
-// backend-fastify/src/models/ThreadPost.ts
-var import_mongoose26 = require("mongoose");
-var ThreadPostSchema = new import_mongoose26.Schema({
+// src/models/ThreadPost.ts
+var import_mongoose27 = require("mongoose");
+var ThreadPostSchema = new import_mongoose27.Schema({
   workspaceId: { type: String, required: true, index: true },
   authorEmail: { type: String, required: true },
   authorName: { type: String, required: true },
@@ -4911,11 +5038,11 @@ var ThreadPostSchema = new import_mongoose26.Schema({
   isPinned: { type: Boolean, default: false },
   isReported: { type: Boolean, default: false }
 }, { timestamps: true });
-var ThreadPost = (0, import_mongoose26.model)("ThreadPost", ThreadPostSchema);
+var ThreadPost = (0, import_mongoose27.model)("ThreadPost", ThreadPostSchema);
 
-// backend-fastify/src/models/ThreadComment.ts
-var import_mongoose27 = require("mongoose");
-var ThreadCommentSchema = new import_mongoose27.Schema({
+// src/models/ThreadComment.ts
+var import_mongoose28 = require("mongoose");
+var ThreadCommentSchema = new import_mongoose28.Schema({
   postId: { type: String, required: true, index: true },
   parentCommentId: { type: String, index: true },
   authorEmail: { type: String, required: true },
@@ -4923,12 +5050,12 @@ var ThreadCommentSchema = new import_mongoose27.Schema({
   content: { type: String, required: true },
   likes: [{ type: String }]
 }, { timestamps: true });
-var ThreadComment = (0, import_mongoose27.model)("ThreadComment", ThreadCommentSchema);
+var ThreadComment = (0, import_mongoose28.model)("ThreadComment", ThreadCommentSchema);
 
-// backend-fastify/src/routes/threads.ts
+// src/routes/threads.ts
 init_User();
 
-// backend-fastify/src/services/threadSockets.ts
+// src/services/threadSockets.ts
 var import_fs5 = __toESM(require("fs"));
 var import_path4 = __toESM(require("path"));
 var activeThreadSockets = /* @__PURE__ */ new Map();
@@ -4983,7 +5110,7 @@ function broadcastToWorkspace(workspaceId, eventType, payload) {
   });
 }
 
-// backend-fastify/src/routes/threads.ts
+// src/routes/threads.ts
 var cloudinaryFolder2 = process.env.CLOUDINARY_FOLDER || "chat_uploads";
 var cloudinaryCloudName2 = process.env.CLOUDINARY_CLOUD_NAME || "";
 var cloudinaryApiKey2 = process.env.CLOUDINARY_API_KEY || "";
@@ -5333,14 +5460,14 @@ async function threadsRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/index.ts
+// src/index.ts
 var import_groq_sdk3 = __toESM(require("groq-sdk"));
 
-// backend-fastify/src/services/webrtc.ts
+// src/services/webrtc.ts
 var import_ws2 = require("ws");
 var import_jsonwebtoken4 = __toESM(require("jsonwebtoken"));
 init_User();
-var import_mongoose28 = require("mongoose");
+var import_mongoose29 = require("mongoose");
 var JWT_SECRET2 = process.env.JWT_SECRET || "nexus-jwt-secret-key";
 var rooms = /* @__PURE__ */ new Map();
 function send(ws, payload) {
@@ -5488,7 +5615,7 @@ function handleWebRtcSignalling(ws) {
     }
     if (type === "end-meeting-all") {
       broadcastToRoom(meetingId, peerId, { type: "meeting-ended" });
-      const query = import_mongoose28.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
+      const query = import_mongoose29.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
       Meeting.updateOne(query, { status: "ended" }).catch((err) => console.error("[WebRTC] Failed to update meeting status:", err));
       return;
     }
@@ -5534,7 +5661,7 @@ async function cleanupPeer(roomId, pid) {
   const baseUserId = pid.split("_")[0];
   try {
     let meetingQuery = { _id: roomId };
-    if (!import_mongoose28.Types.ObjectId.isValid(roomId)) {
+    if (!import_mongoose29.Types.ObjectId.isValid(roomId)) {
       meetingQuery = { joinCode: roomId };
     }
     const meeting = await Meeting.findOne(meetingQuery);
@@ -5612,7 +5739,7 @@ setInterval(() => {
   }
 }, 3e4);
 
-// backend-fastify/src/services/callSignaling.ts
+// src/services/callSignaling.ts
 var import_ws3 = require("ws");
 var import_jsonwebtoken5 = __toESM(require("jsonwebtoken"));
 var JWT_SECRET3 = process.env.JWT_SECRET || "nexus-jwt-secure-key-change-in-production";
@@ -5756,10 +5883,10 @@ function handleCallSignaling(ws) {
   });
 }
 
-// backend-fastify/src/index.ts
+// src/index.ts
 init_mailSockets();
 
-// backend-fastify/src/utils/seedDefaultUser.ts
+// src/utils/seedDefaultUser.ts
 var import_bcrypt5 = __toESM(require("bcrypt"));
 init_User();
 async function ensureDefaultUser() {
@@ -5844,7 +5971,7 @@ async function ensureDefaultUser() {
   }
 }
 
-// backend-fastify/src/index.ts
+// src/index.ts
 import_dotenv2.default.config({ path: import_path5.default.join(__dirname, "../.env") });
 import_dotenv2.default.config();
 var PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
@@ -6108,7 +6235,7 @@ ${transcript}` }
     </ul>
   </div>
 </div>`;
-        const validId = import_mongoose29.default.Types.ObjectId.isValid(meetingId) ? meetingId : null;
+        const validId = import_mongoose30.default.Types.ObjectId.isValid(meetingId) ? meetingId : null;
         let meetingDoc = null;
         if (validId) meetingDoc = await Meeting.findById(validId);
         if (!meetingDoc) meetingDoc = await Meeting.findOne({ joinCode: meetingId });

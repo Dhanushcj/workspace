@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import LogoImage from './assets/landing-logo.png'; // Make sure the asset exists or use an absolute URL
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'https://workspace-backend-r9f8.onrender.com/api';
 
 export default function App() {
   const [auth, setAuth] = useState(() => JSON.parse(localStorage.getItem('auth') || 'null'));

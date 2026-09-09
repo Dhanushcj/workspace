@@ -1,7 +1,7 @@
 
 
-import React, { useState } from 'react';
-import { X, Rocket, Loader, Shield, CircleCheck, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Rocket, Loader, Shield, CircleCheck, AlertCircle, Check } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -33,6 +33,25 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
   const { user } = useAuthStore();
   const { fetchProjects } = useWorkflowStore();
   const [isLaunching, setIsLaunching] = useState(false);
+  const [allMembers, setAllMembers] = useState<any[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (isOpen) {
+      api.get(`/members/${user?.workspaceId || 'forge-india-connect'}`).then(res => {
+        setAllMembers(res.data);
+      }).catch(err => console.error(err));
+    } else {
+      setSelectedMembers(new Set());
+    }
+  }, [isOpen, user?.workspaceId]);
+
+  const toggleMember = (id: string) => {
+    const next = new Set(selectedMembers);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedMembers(next);
+  };
 
   const {
     register,
@@ -63,6 +82,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
         createdById: user?.id,
         startDate: data.startDate,
         endDate: data.endDate,
+        members: Array.from(selectedMembers),
         metadata: {
           sprint: data.sprint,
           completion: 0,
@@ -122,6 +142,24 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
               >
                 <option value="Sprint 1 (Planning)">Sprint 1 (Planning)</option>
               </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">Assign Team Members</label>
+              <div className="max-h-32 overflow-y-auto border border-slate-100 rounded-2xl bg-slate-50 p-2 divide-y divide-slate-100/50">
+                {allMembers.map(member => {
+                  const mId = member._id || member.id;
+                  const isSelected = selectedMembers.has(mId);
+                  return (
+                    <div key={mId} onClick={() => toggleMember(mId)} className="flex items-center gap-3 p-2 hover:bg-white rounded-xl cursor-pointer transition-all">
+                      <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? 'bg-[#005f43] border-[#005f43] text-white' : 'bg-white border-slate-300'}`}>
+                        {isSelected && <Check size={10} strokeWidth={3} />}
+                      </div>
+                      <span className="text-sm font-semibold text-slate-700">{member.name} <span className="text-[10px] text-slate-400 font-normal">({member.role || 'Member'})</span></span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Date Pickers */}

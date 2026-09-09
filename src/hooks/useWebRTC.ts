@@ -368,7 +368,7 @@ export const useWebRTC = ({
     }
 
     // Abstracting signaling connection for the user to integrate with their specific socket logic
-    let API_URL = 'http://localhost:3001';
+    let API_URL = 'https://workspace-backend-r9f8.onrender.com';
     try {
         API_URL = (import.meta as any).env.VITE_API_URL || API_URL;
     } catch(e){}
@@ -387,7 +387,7 @@ export const useWebRTC = ({
     
     // Reliably notify backend of leave on tab close so AI summaries trigger
     if (token && roomId) {
-      let API_URL = 'http://localhost:3001';
+      let API_URL = 'https://workspace-backend-r9f8.onrender.com';
       try { API_URL = (import.meta as any).env.VITE_API_URL || API_URL; } catch(e){}
       const leaveUrl = `${API_URL}/api/meetings/${encodeURIComponent(roomId)}/leave`;
       try {
@@ -423,7 +423,7 @@ export const useWebRTC = ({
     // Fetch ICE Servers (optional, matching existing implementation)
     const fetchIce = async () => {
         try {
-            let API_URL = 'http://localhost:3001';
+            let API_URL = 'https://workspace-backend-r9f8.onrender.com';
             try { API_URL = (import.meta as any).env.VITE_API_URL || API_URL; } catch(e){}
             const res = await fetch(`${API_URL}/api/meet/ice-servers`);
             const data = await res.json();

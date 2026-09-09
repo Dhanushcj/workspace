@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Video, MessageSquare, LogOut, Zap, LayoutDashboard, User, Grid, Shield, RefreshCw } from 'lucide-react';
 
-const GATEWAY_URL = 'http://localhost:3001';
+const GATEWAY_URL = 'https://workspace-backend-r9f8.onrender.com';
 
 const APPS = [
   { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, color: '#3b82f6', desc: 'Command Center' },

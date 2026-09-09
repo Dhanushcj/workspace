@@ -218,6 +218,18 @@ export const SprintBoard = ({
     if (onTaskClick) onTaskClick(task, dId);
   };
 
+  if (!currentProject) {
+    return (
+      <div className="flex-1 w-full overflow-hidden flex flex-col bg-slate-50 items-center justify-center p-8">
+        <div className="text-center max-w-sm bg-white p-10 rounded-3xl border border-slate-100 shadow-sm">
+           <Target className="mx-auto text-slate-200 mb-4" size={48} />
+           <h2 className="text-xl font-bold text-slate-900 mb-2">No Projects Assigned</h2>
+           <p className="text-[13px] text-slate-500 font-medium leading-relaxed">You have not been assigned to any projects. Please contact your Team Lead or Manager to get access.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 w-full overflow-hidden flex flex-col bg-[var(--background)]">
       {/* 1. Top Bar Controls */}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, Search, Users, Plus, X, Loader2, Paperclip, FileText, Download, Image as ImageIcon, Home, Grid, Phone, ArrowLeft, MoreVertical, Mic, Smile } from 'lucide-react';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'https://workspace-backend-r9f8.onrender.com/api';
 
 export default function App() {
   const [auth, setAuth] = useState(() => JSON.parse(localStorage.getItem('auth') || 'null'));
