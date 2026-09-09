@@ -39,8 +39,12 @@ api.interceptors.request.use(async (config) => {
     config.url = config.url.substring(1);
   }
 
-  const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-  const token = auth.token || useAuthStore.getState().accessToken;
+  // Read token from all possible storage locations (in priority order)
+  const directToken = localStorage.getItem('token');
+  const forgeAuth = JSON.parse(localStorage.getItem('forge-auth') || '{}');
+  const persistedToken = forgeAuth?.state?.accessToken;
+  const storeToken = useAuthStore.getState().accessToken;
+  const token = directToken || storeToken || persistedToken;
   console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

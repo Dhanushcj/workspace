@@ -35,13 +35,15 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
       setPhase('INPUT');
       setRequirements('');
       setPlan(null);
-      // Check if there's an existing draft
+      // Check if there's an existing draft — silently ignore auth/network errors
       api.get(`/v1/ai/project-plan/${projectId}`).then(res => {
         if (res.data) {
           loadPlan(res.data);
           setPhase('REVIEW');
         }
-      }).catch(err => console.error(err));
+      }).catch(() => {
+        // Silently ignore - no existing draft, or auth error. User can still create new plan.
+      });
     }
   }, [isOpen, projectId]);
 
@@ -81,9 +83,18 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
       });
       loadPlan(res.data);
       setPhase('REVIEW');
-      toast.success('AI Plan generated successfully');
+      toast.success('AI Plan generated successfully!');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to generate plan');
+      const serverMsg = err.response?.data?.message || err.response?.data?.error || '';
+      let userMsg = 'AI Analysis failed. Please try again.';
+      if (serverMsg.includes('GEMINI_API_KEY')) {
+        userMsg = '⚠️ GEMINI_API_KEY is not configured on the server. Ask your admin to add it in Render environment variables.';
+      } else if (serverMsg.includes('quota') || serverMsg.includes('429')) {
+        userMsg = 'AI quota exceeded. Please wait a moment and try again.';
+      } else if (serverMsg) {
+        userMsg = serverMsg;
+      }
+      toast.error(userMsg, { duration: 6000 });
       setPhase('INPUT');
     }
   };
