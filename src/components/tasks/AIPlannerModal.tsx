@@ -75,26 +75,37 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
     }
     
     setPhase('ANALYZING');
+
+    // Safety timeout: reset to INPUT if no response within 90 seconds
+    const timeout = setTimeout(() => {
+      setPhase('INPUT');
+      toast.error('Request timed out. The AI may be slow — please try again.', { duration: 6000 });
+    }, 90000);
+
     try {
       const res = await api.post('/v1/ai/project-plan/analyze', {
         projectId,
         requirements,
         sprintCapacity
       });
+      clearTimeout(timeout);
       loadPlan(res.data);
       setPhase('REVIEW');
-      toast.success('AI Plan generated successfully!');
+      toast.success('✅ AI Plan generated! Review below and approve to add to Sprint Planner.');
     } catch (err: any) {
+      clearTimeout(timeout);
       const serverMsg = err.response?.data?.message || err.response?.data?.error || '';
       let userMsg = 'AI Analysis failed. Please try again.';
       if (serverMsg.includes('GEMINI_API_KEY')) {
-        userMsg = '⚠️ GEMINI_API_KEY is not configured on the server. Ask your admin to add it in Render environment variables.';
-      } else if (serverMsg.includes('quota') || serverMsg.includes('429')) {
+        userMsg = '⚠️ GEMINI_API_KEY is not set on the server. Add it in Render → Environment Variables.';
+      } else if (serverMsg.includes('quota') || err.response?.status === 429) {
         userMsg = 'AI quota exceeded. Please wait a moment and try again.';
+      } else if (err.response?.status === 401 || err.response?.status === 403) {
+        userMsg = 'Session expired. Please refresh the page and log in again.';
       } else if (serverMsg) {
         userMsg = serverMsg;
       }
-      toast.error(userMsg, { duration: 6000 });
+      toast.error(userMsg, { duration: 7000 });
       setPhase('INPUT');
     }
   };

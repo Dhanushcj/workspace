@@ -10,36 +10,41 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/project-plan/analyze', { preValidation: [authenticate] }, async (request, reply) => {
     const { projectId, requirements, sprintCapacity } = request.body as any;
     try {
-      // Clear existing drafts for this project
-      await AIProjectPlan.deleteMany({ projectId, status: 'DRAFT' });
+      if (!projectId) return reply.code(400).send({ message: 'projectId is required' });
+      if (!requirements?.trim()) return reply.code(400).send({ message: 'requirements are required' });
+
+      // projectId is a String in AIProjectPlan model - use directly
+      await AIProjectPlan.deleteMany({ projectId: String(projectId), status: 'DRAFT' });
 
       const result = await aiService.analyzeRequirements(requirements, sprintCapacity || 40);
       
       const draft = new AIProjectPlan({
-        projectId,
+        projectId: String(projectId),
         status: 'DRAFT',
         projectSummary: result.projectSummary,
-        assumptions: result.assumptions,
-        clarifications: result.clarifications,
-        epics: result.epics,
-        sprints: result.sprints
+        assumptions: result.assumptions || [],
+        clarifications: result.clarifications || [],
+        epics: result.epics || [],
+        sprints: result.sprints || []
       });
       await draft.save();
 
       return reply.send(draft);
     } catch (err: any) {
-      request.log.error(err);
+      request.log.error('[AI Analyze Error] ' + err.message);
       return reply.code(500).send({ message: err.message || 'AI Analysis failed' });
     }
   });
 
   fastify.get('/project-plan/:projectId', { preValidation: [authenticate] }, async (request, reply) => {
-    const { projectId } = request.params as { projectId: string };
-    const draft = await AIProjectPlan.findOne({ projectId, status: 'DRAFT' }).sort({ createdAt: -1 });
-    if (!draft) {
-      return reply.send(null);
+    try {
+      const { projectId } = request.params as { projectId: string };
+      const draft = await AIProjectPlan.findOne({ projectId: String(projectId), status: 'DRAFT' }).sort({ createdAt: -1 });
+      return reply.send(draft || null);
+    } catch (err: any) {
+      request.log.error('[AI GetPlan Error] ' + err.message);
+      return reply.send(null); // Return null instead of error so modal still opens
     }
-    return reply.send(draft);
   });
 
   fastify.post('/project-plan/regenerate', { preValidation: [authenticate] }, async (request, reply) => {

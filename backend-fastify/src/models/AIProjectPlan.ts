@@ -43,7 +43,8 @@ const SprintSchema = new mongoose.Schema({
 });
 
 const AIProjectPlanSchema = new mongoose.Schema({
-  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  // Use String (not ObjectId) to match Sprint/Issue/Epic models — avoids CastError when querying with string projectIds
+  projectId: { type: String, required: true, index: true },
   status: { type: String, enum: ['DRAFT', 'APPROVED'], default: 'DRAFT' },
   projectSummary: String,
   assumptions: [String],
