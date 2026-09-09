@@ -58,50 +58,56 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     const plan = await AIProjectPlan.findById(planId);
     if (!plan) return reply.code(404).send({ message: 'Plan not found' });
 
+    // CRITICAL: Convert ObjectId to String for all references — Issue/Sprint store projectId as String
+    const projectIdStr = plan.projectId.toString();
     const workspaceId = (request.user as any)?.workspaceId || 'forge-india-connect';
     const creatorId = (request.user as any)?.id || 'system';
 
     const sprintMap: Record<string, string> = {}; 
     const epicMap: Record<string, string> = {};
 
+    // Create AI-suggested sprints in the database
     for (const s of plan.sprints) {
       const sprint = new Sprint({
-        projectId: plan.projectId,
+        projectId: projectIdStr,
         name: s.name,
         goal: s.goal,
         status: 'PLANNING'
       });
       await sprint.save();
-      sprintMap[s.id] = sprint.id;
+      // Map AI sprint ID (e.g. "sprint-1") → real MongoDB sprint ID (string)
+      sprintMap[s.id] = sprint._id.toString();
     }
 
-    const getSprintForStory = (sId: string) => {
+    const getSprintForStory = (sId: string): string | null => {
       const sp = plan.sprints.find(s => s.storyIds.includes(sId));
-      return sp ? sprintMap[sp.id] : undefined;
+      return sp ? (sprintMap[sp.id] || null) : null;
     };
 
+    // Create Epics, Stories, and Tasks
     for (const e of plan.epics) {
       if (approvedEpicIds.includes(e.id)) {
         const epic = new Epic({
-          projectId: plan.projectId,
+          projectId: projectIdStr,
           name: e.name,
           description: e.description,
           status: 'TODO'
         });
         await epic.save();
-        epicMap[e.id] = epic.id;
+        epicMap[e.id] = epic._id.toString();
       }
 
       for (const s of e.stories) {
         if (approvedStoryIds.includes(s.id)) {
           const sprintId = getSprintForStory(s.id);
+          const acText = Array.isArray(s.acceptanceCriteria) ? s.acceptanceCriteria.join('\n- ') : '';
           const story = new Issue({
             workspaceId,
-            projectId: plan.projectId,
-            epicId: epicMap[e.id],
-            sprintId,
+            projectId: projectIdStr,
+            epicId: epicMap[e.id] || undefined,
+            sprintId: sprintId,
             title: s.title,
-            description: s.description + '\n\n**User Story:** ' + s.userStory + '\n\n**Acceptance Criteria:**\n- ' + s.acceptanceCriteria.join('\n- '),
+            description: (s.description || '') + (s.userStory ? '\n\n**User Story:** ' + s.userStory : '') + (acText ? '\n\n**Acceptance Criteria:**\n- ' + acText : ''),
             type: 'STORY',
             status: 'TO_DO',
             priority: s.priority || 'MEDIUM',
@@ -116,11 +122,11 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
             const sprintId = getSprintForStory(s.id);
             const task = new Issue({
               workspaceId,
-              projectId: plan.projectId,
-              epicId: epicMap[e.id],
-              sprintId,
+              projectId: projectIdStr,
+              epicId: epicMap[e.id] || undefined,
+              sprintId: sprintId,
               title: t.title,
-              description: t.description + (t.assigneeReason ? '\n\n**AI Note:** ' + t.assigneeReason : ''),
+              description: (t.description || '') + (t.assigneeReason ? '\n\n**AI Note:** ' + t.assigneeReason : ''),
               type: 'TASK',
               status: 'TO_DO',
               priority: t.priority || 'MEDIUM',
@@ -136,6 +142,6 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     plan.status = 'APPROVED';
     await plan.save();
 
-    return reply.send({ success: true, message: 'Plan applied successfully' });
+    return reply.send({ success: true, message: 'Plan applied successfully', projectId: projectIdStr });
   });
 };

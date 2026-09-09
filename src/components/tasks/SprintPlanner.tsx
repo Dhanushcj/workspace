@@ -426,11 +426,27 @@ export default function SprintPlanner() {
           onClose={() => setIsAIPlannerOpen(false)}
           projectId={currentProject.id || (currentProject as any)._id}
           projectName={currentProject.name}
-          onSuccess={() => {
-            fetchTasks({ projectId: currentProject.id || (currentProject as any)._id });
-            api.get(`/projects/${currentProject.id || (currentProject as any)._id}/sprints`).then(sRes => {
-              setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
+      onSuccess={() => {
+            const projectId = currentProject.id || (currentProject as any)._id;
+            // 1. Reload sprints so newly created AI sprints appear in navigator
+            api.get(`/projects/${projectId}/sprints`).then(sRes => {
+              const rawSprints = Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []);
+              const normalized = rawSprints.map((s: any) => ({
+                ...s,
+                id: s.id || s._id,
+                _id: s._id || s.id
+              }));
+              setSprints(normalized);
+              // Set the first new sprint as current if there are multiple
+              if (normalized.length > 0) {
+                const planning = normalized.find((s: any) => s.status === 'PLANNING');
+                if (planning) setCurrentSprint(planning);
+              }
             });
+            // 2. Reload ALL tasks for this project (no sprint filter) so they show in backlog/sprint sections
+            fetchTasks({ projectId });
+            // 3. Refresh projects in case sprint counts changed
+            fetchProjects(true);
           }}
         />
       )}
