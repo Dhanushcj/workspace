@@ -411,7 +411,7 @@ var init_MutedUser = __esm({
 var import_fastify = __toESM(require("fastify"));
 var import_cors = __toESM(require("@fastify/cors"));
 var import_websocket = __toESM(require("@fastify/websocket"));
-var import_mongoose30 = __toESM(require("mongoose"));
+var import_mongoose31 = __toESM(require("mongoose"));
 var import_dotenv2 = __toESM(require("dotenv"));
 var import_fs6 = __toESM(require("fs"));
 var import_path5 = __toESM(require("path"));
@@ -5460,6 +5460,307 @@ async function threadsRoutes(fastify2) {
   });
 }
 
+// src/models/AIProjectPlan.ts
+var import_mongoose29 = __toESM(require("mongoose"));
+var TaskSchema2 = new import_mongoose29.default.Schema({
+  id: String,
+  title: String,
+  description: String,
+  category: String,
+  storyPoints: Number,
+  priority: String,
+  suggestedAssignee: String,
+  assigneeReason: String,
+  selected: { type: Boolean, default: true }
+});
+var StorySchema2 = new import_mongoose29.default.Schema({
+  id: String,
+  title: String,
+  userStory: String,
+  description: String,
+  storyPoints: Number,
+  priority: String,
+  acceptanceCriteria: [String],
+  dependencies: [String],
+  tasks: [TaskSchema2],
+  selected: { type: Boolean, default: true }
+});
+var EpicSchema2 = new import_mongoose29.default.Schema({
+  id: String,
+  name: String,
+  description: String,
+  priority: String,
+  stories: [StorySchema2],
+  selected: { type: Boolean, default: true }
+});
+var SprintSchema2 = new import_mongoose29.default.Schema({
+  id: String,
+  name: String,
+  goal: String,
+  storyIds: [String],
+  totalStoryPoints: Number
+});
+var AIProjectPlanSchema = new import_mongoose29.default.Schema({
+  projectId: { type: import_mongoose29.default.Schema.Types.ObjectId, ref: "Project", required: true },
+  status: { type: String, enum: ["DRAFT", "APPROVED"], default: "DRAFT" },
+  projectSummary: String,
+  assumptions: [String],
+  clarifications: [String],
+  epics: [EpicSchema2],
+  sprints: [SprintSchema2],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+var AIProjectPlan = import_mongoose29.default.model("AIProjectPlan", AIProjectPlanSchema);
+
+// src/services/aiService.ts
+var import_generative_ai2 = require("@google/generative-ai");
+var aiService = {
+  async analyzeRequirements(requirements, sprintCapacity = 40) {
+    const apiKey = process.env.GEMINI_API_KEY || "";
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not configured in backend environment variables.");
+    }
+    const genAI2 = new import_generative_ai2.GoogleGenerativeAI(apiKey);
+    const model23 = genAI2.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `You are an expert Agile Project Manager.
+Analyze the following project requirements and generate a detailed Sprint & Task Plan.
+Return ONLY valid JSON, with NO markdown wrapping or code blocks (i.e. strictly start with { and end with }).
+
+REQUIREMENTS:
+${requirements}
+
+SPRINT CAPACITY:
+Assume a maximum team capacity of ${sprintCapacity} story points per sprint. Group stories into sprints such that no sprint exceeds this capacity. If the remaining stories exceed capacity, add more sprints.
+
+INSTRUCTIONS:
+1. Identify Epics (logical modules).
+2. For each Epic, write User Stories with proper Agile format (As a X, I want Y so that Z).
+3. For each User Story, provide Acceptance Criteria (array of clear, testable statements) and identify dependencies (array of story IDs if any).
+4. For each User Story, generate technically meaningful implementation Tasks. Avoid micro-tasks (like "create file"). Assign each task a category (e.g. Frontend, Backend, Database, API, UI/UX, Testing).
+5. Suggest Fibonacci Story Points (1, 2, 3, 5, 8, 13) for each Task and sum them up for the Story. Explain the points in assigneeReason/description if helpful.
+6. Group the User Stories into logical Sprints with a goal. The total story points per sprint should be <= ${sprintCapacity}.
+7. Generate unique IDs (e.g., "epic-1", "story-1", "task-1") for every item so we can link dependencies.
+
+JSON STRUCTURE TO RETURN EXACTLY:
+{
+  "projectSummary": "Brief summary",
+  "assumptions": ["Assumption 1"],
+  "clarifications": ["Clarification 1"],
+  "epics": [
+    {
+      "id": "epic-1",
+      "name": "Epic Name",
+      "description": "Epic description",
+      "priority": "HIGH",
+      "stories": [
+        {
+          "id": "story-1",
+          "title": "Story Title",
+          "userStory": "As a...",
+          "description": "Description",
+          "storyPoints": 5,
+          "priority": "HIGH",
+          "acceptanceCriteria": ["Criterion 1"],
+          "dependencies": [],
+          "tasks": [
+            {
+              "id": "task-1",
+              "title": "Task title",
+              "description": "Description",
+              "category": "Backend",
+              "storyPoints": 3,
+              "priority": "HIGH",
+              "suggestedAssignee": "",
+              "assigneeReason": "Reason"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sprints": [
+    {
+      "id": "sprint-1",
+      "name": "Sprint 1",
+      "goal": "Sprint Goal",
+      "storyIds": ["story-1"],
+      "totalStoryPoints": 5
+    }
+  ]
+}
+`;
+    const result = await model23.generateContent(prompt);
+    let text = result.response.text();
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(text);
+  },
+  async regenerateItem(itemId, itemType, context, promptAddition) {
+    const apiKey = process.env.GEMINI_API_KEY || "";
+    if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
+    const genAI2 = new import_generative_ai2.GoogleGenerativeAI(apiKey);
+    const model23 = genAI2.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `You are an expert Agile Project Manager.
+Regenerate a single ${itemType} based on the following context.
+Return ONLY valid JSON for the item, no markdown.
+
+CURRENT ITEM CONTEXT:
+${JSON.stringify(context, null, 2)}
+
+USER INSTRUCTION:
+${promptAddition}
+
+If it's a Task, return:
+{
+  "id": "keep-same-id",
+  "title": "",
+  "description": "",
+  "category": "",
+  "storyPoints": 0,
+  "priority": "",
+  "suggestedAssignee": "",
+  "assigneeReason": ""
+}
+
+If it's a Story, return:
+{
+  "id": "keep-same-id",
+  "title": "",
+  "userStory": "",
+  "description": "",
+  "storyPoints": 0,
+  "priority": "",
+  "acceptanceCriteria": [],
+  "dependencies": [],
+  "tasks": [...]
+}
+`;
+    const result = await model23.generateContent(prompt);
+    let text = result.response.text();
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(text);
+  }
+};
+
+// src/routes/ai.ts
+var aiRoutes = async (fastify2) => {
+  fastify2.post("/project-plan/analyze", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+    const { projectId, requirements, sprintCapacity } = request.body;
+    try {
+      await AIProjectPlan.deleteMany({ projectId, status: "DRAFT" });
+      const result = await aiService.analyzeRequirements(requirements, sprintCapacity || 40);
+      const draft = new AIProjectPlan({
+        projectId,
+        status: "DRAFT",
+        projectSummary: result.projectSummary,
+        assumptions: result.assumptions,
+        clarifications: result.clarifications,
+        epics: result.epics,
+        sprints: result.sprints
+      });
+      await draft.save();
+      return reply.send(draft);
+    } catch (err) {
+      request.log.error(err);
+      return reply.code(500).send({ message: err.message || "AI Analysis failed" });
+    }
+  });
+  fastify2.get("/project-plan/:projectId", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+    const { projectId } = request.params;
+    const draft = await AIProjectPlan.findOne({ projectId, status: "DRAFT" }).sort({ createdAt: -1 });
+    if (!draft) {
+      return reply.send(null);
+    }
+    return reply.send(draft);
+  });
+  fastify2.post("/project-plan/regenerate", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+    const { itemId, itemType, context, promptAddition } = request.body;
+    try {
+      const result = await aiService.regenerateItem(itemId, itemType, context, promptAddition);
+      return reply.send(result);
+    } catch (err) {
+      request.log.error(err);
+      return reply.code(500).send({ message: err.message || "Regeneration failed" });
+    }
+  });
+  fastify2.post("/project-plan/approve", { preValidation: [fastify2.authenticate] }, async (request, reply) => {
+    const { planId, approvedEpicIds, approvedStoryIds, approvedTaskIds } = request.body;
+    const plan = await AIProjectPlan.findById(planId);
+    if (!plan) return reply.code(404).send({ message: "Plan not found" });
+    const workspaceId = request.user?.workspaceId || "forge-india-connect";
+    const creatorId = request.user?.id || "system";
+    const sprintMap = {};
+    const epicMap = {};
+    for (const s of plan.sprints) {
+      const sprint = new Sprint({
+        projectId: plan.projectId,
+        name: s.name,
+        goal: s.goal,
+        status: "PLANNING"
+      });
+      await sprint.save();
+      sprintMap[s.id] = sprint.id;
+    }
+    const getSprintForStory = (sId) => {
+      const sp = plan.sprints.find((s) => s.storyIds.includes(sId));
+      return sp ? sprintMap[sp.id] : void 0;
+    };
+    for (const e of plan.epics) {
+      if (approvedEpicIds.includes(e.id)) {
+        const epic = new Epic({
+          projectId: plan.projectId,
+          name: e.name,
+          description: e.description,
+          status: "TODO"
+        });
+        await epic.save();
+        epicMap[e.id] = epic.id;
+      }
+      for (const s of e.stories) {
+        if (approvedStoryIds.includes(s.id)) {
+          const sprintId = getSprintForStory(s.id);
+          const story = new Issue({
+            workspaceId,
+            projectId: plan.projectId,
+            epicId: epicMap[e.id],
+            sprintId,
+            title: s.title,
+            description: s.description + "\n\n**User Story:** " + s.userStory + "\n\n**Acceptance Criteria:**\n- " + s.acceptanceCriteria.join("\n- "),
+            type: "STORY",
+            status: "TO_DO",
+            priority: s.priority || "MEDIUM",
+            storyPoints: s.storyPoints,
+            creatorId
+          });
+          await story.save();
+        }
+        for (const t of s.tasks) {
+          if (approvedTaskIds.includes(t.id)) {
+            const sprintId = getSprintForStory(s.id);
+            const task = new Issue({
+              workspaceId,
+              projectId: plan.projectId,
+              epicId: epicMap[e.id],
+              sprintId,
+              title: t.title,
+              description: t.description + (t.assigneeReason ? "\n\n**AI Note:** " + t.assigneeReason : ""),
+              type: "TASK",
+              status: "TO_DO",
+              priority: t.priority || "MEDIUM",
+              storyPoints: t.storyPoints,
+              creatorId
+            });
+            await task.save();
+          }
+        }
+      }
+    }
+    plan.status = "APPROVED";
+    await plan.save();
+    return reply.send({ success: true, message: "Plan applied successfully" });
+  });
+};
+
 // src/index.ts
 var import_groq_sdk3 = __toESM(require("groq-sdk"));
 
@@ -5467,7 +5768,7 @@ var import_groq_sdk3 = __toESM(require("groq-sdk"));
 var import_ws2 = require("ws");
 var import_jsonwebtoken4 = __toESM(require("jsonwebtoken"));
 init_User();
-var import_mongoose29 = require("mongoose");
+var import_mongoose30 = require("mongoose");
 var JWT_SECRET2 = process.env.JWT_SECRET || "nexus-jwt-secret-key";
 var rooms = /* @__PURE__ */ new Map();
 function send(ws, payload) {
@@ -5615,7 +5916,7 @@ function handleWebRtcSignalling(ws) {
     }
     if (type === "end-meeting-all") {
       broadcastToRoom(meetingId, peerId, { type: "meeting-ended" });
-      const query = import_mongoose29.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
+      const query = import_mongoose30.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
       Meeting.updateOne(query, { status: "ended" }).catch((err) => console.error("[WebRTC] Failed to update meeting status:", err));
       return;
     }
@@ -5661,7 +5962,7 @@ async function cleanupPeer(roomId, pid) {
   const baseUserId = pid.split("_")[0];
   try {
     let meetingQuery = { _id: roomId };
-    if (!import_mongoose29.Types.ObjectId.isValid(roomId)) {
+    if (!import_mongoose30.Types.ObjectId.isValid(roomId)) {
       meetingQuery = { joinCode: roomId };
     }
     const meeting = await Meeting.findOne(meetingQuery);
@@ -6085,6 +6386,7 @@ async function bootstrap() {
   await server.register(superadminRoutes, { prefix: "/api/superadmin" });
   await server.register(statusRoutes, { prefix: "/api/status" });
   await server.register(threadsRoutes, { prefix: "/api/threads" });
+  await server.register(aiRoutes, { prefix: "/api/v1/ai" });
   console.log("[BOOTSTRAP] Registering mock routes...");
   server.get("/api/notifications/unread-count", async () => {
     return { count: 0 };
@@ -6235,7 +6537,7 @@ ${transcript}` }
     </ul>
   </div>
 </div>`;
-        const validId = import_mongoose30.default.Types.ObjectId.isValid(meetingId) ? meetingId : null;
+        const validId = import_mongoose31.default.Types.ObjectId.isValid(meetingId) ? meetingId : null;
         let meetingDoc = null;
         if (validId) meetingDoc = await Meeting.findById(validId);
         if (!meetingDoc) meetingDoc = await Meeting.findOne({ joinCode: meetingId });

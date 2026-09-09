@@ -11,7 +11,7 @@ import {
   BarChart3, Settings, Layers, Zap, 
   Plus, Search, List, Flame, Flag, CircleCheck,
   Users, Activity, GitPullRequest, Layout, Clock,
-  ChevronRight, Filter, ChevronDown, AlertCircle
+  ChevronRight, Filter, ChevronDown, AlertCircle, Target
 } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 import SprintSelector from './SprintSelector';

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Target, Calendar, Play, 
-  AlertCircle, User, 
+  AlertCircle, User, Bot,
   GripVertical, CalendarDays
 } from 'lucide-react';
 import { 
@@ -22,12 +22,16 @@ import { useToastStore } from '../store/toastStore';
 import api from '../lib/api';
 import { SprintNavigatorBar } from './SprintNavigatorBar';
 import { CreateSprintModal } from './CreateSprintModal';
+import AIPlannerModal from './AIPlannerModal';
+import { useAuthStore } from '../store/authStore';
 
 export default function SprintPlanner() {
   const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint } = useWorkflowStore();
   const { addToast } = useToastStore();
+  const { user } = useAuthStore();
   const [sprints, setSprints] = useState<any[]>([]);
   const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
+  const [isAIPlannerOpen, setIsAIPlannerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Local state for optimistic updates
@@ -281,6 +285,14 @@ export default function SprintPlanner() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {(user?.role === 'TEAM_LEAD' || user?.role === 'MANAGER') && (
+                <button 
+                  onClick={() => setIsAIPlannerOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-[12px] font-bold hover:bg-indigo-100 transition-all shadow-sm"
+                >
+                  <Bot size={14} /> ✨ AI Plan Project
+                </button>
+              )}
               <button 
                 onClick={handleSetGoal}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
@@ -388,6 +400,21 @@ export default function SprintPlanner() {
           </div>
         ) : null}
       </DragOverlay>
+
+      {currentProject && (
+        <AIPlannerModal
+          isOpen={isAIPlannerOpen}
+          onClose={() => setIsAIPlannerOpen(false)}
+          projectId={currentProject.id || (currentProject as any)._id}
+          projectName={currentProject.name}
+          onSuccess={() => {
+            fetchTasks({ projectId: currentProject.id || (currentProject as any)._id });
+            api.get(`/projects/${currentProject.id || (currentProject as any)._id}/sprints`).then(sRes => {
+              setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
+            });
+          }}
+        />
+      )}
     </DndContext>
   );
 }
