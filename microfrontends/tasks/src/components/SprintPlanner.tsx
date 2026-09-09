@@ -285,14 +285,14 @@ export default function SprintPlanner() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {(user?.role === 'TEAM_LEAD' || user?.role === 'MANAGER') && (
+              {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
                 <button 
                   onClick={() => setIsAIPlannerOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-[12px] font-bold hover:bg-indigo-100 transition-all shadow-sm"
                 >
                   <Bot size={14} /> ✨ AI Plan Project
                 </button>
-              )}
+              ) : null}
               <button 
                 onClick={handleSetGoal}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
