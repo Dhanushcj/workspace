@@ -30,10 +30,10 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/models/User.ts
+// backend-fastify/src/models/User.ts
 var import_mongoose4, UserSchema, User;
 var init_User = __esm({
-  "src/models/User.ts"() {
+  "backend-fastify/src/models/User.ts"() {
     "use strict";
     import_mongoose4 = require("mongoose");
     UserSchema = new import_mongoose4.Schema({
@@ -63,7 +63,7 @@ var init_User = __esm({
   }
 });
 
-// src/services/pushNotifications.ts
+// backend-fastify/src/services/pushNotifications.ts
 var pushNotifications_exports = {};
 __export(pushNotifications_exports, {
   sendPushNotification: () => sendPushNotification
@@ -133,7 +133,7 @@ async function sendPushNotification(recipientEmails, title, body, data) {
 }
 var import_app, import_messaging;
 var init_pushNotifications = __esm({
-  "src/services/pushNotifications.ts"() {
+  "backend-fastify/src/services/pushNotifications.ts"() {
     "use strict";
     init_User();
     import_app = require("firebase-admin/app");
@@ -165,7 +165,7 @@ var init_pushNotifications = __esm({
   }
 });
 
-// src/services/webPush.ts
+// backend-fastify/src/services/webPush.ts
 var webPush_exports = {};
 __export(webPush_exports, {
   getVapidPublicKey: () => getVapidPublicKey,
@@ -222,7 +222,7 @@ async function sendWebPush(recipientEmails, payload) {
 }
 var import_web_push, vapidPublicKey, vapidPrivateKey;
 var init_webPush = __esm({
-  "src/services/webPush.ts"() {
+  "backend-fastify/src/services/webPush.ts"() {
     "use strict";
     import_web_push = __toESM(require("web-push"));
     init_User();
@@ -248,7 +248,7 @@ var init_webPush = __esm({
   }
 });
 
-// src/services/mailSockets.ts
+// backend-fastify/src/services/mailSockets.ts
 var mailSockets_exports = {};
 __export(mailSockets_exports, {
   activeMailSockets: () => activeMailSockets,
@@ -308,7 +308,7 @@ function handleMailSocket(socket, req) {
 }
 var import_fs, import_path, activeMailSockets;
 var init_mailSockets = __esm({
-  "src/services/mailSockets.ts"() {
+  "backend-fastify/src/services/mailSockets.ts"() {
     "use strict";
     import_fs = __toESM(require("fs"));
     import_path = __toESM(require("path"));
@@ -316,10 +316,10 @@ var init_mailSockets = __esm({
   }
 });
 
-// src/models/Transcript.ts
+// backend-fastify/src/models/Transcript.ts
 var import_mongoose10, TranscriptSchema, Transcript;
 var init_Transcript = __esm({
-  "src/models/Transcript.ts"() {
+  "backend-fastify/src/models/Transcript.ts"() {
     "use strict";
     import_mongoose10 = require("mongoose");
     TranscriptSchema = new import_mongoose10.Schema({
@@ -334,7 +334,7 @@ var init_Transcript = __esm({
   }
 });
 
-// src/services/transcription.ts
+// backend-fastify/src/services/transcription.ts
 var transcription_exports = {};
 __export(transcription_exports, {
   transcribeChunk: () => transcribeChunk
@@ -374,7 +374,7 @@ async function transcribeChunk(meetingId, userId, speakerName, filePath) {
 }
 var import_fs4, import_groq_sdk, groq;
 var init_transcription = __esm({
-  "src/services/transcription.ts"() {
+  "backend-fastify/src/services/transcription.ts"() {
     "use strict";
     import_fs4 = __toESM(require("fs"));
     import_groq_sdk = __toESM(require("groq-sdk"));
@@ -386,14 +386,14 @@ var init_transcription = __esm({
   }
 });
 
-// src/models/MutedUser.ts
+// backend-fastify/src/models/MutedUser.ts
 var MutedUser_exports = {};
 __export(MutedUser_exports, {
   MutedUser: () => MutedUser
 });
 var import_mongoose25, MutedUserSchema, MutedUser;
 var init_MutedUser = __esm({
-  "src/models/MutedUser.ts"() {
+  "backend-fastify/src/models/MutedUser.ts"() {
     "use strict";
     import_mongoose25 = require("mongoose");
     MutedUserSchema = new import_mongoose25.Schema({
@@ -407,7 +407,226 @@ var init_MutedUser = __esm({
   }
 });
 
-// src/index.ts
+// backend-fastify/src/services/aiValidator.ts
+var aiValidator_exports = {};
+__export(aiValidator_exports, {
+  checkRequirementCoverage: () => checkRequirementCoverage,
+  detectDuplicates: () => detectDuplicates,
+  isValidFibonacci: () => isValidFibonacci,
+  repairFibonacci: () => repairFibonacci,
+  validateAndRepairPlan: () => validateAndRepairPlan
+});
+function isValidFibonacci(n) {
+  return VALID_FIBONACCI.includes(n);
+}
+function repairFibonacci(n) {
+  if (isValidFibonacci(n)) return n;
+  let nearest = VALID_FIBONACCI[0];
+  let minDiff = Math.abs(n - nearest);
+  for (const fib of VALID_FIBONACCI) {
+    const diff = Math.abs(n - fib);
+    if (diff < minDiff) {
+      minDiff = diff;
+      nearest = fib;
+    }
+  }
+  return nearest;
+}
+function validateAndRepairPlan(plan) {
+  const errors = [];
+  if (!plan || typeof plan !== "object") {
+    return { valid: false, errors: [{ path: "root", message: "Plan is not a valid object" }], repairedPlan: null };
+  }
+  if (!plan.projectAnalysis || typeof plan.projectAnalysis !== "object") {
+    errors.push({ path: "projectAnalysis", message: "Missing projectAnalysis object" });
+    plan.projectAnalysis = { objective: "", actors: [], assumptions: [], clarifications: [] };
+  }
+  if (!Array.isArray(plan.projectAnalysis.requirements)) {
+    errors.push({ path: "projectAnalysis.requirements", message: "requirements must be an array" });
+    plan.projectAnalysis.requirements = [];
+  }
+  if (!Array.isArray(plan.modules)) {
+    errors.push({ path: "modules", message: "modules must be an array" });
+    plan.modules = [];
+  }
+  if (!Array.isArray(plan.sprints)) {
+    errors.push({ path: "sprints", message: "sprints must be an array" });
+    plan.sprints = [];
+  }
+  if (!Array.isArray(plan.assumptions)) {
+    plan.assumptions = plan.projectAnalysis?.assumptions || [];
+  }
+  if (!Array.isArray(plan.clarifications)) {
+    plan.clarifications = plan.projectAnalysis?.clarifications || [];
+  }
+  plan.projectAnalysis.requirements.forEach((req, i) => {
+    if (!req.id) {
+      req.id = `FR-${String(i + 1).padStart(3, "0")}`;
+      errors.push({ path: `requirements[${i}].id`, message: "Auto-assigned missing requirement ID" });
+    }
+    if (!req.title) {
+      req.title = `Requirement ${req.id}`;
+      errors.push({ path: `requirements[${i}].title`, message: "Missing requirement title" });
+    }
+    if (!req.type) req.type = "FUNCTIONAL";
+    if (!req.priority) req.priority = "MEDIUM";
+  });
+  const oversizedStories = [];
+  const invalidStoryPoints = [];
+  plan.modules.forEach((mod, mi) => {
+    if (!mod.id) {
+      mod.id = `MOD-${String(mi + 1).padStart(3, "0")}`;
+    }
+    if (!mod.name) {
+      mod.name = `Module ${mi + 1}`;
+      errors.push({ path: `modules[${mi}].name`, message: "Missing module name" });
+    }
+    if (!Array.isArray(mod.requirementIds)) {
+      mod.requirementIds = [];
+    }
+    if (!Array.isArray(mod.stories)) {
+      mod.stories = [];
+    }
+    mod.stories.forEach((story, si) => {
+      if (!story.id) {
+        story.id = `ST-${mi + 1}-${si + 1}`;
+      }
+      if (!story.title) {
+        story.title = `Story ${story.id}`;
+      }
+      if (!Array.isArray(story.requirementIds)) {
+        story.requirementIds = [];
+      }
+      if (!Array.isArray(story.acceptanceCriteria)) {
+        story.acceptanceCriteria = [];
+      }
+      if (!Array.isArray(story.dependencies)) {
+        story.dependencies = [];
+      }
+      if (!Array.isArray(story.tasks)) {
+        story.tasks = [];
+      }
+      if (!story.estimateReason) {
+        story.estimateReason = "";
+      }
+      if (typeof story.needsSplit !== "boolean") {
+        story.needsSplit = story.storyPoints >= 13;
+      }
+      if (!isValidFibonacci(story.storyPoints)) {
+        const repaired = repairFibonacci(story.storyPoints || 3);
+        invalidStoryPoints.push(`${story.id} (was ${story.storyPoints}, repaired to ${repaired})`);
+        errors.push({ path: `modules[${mi}].stories[${si}].storyPoints`, message: `Invalid Fibonacci value ${story.storyPoints}, repaired to ${repaired}` });
+        story.storyPoints = repaired;
+      }
+      if (story.storyPoints === 13) {
+        oversizedStories.push(story.id);
+        story.needsSplit = true;
+      }
+      story.tasks.forEach((task, ti) => {
+        if (!task.id) {
+          task.id = `TASK-${mi + 1}-${si + 1}-${ti + 1}`;
+        }
+        if (!task.title) {
+          task.title = `Task ${task.id}`;
+        }
+        if (!Array.isArray(task.requirementIds)) {
+          task.requirementIds = story.requirementIds || [];
+        }
+        if (!task.category) {
+          task.category = "BACKEND";
+        }
+        if (!task.priority) {
+          task.priority = "MEDIUM";
+        }
+        if (!task.description) {
+          task.description = "";
+        }
+        if (!isValidFibonacci(task.storyPoints)) {
+          const repaired = repairFibonacci(task.storyPoints || 2);
+          invalidStoryPoints.push(`${task.id} (was ${task.storyPoints}, repaired to ${repaired})`);
+          errors.push({ path: `modules[${mi}].stories[${si}].tasks[${ti}].storyPoints`, message: `Invalid Fibonacci value ${task.storyPoints}, repaired to ${repaired}` });
+          task.storyPoints = repaired;
+        }
+      });
+    });
+  });
+  plan.sprints.forEach((sprint, i) => {
+    if (!sprint.id) {
+      sprint.id = `sprint-${i + 1}`;
+    }
+    if (!sprint.name) {
+      sprint.name = `Sprint ${i + 1}`;
+    }
+    if (!sprint.goal) {
+      sprint.goal = `Complete sprint ${i + 1} objectives`;
+    }
+    if (!Array.isArray(sprint.storyIds)) {
+      sprint.storyIds = [];
+    }
+    if (typeof sprint.totalStoryPoints !== "number") {
+      sprint.totalStoryPoints = 0;
+    }
+  });
+  if (!plan.validation) {
+    plan.validation = { requirementCoverage: 0, unrelatedItems: [], duplicates: [], invalidStoryPoints: [], oversizedStories: [] };
+  }
+  plan.validation.invalidStoryPoints = invalidStoryPoints;
+  plan.validation.oversizedStories = oversizedStories;
+  return {
+    valid: errors.filter((e) => e.message.startsWith("Missing") || e.message.startsWith("Plan")).length === 0,
+    errors,
+    repairedPlan: plan
+  };
+}
+function checkRequirementCoverage(requirements, modules) {
+  const allReqIds = requirements.map((r) => r.id);
+  const coveredIds = /* @__PURE__ */ new Set();
+  const unrelatedModules = [];
+  for (const mod of modules) {
+    const modReqIds = [...mod.requirementIds || []];
+    for (const story of mod.stories || []) {
+      modReqIds.push(...story.requirementIds || []);
+      for (const task of story.tasks || []) {
+        modReqIds.push(...task.requirementIds || []);
+      }
+    }
+    modReqIds.forEach((id) => coveredIds.add(id));
+    const knownRefs = modReqIds.filter((id) => allReqIds.includes(id));
+    if (knownRefs.length === 0 && mod.stories?.length > 0) {
+      unrelatedModules.push(mod.name || mod.id);
+    }
+  }
+  const covered = allReqIds.filter((id) => coveredIds.has(id));
+  const missing = allReqIds.filter((id) => !coveredIds.has(id));
+  const coveragePercent = allReqIds.length > 0 ? Math.round(covered.length / allReqIds.length * 100) : 100;
+  return { coveragePercent, covered, missing, unrelatedModules };
+}
+function detectDuplicates(generatedItems, existingIssues) {
+  const duplicates = [];
+  for (const gen of generatedItems) {
+    const genNorm = gen.title.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+    for (const existing of existingIssues) {
+      const exNorm = existing.title.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+      const genWords = genNorm.split(" ").filter((w) => w.length > 3);
+      const exWords = new Set(exNorm.split(" ").filter((w) => w.length > 3));
+      const matchCount = genWords.filter((w) => exWords.has(w)).length;
+      if (genWords.length > 0 && matchCount / genWords.length >= 0.7) {
+        duplicates.push({ newTitle: gen.title, existingId: existing._id.toString(), existingTitle: existing.title });
+        break;
+      }
+    }
+  }
+  return duplicates;
+}
+var VALID_FIBONACCI;
+var init_aiValidator = __esm({
+  "backend-fastify/src/services/aiValidator.ts"() {
+    "use strict";
+    VALID_FIBONACCI = [1, 2, 3, 5, 8, 13];
+  }
+});
+
+// backend-fastify/src/index.ts
 var import_fastify = __toESM(require("fastify"));
 var import_cors = __toESM(require("@fastify/cors"));
 var import_websocket = __toESM(require("@fastify/websocket"));
@@ -418,10 +637,10 @@ var import_path5 = __toESM(require("path"));
 var import_jsonwebtoken6 = __toESM(require("jsonwebtoken"));
 var import_multipart = __toESM(require("@fastify/multipart"));
 
-// src/middlewares/auth.ts
+// backend-fastify/src/middlewares/auth.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 
-// src/utils/securityConfig.ts
+// backend-fastify/src/utils/securityConfig.ts
 var import_crypto = __toESM(require("crypto"));
 var INSECURE_JWT_SECRETS = /* @__PURE__ */ new Set([
   "nexus-jwt-secret-key",
@@ -571,7 +790,7 @@ function validatePasswordStrength(password) {
   return null;
 }
 
-// src/middlewares/auth.ts
+// backend-fastify/src/middlewares/auth.ts
 var getJwtSecret = () => loadSecurityConfig().jwtSecret;
 async function authenticate(request, reply) {
   try {
@@ -602,7 +821,7 @@ async function authenticate(request, reply) {
   }
 }
 
-// src/models/Meeting.ts
+// backend-fastify/src/models/Meeting.ts
 var import_mongoose = require("mongoose");
 var MeetingSchema = new import_mongoose.Schema({
   title: { type: String, required: true },
@@ -621,14 +840,14 @@ var MeetingSchema = new import_mongoose.Schema({
 });
 var Meeting = (0, import_mongoose.model)("Meeting", MeetingSchema);
 
-// src/services/summarizer.ts
+// backend-fastify/src/services/summarizer.ts
 var import_fs2 = __toESM(require("fs"));
 var import_path2 = __toESM(require("path"));
 var import_os = __toESM(require("os"));
 var import_generative_ai = require("@google/generative-ai");
 var import_server = require("@google/generative-ai/server");
 
-// src/models/Participant.ts
+// backend-fastify/src/models/Participant.ts
 var import_mongoose2 = require("mongoose");
 var ParticipantSchema = new import_mongoose2.Schema({
   meetingId: { type: import_mongoose2.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
@@ -641,7 +860,7 @@ var ParticipantSchema = new import_mongoose2.Schema({
 });
 var Participant = (0, import_mongoose2.model)("Participant", ParticipantSchema);
 
-// src/models/Mail.ts
+// backend-fastify/src/models/Mail.ts
 var import_mongoose3 = __toESM(require("mongoose"));
 var mailSchema = new import_mongoose3.default.Schema({
   workspaceId: { type: String, required: true, default: "forge-india-connect" },
@@ -671,7 +890,7 @@ mailSchema.pre("save", function(next) {
 });
 var Mail = import_mongoose3.default.model("Mail", mailSchema);
 
-// src/services/summarizer.ts
+// backend-fastify/src/services/summarizer.ts
 init_User();
 init_pushNotifications();
 init_webPush();
@@ -885,12 +1104,12 @@ Focus on capturing the real essence of the conversation accurately.`;
   return summaryHtml;
 }
 
-// src/routes/auth.ts
+// backend-fastify/src/routes/auth.ts
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
 init_User();
 
-// src/models/Tenant.ts
+// backend-fastify/src/models/Tenant.ts
 var import_mongoose5 = require("mongoose");
 var TenantSchema = new import_mongoose5.Schema({
   name: { type: String, required: true },
@@ -907,7 +1126,7 @@ var TenantSchema = new import_mongoose5.Schema({
 }, { collection: "tenants" });
 var Tenant = (0, import_mongoose5.model)("Tenant", TenantSchema);
 
-// src/models/RefreshToken.ts
+// backend-fastify/src/models/RefreshToken.ts
 var import_mongoose6 = require("mongoose");
 var RefreshTokenSchema = new import_mongoose6.Schema({
   userId: { type: import_mongoose6.Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -918,10 +1137,10 @@ var RefreshTokenSchema = new import_mongoose6.Schema({
 });
 var RefreshToken = (0, import_mongoose6.model)("RefreshToken", RefreshTokenSchema);
 
-// src/routes/auth.ts
+// backend-fastify/src/routes/auth.ts
 init_webPush();
 
-// src/utils/redis.ts
+// backend-fastify/src/utils/redis.ts
 var import_ioredis = __toESM(require("ioredis"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
@@ -1005,7 +1224,7 @@ async function resetFailedAttempts(email) {
   }
 }
 
-// src/utils/mfa.ts
+// backend-fastify/src/utils/mfa.ts
 var import_speakeasy = __toESM(require("speakeasy"));
 var import_qrcode = __toESM(require("qrcode"));
 async function generateMfaSecret(email) {
@@ -1031,7 +1250,7 @@ function verifyMfaToken(secret, token) {
   });
 }
 
-// src/utils/mongo.ts
+// backend-fastify/src/utils/mongo.ts
 var import_mongoose7 = __toESM(require("mongoose"));
 var lastConnectError = null;
 function validateMongoUri(uri) {
@@ -1078,7 +1297,7 @@ function isMongoConnected() {
   return import_mongoose7.default.connection.readyState === 1;
 }
 
-// src/routes/auth.ts
+// backend-fastify/src/routes/auth.ts
 var getJwtSecret2 = () => loadSecurityConfig().jwtSecret;
 var getJwtRefreshSecret = () => loadSecurityConfig().jwtRefreshSecret;
 var isProduction = () => loadSecurityConfig().isProduction;
@@ -1633,11 +1852,11 @@ async function authRoutes(fastify2) {
   });
 }
 
-// src/routes/meetings.ts
+// backend-fastify/src/routes/meetings.ts
 var import_bcrypt3 = __toESM(require("bcrypt"));
 var import_mongoose11 = require("mongoose");
 
-// src/models/Recording.ts
+// backend-fastify/src/models/Recording.ts
 var import_mongoose8 = require("mongoose");
 var RecordingSchema = new import_mongoose8.Schema({
   meetingId: { type: import_mongoose8.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
@@ -1650,10 +1869,10 @@ var RecordingSchema = new import_mongoose8.Schema({
 });
 var Recording = (0, import_mongoose8.model)("Recording", RecordingSchema);
 
-// src/routes/meetings.ts
+// backend-fastify/src/routes/meetings.ts
 init_User();
 
-// src/models/Room.ts
+// backend-fastify/src/models/Room.ts
 var import_mongoose9 = require("mongoose");
 var RoomSchema = new import_mongoose9.Schema({
   workspaceId: { type: String, required: true },
@@ -1665,10 +1884,10 @@ var RoomSchema = new import_mongoose9.Schema({
 });
 var Room = (0, import_mongoose9.model)("Room", RoomSchema);
 
-// src/routes/meetings.ts
+// backend-fastify/src/routes/meetings.ts
 init_Transcript();
 
-// src/services/aiBot.ts
+// backend-fastify/src/services/aiBot.ts
 var import_ws = __toESM(require("ws"));
 var import_fs3 = __toESM(require("fs"));
 var import_path3 = __toESM(require("path"));
@@ -1850,7 +2069,7 @@ function handleAudioSocket(ws) {
   });
 }
 
-// src/routes/meetings.ts
+// backend-fastify/src/routes/meetings.ts
 init_pushNotifications();
 init_webPush();
 async function meetingRoutes(fastify2) {
@@ -2586,7 +2805,7 @@ async function meetingRoutes(fastify2) {
   });
 }
 
-// src/routes/mail.ts
+// backend-fastify/src/routes/mail.ts
 init_mailSockets();
 init_pushNotifications();
 init_webPush();
@@ -3045,12 +3264,12 @@ Context: "${context || "Professional email"}"`;
   });
 }
 
-// src/routes/kural.ts
+// backend-fastify/src/routes/kural.ts
 var import_mongoose16 = require("mongoose");
 var import_cloudinary = require("cloudinary");
 init_User();
 
-// src/models/KuralConversation.ts
+// backend-fastify/src/models/KuralConversation.ts
 var import_mongoose12 = require("mongoose");
 var KuralConversationSchema = new import_mongoose12.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -3072,7 +3291,7 @@ KuralConversationSchema.pre("save", function(next) {
 });
 var KuralConversation = (0, import_mongoose12.model)("KuralConversation", KuralConversationSchema);
 
-// src/models/KuralMessage.ts
+// backend-fastify/src/models/KuralMessage.ts
 var import_mongoose13 = require("mongoose");
 var KuralMessageSchema = new import_mongoose13.Schema({
   conversationId: { type: import_mongoose13.Schema.Types.ObjectId, ref: "KuralConversation", required: true, index: true },
@@ -3088,7 +3307,7 @@ var KuralMessageSchema = new import_mongoose13.Schema({
 KuralMessageSchema.index({ conversationId: 1, createdAt: 1 });
 var KuralMessage = (0, import_mongoose13.model)("KuralMessage", KuralMessageSchema);
 
-// src/models/Story.ts
+// backend-fastify/src/models/Story.ts
 var import_mongoose14 = require("mongoose");
 var StorySchema = new import_mongoose14.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -3118,7 +3337,7 @@ var StorySchema = new import_mongoose14.Schema({
 StorySchema.index({ workspaceId: 1, createdAt: -1 });
 var Story = (0, import_mongoose14.model)("Story", StorySchema);
 
-// src/models/CallLog.ts
+// backend-fastify/src/models/CallLog.ts
 var import_mongoose15 = __toESM(require("mongoose"));
 var CallLogSchema = new import_mongoose15.Schema(
   {
@@ -3138,7 +3357,7 @@ CallLogSchema.index({ callerEmail: 1, timestamp: -1 });
 CallLogSchema.index({ calleeEmail: 1, timestamp: -1 });
 var CallLog = import_mongoose15.default.model("CallLog", CallLogSchema);
 
-// src/routes/kural.ts
+// backend-fastify/src/routes/kural.ts
 init_pushNotifications();
 init_webPush();
 var cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "chat_uploads";
@@ -3807,7 +4026,7 @@ async function kuralRoutes(fastify2) {
   });
 }
 
-// src/routes/members.ts
+// backend-fastify/src/routes/members.ts
 var import_bcrypt4 = __toESM(require("bcrypt"));
 init_User();
 var defaultWorkspaceId2 = "forge-india-connect";
@@ -3879,12 +4098,13 @@ async function memberRoutes(fastify2) {
   });
 }
 
-// src/models/Project.ts
+// backend-fastify/src/models/Project.ts
 var import_mongoose17 = require("mongoose");
 var ProjectSchema = new import_mongoose17.Schema({
   workspaceId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   description: { type: String },
+  requirements: { type: String },
   status: { type: String, default: "TO DO" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
@@ -3895,7 +4115,7 @@ ProjectSchema.pre("save", function(next) {
 });
 var Project = (0, import_mongoose17.model)("Project", ProjectSchema);
 
-// src/models/Sprint.ts
+// backend-fastify/src/models/Sprint.ts
 var import_mongoose18 = require("mongoose");
 var SprintSchema = new import_mongoose18.Schema({
   projectId: { type: String, required: true, index: true },
@@ -3917,7 +4137,7 @@ SprintSchema.pre("save", function(next) {
 });
 var Sprint = (0, import_mongoose18.model)("Sprint", SprintSchema);
 
-// src/models/Epic.ts
+// backend-fastify/src/models/Epic.ts
 var import_mongoose19 = require("mongoose");
 var EpicSchema = new import_mongoose19.Schema({
   projectId: { type: String, required: true, index: true },
@@ -3934,7 +4154,7 @@ EpicSchema.pre("save", function(next) {
 });
 var Epic = (0, import_mongoose19.model)("Epic", EpicSchema);
 
-// src/models/Status.ts
+// backend-fastify/src/models/Status.ts
 var import_mongoose20 = require("mongoose");
 var StatusSchema = new import_mongoose20.Schema({
   projectId: { type: String, required: true, index: true },
@@ -3951,7 +4171,7 @@ StatusSchema.pre("save", function(next) {
 });
 var Status = (0, import_mongoose20.model)("Status", StatusSchema);
 
-// src/models/ProjectMember.ts
+// backend-fastify/src/models/ProjectMember.ts
 var import_mongoose21 = require("mongoose");
 var ProjectMemberSchema = new import_mongoose21.Schema({
   projectId: { type: String, required: true, index: true },
@@ -3962,7 +4182,7 @@ var ProjectMemberSchema = new import_mongoose21.Schema({
 ProjectMemberSchema.index({ projectId: 1, userId: 1 }, { unique: true });
 var ProjectMember = (0, import_mongoose21.model)("ProjectMember", ProjectMemberSchema);
 
-// src/routes/projects.ts
+// backend-fastify/src/routes/projects.ts
 init_User();
 var defaultWorkspaceId3 = "forge-india-connect";
 async function projectRoutes(fastify2) {
@@ -4029,7 +4249,8 @@ async function projectRoutes(fastify2) {
       const project = await Project.create({
         workspaceId,
         name: body.name,
-        description: body.description
+        description: body.description,
+        requirements: body.requirements
       });
       await Sprint.create({
         projectId: project.id,
@@ -4187,7 +4408,7 @@ async function projectRoutes(fastify2) {
   });
 }
 
-// src/models/Issue.ts
+// backend-fastify/src/models/Issue.ts
 var import_mongoose22 = require("mongoose");
 var IssueSchema = new import_mongoose22.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -4218,14 +4439,19 @@ IssueSchema.pre("save", function(next) {
 });
 var Issue = (0, import_mongoose22.model)("Issue", IssueSchema);
 
-// src/routes/issues.ts
+// backend-fastify/src/routes/issues.ts
 init_User();
 var defaultWorkspaceId4 = "forge-india-connect";
 async function issueRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
+  const isLeadOrManager = (role) => {
+    if (!role) return false;
+    const r = role.toUpperCase();
+    return ["TEAM_LEAD", "TEAM LEAD", "MANAGER", "ADMIN", "SUPER-ADMIN", "COMPANY-ADMIN"].includes(r);
+  };
   const checkIssueAccess = async (request, issueProjectId) => {
     const role = request.user?.role || "DEVELOPER";
-    if (role === "TEAM_LEAD" || role === "MANAGER") return true;
+    if (isLeadOrManager(role)) return true;
     const member = await ProjectMember.findOne({ projectId: issueProjectId, userId: request.user?.id }).lean();
     return !!member;
   };
@@ -4235,7 +4461,7 @@ async function issueRoutes(fastify2) {
       const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId4;
       const role = request.user?.role || "DEVELOPER";
       let allowedProjectIds = null;
-      if (role !== "TEAM_LEAD" && role !== "MANAGER") {
+      if (!isLeadOrManager(role)) {
         const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
         allowedProjectIds = memberships.map((m) => m.projectId);
       }
@@ -4418,7 +4644,7 @@ async function issueRoutes(fastify2) {
   });
 }
 
-// src/routes/sprints.ts
+// backend-fastify/src/routes/sprints.ts
 var sprintRoutes = async (fastify2) => {
   fastify2.addHook("onRequest", authenticate);
   fastify2.get("/:sprintId", async (request, reply) => {
@@ -4469,7 +4695,7 @@ var sprintRoutes = async (fastify2) => {
   });
 };
 
-// src/models/Task.ts
+// backend-fastify/src/models/Task.ts
 var import_mongoose23 = require("mongoose");
 var TaskSchema = new import_mongoose23.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -4501,7 +4727,7 @@ TaskSchema.pre("save", function(next) {
 });
 var Task = (0, import_mongoose23.model)("Task", TaskSchema);
 
-// src/routes/tasks.ts
+// backend-fastify/src/routes/tasks.ts
 var defaultWorkspaceId5 = "forge-india-connect";
 async function taskRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -4578,7 +4804,7 @@ async function taskRoutes(fastify2) {
   });
 }
 
-// src/models/Document.ts
+// backend-fastify/src/models/Document.ts
 var import_mongoose24 = require("mongoose");
 var DocumentSchema = new import_mongoose24.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -4603,7 +4829,7 @@ DocumentSchema.pre("save", function(next) {
 });
 var WorkspaceDocument = (0, import_mongoose24.model)("WorkspaceDocument", DocumentSchema);
 
-// src/routes/docs.ts
+// backend-fastify/src/routes/docs.ts
 var defaultWorkspaceId6 = "forge-india-connect";
 async function docsRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -4711,7 +4937,7 @@ async function docsRoutes(fastify2) {
   });
 }
 
-// src/routes/show.ts
+// backend-fastify/src/routes/show.ts
 var fs5 = __toESM(require("fs"));
 var path4 = __toESM(require("path"));
 var cachedExamples = "";
@@ -4795,7 +5021,7 @@ Generate 5 to 7 slides with rich, professional content following the flow in the
   });
 }
 
-// src/routes/superadmin.ts
+// backend-fastify/src/routes/superadmin.ts
 async function superadminRoutes(fastify2) {
   fastify2.addHook("preHandler", authenticate);
   fastify2.addHook("preHandler", async (request, reply) => {
@@ -4813,7 +5039,7 @@ async function superadminRoutes(fastify2) {
   });
 }
 
-// src/routes/status.ts
+// backend-fastify/src/routes/status.ts
 var import_mongoose26 = require("mongoose");
 function normalizeEmail2(value) {
   return String(value || "").trim().toLowerCase();
@@ -5017,10 +5243,10 @@ async function statusRoutes(fastify2) {
   });
 }
 
-// src/routes/threads.ts
+// backend-fastify/src/routes/threads.ts
 var import_cloudinary2 = require("cloudinary");
 
-// src/models/ThreadPost.ts
+// backend-fastify/src/models/ThreadPost.ts
 var import_mongoose27 = require("mongoose");
 var ThreadPostSchema = new import_mongoose27.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -5040,7 +5266,7 @@ var ThreadPostSchema = new import_mongoose27.Schema({
 }, { timestamps: true });
 var ThreadPost = (0, import_mongoose27.model)("ThreadPost", ThreadPostSchema);
 
-// src/models/ThreadComment.ts
+// backend-fastify/src/models/ThreadComment.ts
 var import_mongoose28 = require("mongoose");
 var ThreadCommentSchema = new import_mongoose28.Schema({
   postId: { type: String, required: true, index: true },
@@ -5052,10 +5278,10 @@ var ThreadCommentSchema = new import_mongoose28.Schema({
 }, { timestamps: true });
 var ThreadComment = (0, import_mongoose28.model)("ThreadComment", ThreadCommentSchema);
 
-// src/routes/threads.ts
+// backend-fastify/src/routes/threads.ts
 init_User();
 
-// src/services/threadSockets.ts
+// backend-fastify/src/services/threadSockets.ts
 var import_fs5 = __toESM(require("fs"));
 var import_path4 = __toESM(require("path"));
 var activeThreadSockets = /* @__PURE__ */ new Map();
@@ -5110,7 +5336,7 @@ function broadcastToWorkspace(workspaceId, eventType, payload) {
   });
 }
 
-// src/routes/threads.ts
+// backend-fastify/src/routes/threads.ts
 var cloudinaryFolder2 = process.env.CLOUDINARY_FOLDER || "chat_uploads";
 var cloudinaryCloudName2 = process.env.CLOUDINARY_CLOUD_NAME || "";
 var cloudinaryApiKey2 = process.env.CLOUDINARY_API_KEY || "";
@@ -5460,119 +5686,290 @@ async function threadsRoutes(fastify2) {
   });
 }
 
-// src/models/AIProjectPlan.ts
+// backend-fastify/src/models/AIProjectPlan.ts
 var import_mongoose29 = __toESM(require("mongoose"));
+var RequirementSchema = new import_mongoose29.default.Schema({
+  id: String,
+  title: String,
+  description: String,
+  priority: { type: String, enum: ["HIGH", "MEDIUM", "LOW"], default: "MEDIUM" },
+  type: { type: String, enum: ["FUNCTIONAL", "NON_FUNCTIONAL", "SECURITY", "TECHNICAL"], default: "FUNCTIONAL" }
+}, { _id: false });
 var TaskSchema2 = new import_mongoose29.default.Schema({
   id: String,
   title: String,
   description: String,
-  category: String,
+  category: { type: String, default: "BACKEND" },
+  requirementIds: [String],
   storyPoints: Number,
-  priority: String,
+  estimateReason: String,
+  priority: { type: String, default: "MEDIUM" },
   suggestedAssignee: String,
   assigneeReason: String,
   selected: { type: Boolean, default: true }
-});
+}, { _id: false });
 var StorySchema2 = new import_mongoose29.default.Schema({
   id: String,
   title: String,
   userStory: String,
   description: String,
+  requirementIds: [String],
   storyPoints: Number,
-  priority: String,
+  estimateReason: String,
+  needsSplit: { type: Boolean, default: false },
+  priority: { type: String, default: "MEDIUM" },
   acceptanceCriteria: [String],
   dependencies: [String],
   tasks: [TaskSchema2],
   selected: { type: Boolean, default: true }
-});
-var EpicSchema2 = new import_mongoose29.default.Schema({
+}, { _id: false });
+var ModuleSchema = new import_mongoose29.default.Schema({
   id: String,
   name: String,
   description: String,
-  priority: String,
+  requirementIds: [String],
+  priority: { type: String, default: "MEDIUM" },
   stories: [StorySchema2],
   selected: { type: Boolean, default: true }
-});
+}, { _id: false });
 var SprintSchema2 = new import_mongoose29.default.Schema({
   id: String,
   name: String,
   goal: String,
   storyIds: [String],
   totalStoryPoints: Number
-});
+}, { _id: false });
+var ValidationSchema = new import_mongoose29.default.Schema({
+  requirementCoverage: { type: Number, default: 0 },
+  unrelatedItems: [String],
+  duplicates: [import_mongoose29.default.Schema.Types.Mixed],
+  invalidStoryPoints: [String],
+  oversizedStories: [String]
+}, { _id: false });
+var ProjectAnalysisSchema = new import_mongoose29.default.Schema({
+  objective: String,
+  actors: [String],
+  assumptions: [String],
+  clarifications: [String],
+  requirements: [RequirementSchema]
+}, { _id: false });
 var AIProjectPlanSchema = new import_mongoose29.default.Schema({
-  projectId: { type: import_mongoose29.default.Schema.Types.ObjectId, ref: "Project", required: true },
+  // Use String (not ObjectId) to match Sprint/Issue/Epic models — avoids CastError when querying with string projectIds
+  projectId: { type: String, required: true, index: true },
   status: { type: String, enum: ["DRAFT", "APPROVED"], default: "DRAFT" },
+  // Pass 1 output: structured analysis
+  projectAnalysis: ProjectAnalysisSchema,
+  // Legacy summary field (kept for backwards compatibility)
   projectSummary: String,
   assumptions: [String],
   clarifications: [String],
-  epics: [EpicSchema2],
+  // Pass 2 output: modules (epics), stories, tasks
+  // Stored as 'modules' internally but exposed as 'epics' for UI compatibility
+  modules: [ModuleSchema],
+  // Pass 3 output: sprint plan
   sprints: [SprintSchema2],
+  // Pass 3 output: validation result
+  validation: ValidationSchema,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+AIProjectPlanSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
 var AIProjectPlan = import_mongoose29.default.model("AIProjectPlan", AIProjectPlanSchema);
 
-// src/services/aiService.ts
+// backend-fastify/src/services/aiService.ts
 var import_generative_ai2 = require("@google/generative-ai");
-var aiService = {
-  async analyzeRequirements(requirements, sprintCapacity = 40) {
-    const apiKey = process.env.GEMINI_API_KEY || "";
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is not configured in backend environment variables.");
+var import_process = __toESM(require("process"));
+var import_jsonrepair = require("jsonrepair");
+init_aiValidator();
+function getModel() {
+  const apiKey = import_process.default.env.GEMINI_API_KEY || "";
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured in backend environment variables.");
+  const genAI2 = new import_generative_ai2.GoogleGenerativeAI(apiKey);
+  return genAI2.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: {
+      temperature: 0.3,
+      // Lower temp for structured output
+      maxOutputTokens: 8192,
+      responseMimeType: "application/json"
     }
-    const genAI2 = new import_generative_ai2.GoogleGenerativeAI(apiKey);
-    const model23 = genAI2.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `You are an expert Agile Project Manager.
-Analyze the following project requirements and generate a detailed Sprint & Task Plan.
-Return ONLY valid JSON, with NO markdown wrapping or code blocks (i.e. strictly start with { and end with }).
+  });
+}
+async function callAI(model23, prompt, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await model23.generateContent(prompt);
+      let text = result.response.text();
+      text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+      const startIdx = text.indexOf("{");
+      const endIdx = text.lastIndexOf("}");
+      if (startIdx === -1) {
+        throw new Error("AI response did not contain valid JSON object. Raw: " + text.substring(0, 300));
+      }
+      const jsonText = endIdx > startIdx ? text.substring(startIdx, endIdx + 1) : text.substring(startIdx);
+      try {
+        const repairedJsonText = (0, import_jsonrepair.jsonrepair)(jsonText);
+        return JSON.parse(repairedJsonText);
+      } catch (repairErr) {
+        throw new Error("JSON Repair failed: " + repairErr.message);
+      }
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      console.warn(`[AI Retry] Attempt ${i + 1} failed, retrying in 3s... Error: ${error.message}`);
+      await new Promise((resolve) => setTimeout(resolve, 3e3));
+    }
+  }
+}
+async function extractRequirements(rawRequirements) {
+  const model23 = getModel();
+  const prompt = `You are an expert Business Analyst and Requirements Engineer.
 
-REQUIREMENTS:
-${requirements}
+Your ONLY job in this step is to extract and structure the requirements from the raw text provided.
+Do NOT generate tasks, modules, stories, or sprint plans in this step.
 
-SPRINT CAPACITY:
-Assume a maximum team capacity of ${sprintCapacity} story points per sprint. Group stories into sprints such that no sprint exceeds this capacity. If the remaining stories exceed capacity, add more sprints.
+RAW PROJECT REQUIREMENTS:
+"""
+${rawRequirements}
+"""
+
+Extract the following and return as strict JSON (no markdown, no code blocks, start with {):
+
+{
+  "objective": "One sentence describing the project purpose",
+  "actors": ["Role1", "Role2"],
+  "requirements": [
+    {
+      "id": "FR-001",
+      "title": "Short title of the requirement",
+      "description": "One to two sentence description",
+      "priority": "HIGH",
+      "type": "FUNCTIONAL"
+    }
+  ],
+  "nonFunctionalRequirements": [
+    {
+      "id": "NFR-001",
+      "title": "Performance",
+      "description": "Page load under 2 seconds"
+    }
+  ],
+  "assumptions": ["Assumption 1"],
+  "clarifications": ["What is unclear or needs decision from the client?"],
+  "securityRequirements": ["Role-based access control is required"]
+}
+
+RULES:
+1. Every distinct feature, role, screen, or operation must become a separate requirement with a unique ID starting at FR-001.
+2. IDs must be sequential: FR-001, FR-002, FR-003, etc.
+3. Do NOT invent requirements that are not in the text. If the text says "student login" make FR-001 = "Student Authentication". Do not add "payment gateway" unless the text mentions payments.
+4. type must be one of: FUNCTIONAL, NON_FUNCTIONAL, SECURITY, TECHNICAL
+5. priority must be one of: HIGH, MEDIUM, LOW
+6. Extract ALL requirements \u2014 do not summarize multiple features into one if they are distinct.
+7. Return ONLY the JSON object. No explanations. No markdown.`;
+  return callAI(model23, prompt);
+}
+async function generatePlan(pass1Result, sprintCapacity, existingIssueTitles) {
+  const model23 = getModel();
+  const requirementsJson = JSON.stringify(pass1Result.requirements, null, 2);
+  const existingIssuesStr = existingIssueTitles.length > 0 ? `
+EXISTING TASKS (already in the project \u2014 DO NOT duplicate these):
+${existingIssueTitles.map((t, i) => `- ${t}`).join("\n")}` : "\nNo existing tasks found. Generate fresh plan.";
+  const prompt = `You are an expert Agile Product Manager, Software Architect, and Scrum Master.
+
+You have been given a structured list of project requirements extracted by a Business Analyst.
+Your job is to generate a complete, traceable Agile implementation plan.
+
+PROJECT OBJECTIVE: ${pass1Result.objective}
+ACTORS / ROLES: ${(pass1Result.actors || []).join(", ")}
+
+EXTRACTED REQUIREMENTS:
+${requirementsJson}
+
+SPRINT CONFIGURATION:
+- Sprint Capacity: ${sprintCapacity} story points per sprint
+- Use Fibonacci story points ONLY: 1, 2, 3, 5, 8, 13
+${existingIssuesStr}
 
 INSTRUCTIONS:
-1. Identify Epics (logical modules).
-2. For each Epic, write User Stories with proper Agile format (As a X, I want Y so that Z).
-3. For each User Story, provide Acceptance Criteria (array of clear, testable statements) and identify dependencies (array of story IDs if any).
-4. For each User Story, generate technically meaningful implementation Tasks. Avoid micro-tasks (like "create file"). Assign each task a category (e.g. Frontend, Backend, Database, API, UI/UX, Testing).
-5. Suggest Fibonacci Story Points (1, 2, 3, 5, 8, 13) for each Task and sum them up for the Story. Explain the points in assigneeReason/description if helpful.
-6. Group the User Stories into logical Sprints with a goal. The total story points per sprint should be <= ${sprintCapacity}.
-7. Generate unique IDs (e.g., "epic-1", "story-1", "task-1") for every item so we can link dependencies.
 
-JSON STRUCTURE TO RETURN EXACTLY:
+STEP 1 \u2014 MODULE GROUPING:
+Group related requirements into logical modules (epics).
+Example: FR-001 (Student Login) + FR-002 (Faculty Login) + FR-003 (Admin Login) \u2192 Module: "Authentication & Role Management"
+Do NOT create a separate module for every single requirement.
+Do NOT create modules that have no corresponding requirement.
+
+STEP 2 \u2014 USER STORIES:
+For each requirement, write a user story in proper Agile format:
+"As a [role], I want [feature], so that [business value]."
+Provide 3-5 acceptance criteria (testable, specific).
+
+STEP 3 \u2014 TASKS:
+For each story, generate 2-3 concrete, high-level implementation tasks (e.g., Frontend, Backend, Testing).
+Keep descriptions CONCISE (1 sentence max) to avoid exceeding output limits.
+BAD tasks: "Start development", "Write code", "Complete feature", "Test application"
+GOOD tasks: "Design attendance UI component", "Create POST /api/attendance endpoint", "Write unit tests for attendance service"
+
+STEP 4 \u2014 STORY POINT ESTIMATION (FIBONACCI ONLY: 1, 2, 3, 5, 8, 13):
+1 = Trivial change (CSS tweak, label change)
+2 = Small simple feature (read-only list page)
+3 = Small feature with limited complexity (simple form with validation)
+5 = Moderate feature involving multiple components (CRUD with auth)
+8 = Large feature with multiple layers (real-time, integrations)
+13 = Very large/uncertain (MARK needsSplit: true and suggest splits)
+Provide estimateReason explaining WHY you chose that point value.
+
+STEP 5 \u2014 DEPENDENCIES:
+Identify which stories depend on other stories.
+Example: Attendance story depends on Course Management and Student Management.
+
+STEP 6 \u2014 SPRINT PLANNING:
+Group stories into sprints respecting:
+- Sprint capacity of ${sprintCapacity} points
+- Dependency order (authentication before features that need auth)
+- Logical progression
+
+Return ONLY this exact JSON structure (no markdown, start with {):
+
 {
-  "projectSummary": "Brief summary",
-  "assumptions": ["Assumption 1"],
-  "clarifications": ["Clarification 1"],
-  "epics": [
+  "projectSummary": "Brief one-paragraph project summary",
+  "modules": [
     {
-      "id": "epic-1",
-      "name": "Epic Name",
-      "description": "Epic description",
+      "id": "MOD-001",
+      "name": "Module Name",
+      "description": "What this module covers",
+      "requirementIds": ["FR-001", "FR-002"],
       "priority": "HIGH",
       "stories": [
         {
-          "id": "story-1",
-          "title": "Story Title",
-          "userStory": "As a...",
-          "description": "Description",
+          "id": "ST-001",
+          "title": "Story title",
+          "userStory": "As a [role], I want [feature], so that [value].",
+          "description": "Detailed description",
+          "requirementIds": ["FR-001"],
           "storyPoints": 5,
+          "estimateReason": "Requires frontend form, backend API, DB schema, role-based auth, and testing \u2014 5 points.",
+          "needsSplit": false,
           "priority": "HIGH",
-          "acceptanceCriteria": ["Criterion 1"],
+          "acceptanceCriteria": [
+            "User can submit form with valid data",
+            "System validates required fields",
+            "Error message shown for invalid input",
+            "Successful submission redirects to dashboard"
+          ],
           "dependencies": [],
           "tasks": [
             {
-              "id": "task-1",
-              "title": "Task title",
-              "description": "Description",
-              "category": "Backend",
-              "storyPoints": 3,
-              "priority": "HIGH",
-              "suggestedAssignee": "",
-              "assigneeReason": "Reason"
+              "id": "TASK-001",
+              "title": "Create login form UI component",
+              "description": "Build the login page with email/password fields and validation states",
+              "category": "FRONTEND",
+              "requirementIds": ["FR-001"],
+              "storyPoints": 2,
+              "estimateReason": "Standard form component with validation \u2014 2 points.",
+              "priority": "HIGH"
             }
           ]
         }
@@ -5583,188 +5980,488 @@ JSON STRUCTURE TO RETURN EXACTLY:
     {
       "id": "sprint-1",
       "name": "Sprint 1",
-      "goal": "Sprint Goal",
-      "storyIds": ["story-1"],
+      "goal": "Establish authentication and core user management",
+      "storyIds": ["ST-001"],
       "totalStoryPoints": 5
     }
-  ]
+  ],
+  "assumptions": ["Assumption 1"],
+  "clarifications": ["Unclear point requiring client decision"]
 }
-`;
-    const result = await model23.generateContent(prompt);
-    let text = result.response.text();
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    return JSON.parse(text);
+
+CRITICAL RULES:
+- Every module, story, and task MUST have at least one requirementId from the list above.
+- Only use requirement IDs that exist in the provided requirements list: ${(pass1Result.requirements || []).map((r) => r.id).join(", ")}
+- Story points MUST be one of: 1, 2, 3, 5, 8, 13. No other values allowed.
+- Tasks must be concrete engineering actions. No vague tasks.
+- Do NOT generate modules/features not covered by the requirements.
+- Do NOT duplicate existing tasks: ${existingIssueTitles.slice(0, 20).join("; ")}
+- Keep descriptions concise. Do NOT generate massive text blocks.
+- Sprints must not exceed ${sprintCapacity} story points.
+- Return ONLY the JSON object. No explanations. No markdown. Start with {.`;
+  return callAI(model23, prompt);
+}
+async function validateAndFillGaps(plan, requirements, sprintCapacity) {
+  const model23 = getModel();
+  const coverage = checkRequirementCoverage(requirements, plan.modules || []);
+  if (coverage.missing.length === 0 && coverage.unrelatedModules.length === 0) {
+    plan.validation = {
+      requirementCoverage: coverage.coveragePercent,
+      unrelatedItems: [],
+      duplicates: [],
+      invalidStoryPoints: [],
+      oversizedStories: []
+    };
+    return plan;
+  }
+  const missingReqs = requirements.filter((r) => coverage.missing.includes(r.id));
+  const prompt = `You are a senior Agile coach validating a project plan.
+
+The following requirements have NO implementation plan (no module, story, or task references them).
+Generate ONLY the missing modules/stories/tasks for these requirements.
+Append them to the existing plan.
+
+MISSING REQUIREMENTS:
+${JSON.stringify(missingReqs, null, 2)}
+
+UNRELATED MODULES DETECTED (may not be required):
+${coverage.unrelatedModules.join(", ") || "None"}
+
+EXISTING PLAN SUMMARY (do not repeat these):
+${(plan.modules || []).map((m) => m.name).join(", ")}
+
+SPRINT CAPACITY: ${sprintCapacity} points
+
+Return ONLY JSON with this structure (start with {):
+{
+  "additionalModules": [
+    {
+      "id": "MOD-NEW-001",
+      "name": "Module Name",
+      "description": "Description",
+      "requirementIds": ["FR-XXX"],
+      "priority": "HIGH",
+      "stories": [...]
+    }
+  ],
+  "removedModuleNames": ["Name of unrelated module to remove if any"]
+}
+
+Use Fibonacci points only: 1, 2, 3, 5, 8, 13.
+Return ONLY the JSON. No markdown.`;
+  let gapResult = { additionalModules: [], removedModuleNames: [] };
+  try {
+    gapResult = await callAI(model23, prompt);
+  } catch (err) {
+    console.error("[AI VALIDATOR] Gap-fill AI call failed:", err.message);
+  }
+  if (Array.isArray(gapResult.additionalModules) && gapResult.additionalModules.length > 0) {
+    plan.modules = [...plan.modules || [], ...gapResult.additionalModules];
+  }
+  if (Array.isArray(gapResult.removedModuleNames) && gapResult.removedModuleNames.length > 0) {
+    plan.modules = (plan.modules || []).filter(
+      (m) => !gapResult.removedModuleNames.includes(m.name)
+    );
+  }
+  const finalCoverage = checkRequirementCoverage(requirements, plan.modules || []);
+  plan.validation = {
+    requirementCoverage: finalCoverage.coveragePercent,
+    unrelatedItems: finalCoverage.unrelatedModules,
+    duplicates: [],
+    invalidStoryPoints: [],
+    oversizedStories: []
+  };
+  return plan;
+}
+var aiService = {
+  /**
+   * Main 3-pass analysis pipeline.
+   *
+   * @param rawRequirements  Full requirement text from the Team Lead
+   * @param sprintCapacity   Max story points per sprint
+   * @param existingIssues   Existing issue titles in the project (for duplicate detection)
+   * @returns                Complete validated plan ready to save
+   */
+  async analyzeRequirements(rawRequirements, sprintCapacity = 40, existingIssues = []) {
+    console.log(`
+[AI PLANNER] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
+    console.log(`[AI PLANNER] Original requirements received: ${rawRequirements.length} characters`);
+    console.log(`[AI PLANNER] Sprint capacity: ${sprintCapacity} points`);
+    console.log(`[AI PLANNER] Existing issues to check: ${existingIssues.length}`);
+    console.log(`
+[AI PASS 1] Extracting structured requirements...`);
+    let pass1Result;
+    try {
+      pass1Result = await extractRequirements(rawRequirements);
+    } catch (err) {
+      console.error(`[AI PASS 1] FAILED: ${err.message}`);
+      throw new Error(`Requirement extraction failed: ${err.message}`);
+    }
+    const reqCount = pass1Result.requirements?.length || 0;
+    const actorCount = pass1Result.actors?.length || 0;
+    console.log(`[AI PASS 1] \u2713 Requirements extracted: ${reqCount}`);
+    console.log(`[AI PASS 1] \u2713 Actors identified: ${actorCount} (${(pass1Result.actors || []).join(", ")})`);
+    console.log(`[AI PASS 1] \u2713 Assumptions: ${pass1Result.assumptions?.length || 0}`);
+    console.log(`[AI PASS 1] \u2713 Clarifications: ${pass1Result.clarifications?.length || 0}`);
+    if (reqCount === 0) {
+      throw new Error("AI could not extract any requirements from the provided text. Please check your requirements and try again.");
+    }
+    console.log(`
+[AI PASS 2] Generating Agile plan from ${reqCount} requirements...`);
+    let pass2Result;
+    try {
+      pass2Result = await generatePlan(pass1Result, sprintCapacity, existingIssues.map((i) => i.title));
+    } catch (err) {
+      console.error(`[AI PASS 2] FAILED: ${err.message}`);
+      throw new Error(`Agile plan generation failed: ${err.message}`);
+    }
+    const moduleCount = pass2Result.modules?.length || 0;
+    const storyCount = (pass2Result.modules || []).reduce((a, m) => a + (m.stories?.length || 0), 0);
+    const taskCount = (pass2Result.modules || []).reduce((a, m) => a + (m.stories || []).reduce((b, s) => b + (s.tasks?.length || 0), 0), 0);
+    const totalPoints = (pass2Result.sprints || []).reduce((a, s) => a + (s.totalStoryPoints || 0), 0);
+    console.log(`[AI PASS 2] \u2713 Modules generated: ${moduleCount}`);
+    console.log(`[AI PASS 2] \u2713 Stories generated: ${storyCount}`);
+    console.log(`[AI PASS 2] \u2713 Tasks generated: ${taskCount}`);
+    console.log(`[AI PASS 2] \u2713 Total story points: ${totalPoints}`);
+    console.log(`[AI PASS 2] \u2713 Sprints planned: ${pass2Result.sprints?.length || 0}`);
+    console.log(`
+[AI VALIDATOR] Running schema validation and Fibonacci repair...`);
+    const { repairedPlan, errors } = validateAndRepairPlan(pass2Result);
+    if (errors.length > 0) {
+      console.log(`[AI VALIDATOR] Repaired ${errors.length} schema issues:`);
+      errors.forEach((e) => console.log(`  - [${e.path}] ${e.message}`));
+    } else {
+      console.log(`[AI VALIDATOR] \u2713 Schema valid, no repairs needed`);
+    }
+    console.log(`
+[AI PASS 3] Running requirement coverage check...`);
+    const validatedPlan = await validateAndFillGaps(repairedPlan, pass1Result.requirements || [], sprintCapacity);
+    const coverage = validatedPlan.validation?.requirementCoverage || 0;
+    const unrelated = validatedPlan.validation?.unrelatedItems?.length || 0;
+    const invalidPts = validatedPlan.validation?.invalidStoryPoints?.length || 0;
+    const oversized = validatedPlan.validation?.oversizedStories?.length || 0;
+    console.log(`[AI PASS 3] \u2713 Requirement coverage: ${coverage}%`);
+    console.log(`[AI PASS 3] \u2713 Unrelated items detected: ${unrelated}`);
+    console.log(`[AI PASS 3] \u2713 Invalid story points repaired: ${invalidPts}`);
+    console.log(`[AI PASS 3] \u2713 Oversized stories flagged: ${oversized}`);
+    console.log(`[AI PLANNER] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+`);
+    return {
+      projectSummary: pass2Result.projectSummary || pass1Result.objective || "",
+      projectAnalysis: {
+        objective: pass1Result.objective || "",
+        actors: pass1Result.actors || [],
+        assumptions: pass1Result.assumptions || [],
+        clarifications: pass1Result.clarifications || [],
+        requirements: pass1Result.requirements || []
+      },
+      assumptions: pass1Result.assumptions || [],
+      clarifications: pass1Result.clarifications || [],
+      // Use 'modules' internally but also expose as 'epics' for UI back-compat
+      modules: validatedPlan.modules || [],
+      epics: validatedPlan.modules || [],
+      // UI compatibility alias
+      sprints: validatedPlan.sprints || [],
+      validation: validatedPlan.validation || {}
+    };
   },
+  /**
+   * Regenerate a single story or task with user instructions.
+   * Validates Fibonacci on the regenerated item before returning.
+   */
   async regenerateItem(itemId, itemType, context, promptAddition) {
-    const apiKey = process.env.GEMINI_API_KEY || "";
+    const apiKey = import_process.default.env.GEMINI_API_KEY || "";
     if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
     const genAI2 = new import_generative_ai2.GoogleGenerativeAI(apiKey);
-    const model23 = genAI2.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model23 = genAI2.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.3 } });
     const prompt = `You are an expert Agile Project Manager.
 Regenerate a single ${itemType} based on the following context.
-Return ONLY valid JSON for the item, no markdown.
+Return ONLY valid JSON for the item (no markdown, start with {).
 
 CURRENT ITEM CONTEXT:
 ${JSON.stringify(context, null, 2)}
 
 USER INSTRUCTION:
-${promptAddition}
+${promptAddition || "Improve this item"}
 
-If it's a Task, return:
-{
-  "id": "keep-same-id",
-  "title": "",
-  "description": "",
-  "category": "",
-  "storyPoints": 0,
-  "priority": "",
-  "suggestedAssignee": "",
-  "assigneeReason": ""
-}
+RULES:
+- Story points MUST be Fibonacci: 1, 2, 3, 5, 8, or 13 ONLY.
+- Every requirementId in the original context must be preserved.
+- Tasks must be concrete engineering actions.
+- Return ONLY the JSON. No markdown. Start with {.
 
-If it's a Story, return:
+${itemType === "TASK" ? `Return this exact structure:
 {
-  "id": "keep-same-id",
-  "title": "",
-  "userStory": "",
-  "description": "",
-  "storyPoints": 0,
-  "priority": "",
-  "acceptanceCriteria": [],
+  "id": "${context.id}",
+  "title": "improved task title",
+  "description": "concrete description of what to implement",
+  "category": "FRONTEND|BACKEND|DATABASE|API|TESTING|SECURITY",
+  "requirementIds": ${JSON.stringify(context.requirementIds || [])},
+  "storyPoints": 2,
+  "estimateReason": "why this point value",
+  "priority": "HIGH|MEDIUM|LOW"
+}` : `Return this exact structure:
+{
+  "id": "${context.id}",
+  "title": "improved story title",
+  "userStory": "As a [role], I want [feature], so that [value].",
+  "description": "detailed description",
+  "requirementIds": ${JSON.stringify(context.requirementIds || [])},
+  "storyPoints": 5,
+  "estimateReason": "why this point value",
+  "needsSplit": false,
+  "priority": "HIGH|MEDIUM|LOW",
+  "acceptanceCriteria": ["criterion 1", "criterion 2"],
   "dependencies": [],
   "tasks": [...]
-}
-`;
+}`}`;
     const result = await model23.generateContent(prompt);
     let text = result.response.text();
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    return JSON.parse(text);
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+    const startIdx = text.indexOf("{");
+    const endIdx = text.lastIndexOf("}");
+    const parsed = JSON.parse(text.substring(startIdx, endIdx + 1));
+    const { repairFibonacci: repairFibonacci2, isValidFibonacci: isValidFibonacci2 } = await Promise.resolve().then(() => (init_aiValidator(), aiValidator_exports));
+    if (!isValidFibonacci2(parsed.storyPoints)) {
+      parsed.storyPoints = repairFibonacci2(parsed.storyPoints);
+    }
+    if (Array.isArray(parsed.tasks)) {
+      parsed.tasks.forEach((t) => {
+        if (!isValidFibonacci2(t.storyPoints)) t.storyPoints = repairFibonacci2(t.storyPoints);
+      });
+    }
+    return parsed;
   }
 };
 
-// src/routes/ai.ts
+// backend-fastify/src/routes/ai.ts
+init_aiValidator();
 var aiRoutes = async (fastify2) => {
   fastify2.post("/project-plan/analyze", { preValidation: [authenticate] }, async (request, reply) => {
-    const { projectId, requirements, sprintCapacity } = request.body;
+    const { projectId, requirements: bodyReqs, sprintCapacity } = request.body;
     try {
-      await AIProjectPlan.deleteMany({ projectId, status: "DRAFT" });
-      const result = await aiService.analyzeRequirements(requirements, sprintCapacity || 40);
+      if (!projectId) return reply.code(400).send({ message: "projectId is required" });
+      const project = await Project.findById(projectId);
+      if (!project) return reply.code(404).send({ message: "Project not found" });
+      const requirements = project.requirements?.trim() || bodyReqs?.trim();
+      if (!requirements) {
+        return reply.code(400).send({ message: "No project requirements were found. Add project requirements before generating an AI plan." });
+      }
+      request.log.info(`[AI PLANNER] Project ID: ${projectId}`);
+      request.log.info(`[AI PLANNER] Project Name: ${project.name}`);
+      request.log.info(`[AI PLANNER] Requirements length: ${requirements.length} characters`);
+      request.log.info(`[AI PLANNER] Sprint capacity: ${sprintCapacity || 40} points`);
+      const existingIssues = await Issue.find({ projectId: String(projectId) }, "_id title").lean();
+      request.log.info(`[AI PLANNER] Existing issues in project: ${existingIssues.length}`);
+      await AIProjectPlan.deleteMany({ projectId: String(projectId), status: "DRAFT" });
+      const result = await aiService.analyzeRequirements(
+        requirements,
+        sprintCapacity || 40,
+        existingIssues
+      );
+      const allGeneratedItems = [];
+      for (const mod of result.modules || []) {
+        for (const story of mod.stories || []) {
+          allGeneratedItems.push({ id: story.id, title: story.title });
+          for (const task of story.tasks || []) {
+            allGeneratedItems.push({ id: task.id, title: task.title });
+          }
+        }
+      }
+      const duplicates = detectDuplicates(allGeneratedItems, existingIssues);
+      if (result.validation) {
+        result.validation.duplicates = duplicates;
+      }
+      if (duplicates.length > 0) {
+        request.log.info(`[AI PLANNER] Duplicates detected vs existing issues: ${duplicates.length}`);
+        duplicates.forEach((d) => request.log.info(`  - "${d.newTitle}" matches existing: "${d.existingTitle}"`));
+      }
       const draft = new AIProjectPlan({
-        projectId,
+        projectId: String(projectId),
         status: "DRAFT",
         projectSummary: result.projectSummary,
-        assumptions: result.assumptions,
-        clarifications: result.clarifications,
-        epics: result.epics,
-        sprints: result.sprints
+        projectAnalysis: result.projectAnalysis,
+        assumptions: result.assumptions || [],
+        clarifications: result.clarifications || [],
+        modules: result.modules || [],
+        sprints: result.sprints || [],
+        validation: result.validation || {}
       });
       await draft.save();
-      return reply.send(draft);
+      request.log.info(`[AI PLANNER] Draft saved successfully. ID: ${draft._id}`);
+      const responseData = draft.toObject();
+      responseData.epics = responseData.modules || [];
+      return reply.send(responseData);
     } catch (err) {
-      request.log.error(err);
+      request.log.error("[AI Analyze Error] " + err.message);
       return reply.code(500).send({ message: err.message || "AI Analysis failed" });
     }
   });
   fastify2.get("/project-plan/:projectId", { preValidation: [authenticate] }, async (request, reply) => {
-    const { projectId } = request.params;
-    const draft = await AIProjectPlan.findOne({ projectId, status: "DRAFT" }).sort({ createdAt: -1 });
-    if (!draft) {
+    try {
+      const { projectId } = request.params;
+      const draft = await AIProjectPlan.findOne({ projectId: String(projectId), status: "DRAFT" }).sort({ createdAt: -1 });
+      if (!draft) return reply.send(null);
+      const responseData = draft.toObject();
+      responseData.epics = responseData.modules || [];
+      return reply.send(responseData);
+    } catch (err) {
+      request.log.error("[AI GetPlan Error] " + err.message);
       return reply.send(null);
     }
-    return reply.send(draft);
   });
   fastify2.post("/project-plan/regenerate", { preValidation: [authenticate] }, async (request, reply) => {
     const { itemId, itemType, context, promptAddition } = request.body;
     try {
+      request.log.info(`[AI REGENERATE] Regenerating ${itemType}: ${itemId}`);
       const result = await aiService.regenerateItem(itemId, itemType, context, promptAddition);
       return reply.send(result);
     } catch (err) {
-      request.log.error(err);
+      request.log.error("[AI Regenerate Error] " + err.message);
       return reply.code(500).send({ message: err.message || "Regeneration failed" });
     }
   });
+  const isLeadOrManager = (role) => {
+    if (!role) return false;
+    const r = role.toUpperCase();
+    return ["TEAM_LEAD", "TEAM LEAD", "MANAGER", "ADMIN", "SUPER-ADMIN", "COMPANY-ADMIN"].includes(r);
+  };
   fastify2.post("/project-plan/approve", { preValidation: [authenticate] }, async (request, reply) => {
+    const userRole = request.user?.role;
+    if (!isLeadOrManager(userRole)) {
+      return reply.code(403).send({ message: "Only Team Leads and Managers can approve AI plans." });
+    }
     const { planId, approvedEpicIds, approvedStoryIds, approvedTaskIds } = request.body;
     const plan = await AIProjectPlan.findById(planId);
     if (!plan) return reply.code(404).send({ message: "Plan not found" });
+    request.log.info(`[AI APPROVE] Approving plan ${planId} for project ${plan.projectId}`);
+    request.log.info(`[AI APPROVE] Approved modules: ${approvedEpicIds?.length || 0}`);
+    request.log.info(`[AI APPROVE] Approved stories: ${approvedStoryIds?.length || 0}`);
+    request.log.info(`[AI APPROVE] Approved tasks: ${approvedTaskIds?.length || 0}`);
+    const projectIdStr = plan.projectId.toString();
     const workspaceId = request.user?.workspaceId || "forge-india-connect";
     const creatorId = request.user?.id || "system";
     const sprintMap = {};
     const epicMap = {};
     for (const s of plan.sprints) {
       const sprint = new Sprint({
-        projectId: plan.projectId,
+        projectId: projectIdStr,
         name: s.name,
         goal: s.goal,
         status: "PLANNING"
       });
       await sprint.save();
-      sprintMap[s.id] = sprint.id;
+      sprintMap[s.id] = sprint._id.toString();
+      request.log.info(`[AI APPROVE] Created sprint: "${s.name}" (${sprint._id})`);
     }
     const getSprintForStory = (sId) => {
       const sp = plan.sprints.find((s) => s.storyIds.includes(sId));
-      return sp ? sprintMap[sp.id] : void 0;
+      return sp ? sprintMap[sp.id] || null : null;
     };
-    for (const e of plan.epics) {
-      if (approvedEpicIds.includes(e.id)) {
+    const modules = plan.modules || [];
+    for (const mod of modules) {
+      const modId = mod.id || "";
+      if (approvedEpicIds.includes(modId)) {
+        const reqIds = (mod.requirementIds || []).join(", ");
         const epic = new Epic({
-          projectId: plan.projectId,
-          name: e.name,
-          description: e.description,
+          projectId: projectIdStr,
+          name: mod.name,
+          description: (mod.description || "") + (reqIds ? ` [Requirements: ${reqIds}]` : ""),
           status: "TODO"
         });
         await epic.save();
-        epicMap[e.id] = epic.id;
+        epicMap[modId] = epic._id.toString();
+        request.log.info(`[AI APPROVE] Created epic/module: "${mod.name}" (${epic._id})`);
       }
-      for (const s of e.stories) {
-        if (approvedStoryIds.includes(s.id)) {
-          const sprintId = getSprintForStory(s.id);
-          const story = new Issue({
+      for (const story of mod.stories || []) {
+        if (approvedStoryIds.includes(story.id)) {
+          const sprintId = getSprintForStory(story.id);
+          const acText = Array.isArray(story.acceptanceCriteria) ? story.acceptanceCriteria.map((c) => `- ${c}`).join("\n") : "";
+          const reqIdsStr = (story.requirementIds || []).join(", ");
+          const descParts = [
+            story.description || "",
+            story.userStory ? `
+
+**User Story:** ${story.userStory}` : "",
+            acText ? `
+
+**Acceptance Criteria:**
+${acText}` : "",
+            story.estimateReason ? `
+
+**Estimate Reason:** ${story.estimateReason}` : "",
+            reqIdsStr ? `
+
+**Requirements:** ${reqIdsStr}` : ""
+          ];
+          const storyIssue = new Issue({
             workspaceId,
-            projectId: plan.projectId,
-            epicId: epicMap[e.id],
+            projectId: projectIdStr,
+            epicId: epicMap[modId] || void 0,
             sprintId,
-            title: s.title,
-            description: s.description + "\n\n**User Story:** " + s.userStory + "\n\n**Acceptance Criteria:**\n- " + s.acceptanceCriteria.join("\n- "),
+            title: story.title,
+            description: descParts.join(""),
             type: "STORY",
             status: "TO_DO",
-            priority: s.priority || "MEDIUM",
-            storyPoints: s.storyPoints,
+            priority: story.priority || "MEDIUM",
+            storyPoints: story.storyPoints,
             creatorId
           });
-          await story.save();
+          await storyIssue.save();
         }
-        for (const t of s.tasks) {
-          if (approvedTaskIds.includes(t.id)) {
-            const sprintId = getSprintForStory(s.id);
-            const task = new Issue({
+        for (const task of story.tasks || []) {
+          if (approvedTaskIds.includes(task.id)) {
+            const sprintId = getSprintForStory(story.id);
+            const reqIdsStr = (task.requirementIds || story.requirementIds || []).join(", ");
+            const taskDescParts = [
+              task.description || "",
+              task.estimateReason ? `
+
+**Estimate Reason:** ${task.estimateReason}` : "",
+              reqIdsStr ? `
+
+**Requirements:** ${reqIdsStr}` : ""
+            ];
+            const taskIssue = new Issue({
               workspaceId,
-              projectId: plan.projectId,
-              epicId: epicMap[e.id],
+              projectId: projectIdStr,
+              epicId: epicMap[modId] || void 0,
               sprintId,
-              title: t.title,
-              description: t.description + (t.assigneeReason ? "\n\n**AI Note:** " + t.assigneeReason : ""),
+              title: task.title,
+              description: taskDescParts.join(""),
               type: "TASK",
               status: "TO_DO",
-              priority: t.priority || "MEDIUM",
-              storyPoints: t.storyPoints,
+              priority: task.priority || "MEDIUM",
+              storyPoints: task.storyPoints,
               creatorId
             });
-            await task.save();
+            await taskIssue.save();
+            const legacyTask = new Task({
+              workspaceId,
+              title: task.title,
+              description: taskDescParts.join(""),
+              status: "todo",
+              priority: (task.priority || "MEDIUM").toLowerCase(),
+              createdByEmail: request.user?.email || "ai-planner@system.local",
+              assigneeEmail: task.suggestedAssignee ? task.suggestedAssignee + "@forge.local" : void 0,
+              assigneeName: task.suggestedAssignee || void 0
+            });
+            await legacyTask.save();
           }
         }
       }
     }
     plan.status = "APPROVED";
     await plan.save();
-    return reply.send({ success: true, message: "Plan applied successfully" });
+    request.log.info(`[AI APPROVE] \u2713 Plan approved and persisted. Project: ${projectIdStr}`);
+    return reply.send({ success: true, message: "Plan applied successfully", projectId: projectIdStr });
   });
 };
 
-// src/index.ts
+// backend-fastify/src/index.ts
 var import_groq_sdk3 = __toESM(require("groq-sdk"));
 
-// src/services/webrtc.ts
+// backend-fastify/src/services/webrtc.ts
 var import_ws2 = require("ws");
 var import_jsonwebtoken4 = __toESM(require("jsonwebtoken"));
 init_User();
@@ -6040,7 +6737,7 @@ setInterval(() => {
   }
 }, 3e4);
 
-// src/services/callSignaling.ts
+// backend-fastify/src/services/callSignaling.ts
 var import_ws3 = require("ws");
 var import_jsonwebtoken5 = __toESM(require("jsonwebtoken"));
 var JWT_SECRET3 = process.env.JWT_SECRET || "nexus-jwt-secure-key-change-in-production";
@@ -6184,10 +6881,10 @@ function handleCallSignaling(ws) {
   });
 }
 
-// src/index.ts
+// backend-fastify/src/index.ts
 init_mailSockets();
 
-// src/utils/seedDefaultUser.ts
+// backend-fastify/src/utils/seedDefaultUser.ts
 var import_bcrypt5 = __toESM(require("bcrypt"));
 init_User();
 async function ensureDefaultUser() {
@@ -6272,7 +6969,7 @@ async function ensureDefaultUser() {
   }
 }
 
-// src/index.ts
+// backend-fastify/src/index.ts
 import_dotenv2.default.config({ path: import_path5.default.join(__dirname, "../.env") });
 import_dotenv2.default.config();
 var PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
@@ -6330,7 +7027,7 @@ async function connectDatabase() {
 }
 async function bootstrap() {
   console.log("[BOOTSTRAP] Starting bootstrap sequence...");
-  const corsOrigin = securityConfig.corsAllowedOrigins.length > 0 ? securityConfig.corsAllowedOrigins : isProduction2 ? ["https://workspace-blue-theta-87.vercel.app", "http://localhost:8081", "http://localhost:3000"] : true;
+  const corsOrigin = true;
   await server.register(import_cors.default, {
     origin: corsOrigin,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

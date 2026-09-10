@@ -9,9 +9,15 @@ const defaultWorkspaceId = 'forge-india-connect';
 export async function issueRoutes(fastify: FastifyInstance) {
   fastify.addHook('preValidation', authenticate);
 
+  const isLeadOrManager = (role: string) => {
+    if (!role) return false;
+    const r = role.toUpperCase();
+    return ['TEAM_LEAD', 'TEAM LEAD', 'MANAGER', 'ADMIN', 'SUPER-ADMIN', 'COMPANY-ADMIN'].includes(r);
+  };
+
   const checkIssueAccess = async (request: FastifyRequest, issueProjectId: string) => {
     const role = request.user?.role || 'DEVELOPER';
-    if (role === 'TEAM_LEAD' || role === 'MANAGER') return true;
+    if (isLeadOrManager(role)) return true;
     const member = await ProjectMember.findOne({ projectId: issueProjectId, userId: request.user?.id }).lean();
     return !!member;
   };
@@ -24,7 +30,7 @@ export async function issueRoutes(fastify: FastifyInstance) {
       const role = request.user?.role || 'DEVELOPER';
 
       let allowedProjectIds: string[] | null = null;
-      if (role !== 'TEAM_LEAD' && role !== 'MANAGER') {
+      if (!isLeadOrManager(role)) {
         const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
         allowedProjectIds = memberships.map(m => m.projectId);
       }

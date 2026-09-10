@@ -41,7 +41,7 @@ function runService({ name, command, args, color, cwd }) {
   const child = spawn(command, args, {
     cwd: cwd || __dirname,
     shell: true,
-    env: { ...process.env, FORCE_COLOR: 'true' }
+    env: { ...process.env, FORCE_COLOR: 'true', NODE_OPTIONS: '--max-old-space-size=4096' }
   });
 
   child.stdout.on('data', (data) => {

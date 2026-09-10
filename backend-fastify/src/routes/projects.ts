@@ -92,6 +92,7 @@ export async function projectRoutes(fastify: FastifyInstance) {
         workspaceId,
         name: body.name,
         description: body.description,
+        requirements: body.requirements,
       });
 
       // Default backlog

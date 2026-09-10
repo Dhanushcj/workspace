@@ -186,7 +186,8 @@ export const useWorkflowStore = create<WorkflowState>()(
           }));
 
           const state = get();
-          const currentInList = apiData.find((p: any) => p.id === state.currentProject?.id);
+          const currentId = state.currentProject?.id || (state.currentProject as any)?._id;
+          const currentInList = apiData.find((p: any) => p.id === currentId || p._id === currentId);
 
           const updates: any = { projects: apiData, isLoading: false };
 

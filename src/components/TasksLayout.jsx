@@ -25,6 +25,7 @@ import {
   Clock
 } from 'lucide-react';
 import LogoImage from '../assets/landing-logo.png';
+import ProjectSelector from './tasks/ProjectSelector';
 
 const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = false }) => {
   const { workspaceId } = useParams();
@@ -201,9 +202,11 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Row (Search, Notifications, Profile) */}
+        {/* Top Header Row (ProjectSelector, Search, Notifications, Profile) */}
         <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0">
-          <div className="flex-1" />
+          <div className="flex-1 flex items-center">
+            <ProjectSelector />
+          </div>
           <div className="flex items-center gap-4">
             {/* Search */}
             <div className="relative group">

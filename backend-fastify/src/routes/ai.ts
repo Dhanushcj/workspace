@@ -3,75 +3,159 @@ import { AIProjectPlan } from '../models/AIProjectPlan';
 import { aiService } from '../services/aiService';
 import { Epic } from '../models/Epic';
 import { Sprint } from '../models/Sprint';
+import { Task } from '../models/Task';
 import { Issue } from '../models/Issue';
+import { Project } from '../models/Project';
 import { authenticate } from '../middlewares/auth';
+import { detectDuplicates } from '../services/aiValidator';
 
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
+
+  // ── POST /project-plan/analyze — Run 3-pass AI analysis and save draft ──────────────────
   fastify.post('/project-plan/analyze', { preValidation: [authenticate] }, async (request, reply) => {
-    const { projectId, requirements, sprintCapacity } = request.body as any;
+    const { projectId, requirements: bodyReqs, sprintCapacity } = request.body as any;
     try {
       if (!projectId) return reply.code(400).send({ message: 'projectId is required' });
-      if (!requirements?.trim()) return reply.code(400).send({ message: 'requirements are required' });
 
-      // projectId is a String in AIProjectPlan model - use directly
+      // Retrieve ACTUAL project requirements from DB
+      const project = await Project.findById(projectId);
+      if (!project) return reply.code(404).send({ message: 'Project not found' });
+
+      const requirements = project.requirements?.trim() || bodyReqs?.trim();
+
+      if (!requirements) {
+        return reply.code(400).send({ message: 'No project requirements were found. Add project requirements before generating an AI plan.' });
+      }
+
+      request.log.info(`[AI PLANNER] Project ID: ${projectId}`);
+      request.log.info(`[AI PLANNER] Project Name: ${project.name}`);
+      request.log.info(`[AI PLANNER] Requirements length: ${requirements.length} characters`);
+      request.log.info(`[AI PLANNER] Sprint capacity: ${sprintCapacity || 40} points`);
+
+      // Load existing issues for duplicate detection
+      const existingIssues = await Issue.find({ projectId: String(projectId) }, '_id title').lean();
+      request.log.info(`[AI PLANNER] Existing issues in project: ${existingIssues.length}`);
+
+      // Delete any existing DRAFT for this project (user is re-analyzing)
       await AIProjectPlan.deleteMany({ projectId: String(projectId), status: 'DRAFT' });
 
-      const result = await aiService.analyzeRequirements(requirements, sprintCapacity || 40);
-      
+      // Run 3-pass AI analysis
+      const result = await aiService.analyzeRequirements(
+        requirements,
+        sprintCapacity || 40,
+        existingIssues as any[]
+      );
+
+      // Run duplicate detection across all generated tasks/stories vs existing issues
+      const allGeneratedItems: { id: string; title: string }[] = [];
+      for (const mod of (result.modules || [])) {
+        for (const story of (mod.stories || [])) {
+          allGeneratedItems.push({ id: story.id, title: story.title });
+          for (const task of (story.tasks || [])) {
+            allGeneratedItems.push({ id: task.id, title: task.title });
+          }
+        }
+      }
+
+      const duplicates = detectDuplicates(allGeneratedItems, existingIssues as any[]);
+      if (result.validation) {
+        result.validation.duplicates = duplicates;
+      }
+      if (duplicates.length > 0) {
+        request.log.info(`[AI PLANNER] Duplicates detected vs existing issues: ${duplicates.length}`);
+        duplicates.forEach(d => request.log.info(`  - "${d.newTitle}" matches existing: "${d.existingTitle}"`));
+      }
+
+      // Save the validated draft
       const draft = new AIProjectPlan({
         projectId: String(projectId),
         status: 'DRAFT',
         projectSummary: result.projectSummary,
+        projectAnalysis: result.projectAnalysis,
         assumptions: result.assumptions || [],
         clarifications: result.clarifications || [],
-        epics: result.epics || [],
-        sprints: result.sprints || []
+        modules: result.modules || [],
+        sprints: result.sprints || [],
+        validation: result.validation || {}
       });
       await draft.save();
 
-      return reply.send(draft);
+      request.log.info(`[AI PLANNER] Draft saved successfully. ID: ${draft._id}`);
+
+      // Return the draft with 'epics' alias for frontend compatibility
+      const responseData = draft.toObject() as any;
+      responseData.epics = responseData.modules || [];
+
+      return reply.send(responseData);
     } catch (err: any) {
       request.log.error('[AI Analyze Error] ' + err.message);
       return reply.code(500).send({ message: err.message || 'AI Analysis failed' });
     }
   });
 
+  // ── GET /project-plan/:projectId — Load existing draft ─────────────────────
   fastify.get('/project-plan/:projectId', { preValidation: [authenticate] }, async (request, reply) => {
     try {
       const { projectId } = request.params as { projectId: string };
       const draft = await AIProjectPlan.findOne({ projectId: String(projectId), status: 'DRAFT' }).sort({ createdAt: -1 });
-      return reply.send(draft || null);
+      if (!draft) return reply.send(null);
+
+      const responseData = draft.toObject() as any;
+      // Expose modules as epics for UI compatibility
+      responseData.epics = responseData.modules || [];
+      return reply.send(responseData);
     } catch (err: any) {
       request.log.error('[AI GetPlan Error] ' + err.message);
       return reply.send(null); // Return null instead of error so modal still opens
     }
   });
 
+  // ── POST /project-plan/regenerate — Regenerate single story or task ─────────
   fastify.post('/project-plan/regenerate', { preValidation: [authenticate] }, async (request, reply) => {
     const { itemId, itemType, context, promptAddition } = request.body as any;
     try {
+      request.log.info(`[AI REGENERATE] Regenerating ${itemType}: ${itemId}`);
       const result = await aiService.regenerateItem(itemId, itemType, context, promptAddition);
       return reply.send(result);
     } catch (err: any) {
-      request.log.error(err);
+      request.log.error('[AI Regenerate Error] ' + err.message);
       return reply.code(500).send({ message: err.message || 'Regeneration failed' });
     }
   });
 
+  // Helper to standardize role checking for team leads and managers
+  const isLeadOrManager = (role: string) => {
+    if (!role) return false;
+    const r = role.toUpperCase();
+    return ['TEAM_LEAD', 'TEAM LEAD', 'MANAGER', 'ADMIN', 'SUPER-ADMIN', 'COMPANY-ADMIN'].includes(r);
+  };
+
+  // ── POST /project-plan/approve — Save approved plan to Sprint Board ─────────
   fastify.post('/project-plan/approve', { preValidation: [authenticate] }, async (request, reply) => {
+    // TEAM_LEAD permission check
+    const userRole = (request.user as any)?.role;
+    if (!isLeadOrManager(userRole)) {
+      return reply.code(403).send({ message: 'Only Team Leads and Managers can approve AI plans.' });
+    }
+
     const { planId, approvedEpicIds, approvedStoryIds, approvedTaskIds } = request.body as any;
     const plan = await AIProjectPlan.findById(planId);
     if (!plan) return reply.code(404).send({ message: 'Plan not found' });
 
-    // CRITICAL: Convert ObjectId to String for all references — Issue/Sprint store projectId as String
+    request.log.info(`[AI APPROVE] Approving plan ${planId} for project ${plan.projectId}`);
+    request.log.info(`[AI APPROVE] Approved modules: ${approvedEpicIds?.length || 0}`);
+    request.log.info(`[AI APPROVE] Approved stories: ${approvedStoryIds?.length || 0}`);
+    request.log.info(`[AI APPROVE] Approved tasks: ${approvedTaskIds?.length || 0}`);
+
+    // CRITICAL: Convert ObjectId to String for all references
     const projectIdStr = plan.projectId.toString();
     const workspaceId = (request.user as any)?.workspaceId || 'forge-india-connect';
     const creatorId = (request.user as any)?.id || 'system';
 
-    const sprintMap: Record<string, string> = {}; 
+    const sprintMap: Record<string, string> = {};
     const epicMap: Record<string, string> = {};
 
-    // Create AI-suggested sprints in the database
+    // Create AI-suggested sprints
     for (const s of plan.sprints) {
       const sprint = new Sprint({
         projectId: projectIdStr,
@@ -80,65 +164,105 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         status: 'PLANNING'
       });
       await sprint.save();
-      // Map AI sprint ID (e.g. "sprint-1") → real MongoDB sprint ID (string)
       sprintMap[s.id] = sprint._id.toString();
+      request.log.info(`[AI APPROVE] Created sprint: "${s.name}" (${sprint._id})`);
     }
 
     const getSprintForStory = (sId: string): string | null => {
-      const sp = plan.sprints.find(s => s.storyIds.includes(sId));
+      const sp = plan.sprints.find((s: any) => s.storyIds.includes(sId));
       return sp ? (sprintMap[sp.id] || null) : null;
     };
 
-    // Create Epics, Stories, and Tasks
-    for (const e of plan.epics) {
-      if (approvedEpicIds.includes(e.id)) {
+    // Use modules array (new schema) for creation
+    const modules: any[] = (plan as any).modules || [];
+
+    // Create Epics / Modules → Stories → Tasks
+    for (const mod of modules) {
+      const modId = mod.id || '';
+      // approvedEpicIds uses module IDs
+      if (approvedEpicIds.includes(modId)) {
+        const reqIds = (mod.requirementIds || []).join(', ');
         const epic = new Epic({
           projectId: projectIdStr,
-          name: e.name,
-          description: e.description,
+          name: mod.name,
+          description: (mod.description || '') + (reqIds ? ` [Requirements: ${reqIds}]` : ''),
           status: 'TODO'
         });
         await epic.save();
-        epicMap[e.id] = epic._id.toString();
+        epicMap[modId] = epic._id.toString();
+        request.log.info(`[AI APPROVE] Created epic/module: "${mod.name}" (${epic._id})`);
       }
 
-      for (const s of e.stories) {
-        if (approvedStoryIds.includes(s.id)) {
-          const sprintId = getSprintForStory(s.id);
-          const acText = Array.isArray(s.acceptanceCriteria) ? s.acceptanceCriteria.join('\n- ') : '';
-          const story = new Issue({
+      for (const story of (mod.stories || [])) {
+        if (approvedStoryIds.includes(story.id)) {
+          const sprintId = getSprintForStory(story.id);
+          const acText = Array.isArray(story.acceptanceCriteria)
+            ? story.acceptanceCriteria.map((c: string) => `- ${c}`).join('\n')
+            : '';
+          const reqIdsStr = (story.requirementIds || []).join(', ');
+
+          const descParts = [
+            story.description || '',
+            story.userStory ? `\n\n**User Story:** ${story.userStory}` : '',
+            acText ? `\n\n**Acceptance Criteria:**\n${acText}` : '',
+            story.estimateReason ? `\n\n**Estimate Reason:** ${story.estimateReason}` : '',
+            reqIdsStr ? `\n\n**Requirements:** ${reqIdsStr}` : ''
+          ];
+
+          const storyIssue = new Issue({
             workspaceId,
             projectId: projectIdStr,
-            epicId: epicMap[e.id] || undefined,
+            epicId: epicMap[modId] || undefined,
             sprintId: sprintId,
-            title: s.title,
-            description: (s.description || '') + (s.userStory ? '\n\n**User Story:** ' + s.userStory : '') + (acText ? '\n\n**Acceptance Criteria:**\n- ' + acText : ''),
+            title: story.title,
+            description: descParts.join(''),
             type: 'STORY',
             status: 'TO_DO',
-            priority: s.priority || 'MEDIUM',
-            storyPoints: s.storyPoints,
+            priority: story.priority || 'MEDIUM',
+            storyPoints: story.storyPoints,
             creatorId
           });
-          await story.save();
+          await storyIssue.save();
         }
 
-        for (const t of s.tasks) {
-          if (approvedTaskIds.includes(t.id)) {
-            const sprintId = getSprintForStory(s.id);
-            const task = new Issue({
+        for (const task of (story.tasks || [])) {
+          if (approvedTaskIds.includes(task.id)) {
+            const sprintId = getSprintForStory(story.id);
+            const reqIdsStr = (task.requirementIds || story.requirementIds || []).join(', ');
+
+            const taskDescParts = [
+              task.description || '',
+              task.estimateReason ? `\n\n**Estimate Reason:** ${task.estimateReason}` : '',
+              reqIdsStr ? `\n\n**Requirements:** ${reqIdsStr}` : ''
+            ];
+
+            const taskIssue = new Issue({
               workspaceId,
               projectId: projectIdStr,
-              epicId: epicMap[e.id] || undefined,
+              epicId: epicMap[modId] || undefined,
               sprintId: sprintId,
-              title: t.title,
-              description: (t.description || '') + (t.assigneeReason ? '\n\n**AI Note:** ' + t.assigneeReason : ''),
+              title: task.title,
+              description: taskDescParts.join(''),
               type: 'TASK',
               status: 'TO_DO',
-              priority: t.priority || 'MEDIUM',
-              storyPoints: t.storyPoints,
+              priority: task.priority || 'MEDIUM',
+              storyPoints: task.storyPoints,
               creatorId
             });
-            await task.save();
+            await taskIssue.save();
+
+            // Also create a legacy Task for the old dashboard views
+            const legacyTask = new Task({
+              workspaceId,
+              title: task.title,
+              description: taskDescParts.join(''),
+              status: 'todo',
+              priority: (task.priority || 'MEDIUM').toLowerCase(),
+              createdByEmail: (request.user as any)?.email || 'ai-planner@system.local',
+              assigneeEmail: task.suggestedAssignee ? task.suggestedAssignee + '@forge.local' : undefined,
+              assigneeName: task.suggestedAssignee || undefined
+            });
+            await legacyTask.save();
           }
         }
       }
@@ -146,6 +270,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
 
     plan.status = 'APPROVED';
     await plan.save();
+
+    request.log.info(`[AI APPROVE] ✓ Plan approved and persisted. Project: ${projectIdStr}`);
 
     return reply.send({ success: true, message: 'Plan applied successfully', projectId: projectIdStr });
   });
