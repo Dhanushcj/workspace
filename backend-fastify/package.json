@@ -1,6 +1,7 @@
 {
   "name": "nexus-zoom-backend",
   "version": "1.0.0",
+  "type": "commonjs",
   "description": "Production-ready Zoom-like meeting backend service using Fastify, MongoDB, Redis, and WebRTC Mediasoup SFU",
   "main": "dist/index.js",
   "scripts": {
