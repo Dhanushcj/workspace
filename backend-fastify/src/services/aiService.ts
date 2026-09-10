@@ -18,34 +18,32 @@
  *            corrected plan with any gaps filled
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import process from 'process';
 import { jsonrepair } from 'jsonrepair';
 import { validateAndRepairPlan, checkRequirementCoverage } from './aiValidator';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getModel() {
-  const apiKey = process.env.GEMINI_API_KEY || '';
-  if (!apiKey) throw new Error('GEMINI_API_KEY is not configured in backend environment variables.');
-  const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
-    generationConfig: {
-      temperature: 0.3,   // Lower temp for structured output
-      maxOutputTokens: 8192,
-      responseMimeType: 'application/json'
-    }
-  });
+function getClient() {
+  const apiKey = process.env.GROQ_API_KEY || '';
+  if (!apiKey) throw new Error('GROQ_API_KEY is not configured in backend environment variables.');
+  return new Groq({ apiKey });
 }
 
-async function callAI(model: any, prompt: string, retries = 3): Promise<any> {
+async function callAI(client: Groq, prompt: string, retries = 3, model = 'qwen/qwen3.8-27b', maxTokens = 4096): Promise<any> {
   console.log('[3] AI request started...');
   for (let i = 0; i < retries; i++) {
     try {
-      const result = await model.generateContent(prompt);
+      const completion = await client.chat.completions.create({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: maxTokens,
+        response_format: { type: 'json_object' }
+      });
       console.log('[4] AI response received');
-      let text = result.response.text();
+      let text = completion.choices[0]?.message?.content || '{}';
 
       // Strip markdown code blocks if AI wraps in ```json ... ``` or ``` ... ```
       text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
@@ -68,8 +66,11 @@ async function callAI(model: any, prompt: string, retries = 3): Promise<any> {
       }
     } catch (error: any) {
       if (i === retries - 1) throw error;
-      console.warn(`[AI Retry] Attempt ${i + 1} failed, retrying in 3s... Error: ${error.message}`);
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // For rate limit errors (429), wait longer to let the TPM window reset
+      const isRateLimit = error.message?.includes('429') || error.message?.includes('rate_limit');
+      const waitMs = isRateLimit ? 15000 : 3000;
+      console.warn(`[AI Retry] Attempt ${i + 1} failed, retrying in ${waitMs / 1000}s... Error: ${error.message}`);
+      await new Promise(resolve => setTimeout(resolve, waitMs));
     }
   }
 }
@@ -77,7 +78,7 @@ async function callAI(model: any, prompt: string, retries = 3): Promise<any> {
 // ─── Pass 1: Requirement Analyzer ────────────────────────────────────────────
 
 async function extractRequirements(rawRequirements: string): Promise<any> {
-  const model = getModel();
+  const client = getClient();
 
   const prompt = `You are an expert Business Analyst and Requirements Engineer.
 
@@ -124,7 +125,7 @@ RULES:
 6. Extract ALL requirements — do not summarize multiple features into one if they are distinct.
 7. Return ONLY the JSON object. No explanations. No markdown.`;
 
-  return callAI(model, prompt);
+  return callAI(client, prompt);
 }
 
 // ─── Pass 2: Agile Planner ────────────────────────────────────────────────────
@@ -134,7 +135,7 @@ async function generatePlan(
   sprintCapacity: number,
   existingIssueTitles: string[]
 ): Promise<any> {
-  const model = getModel();
+  const client = getClient();
 
   const requirementsJson = JSON.stringify(pass1Result.requirements, null, 2);
   const existingIssuesStr = existingIssueTitles.length > 0
@@ -264,7 +265,7 @@ CRITICAL RULES:
 - Sprints must not exceed ${sprintCapacity} story points.
 - Return ONLY the JSON object. No explanations. No markdown. Start with {.`;
 
-  return callAI(model, prompt);
+  return callAI(client, prompt);
 }
 
 // ─── Pass 3: Validator / Gap Filler ──────────────────────────────────────────
@@ -274,7 +275,7 @@ async function validateAndFillGaps(
   requirements: any[],
   sprintCapacity: number
 ): Promise<any> {
-  const model = getModel();
+  const client = getClient();
 
   // Run static coverage check first
   const coverage = checkRequirementCoverage(requirements, plan.modules || []);
@@ -330,7 +331,8 @@ Return ONLY the JSON. No markdown.`;
 
   let gapResult: any = { additionalModules: [], removedModuleNames: [] };
   try {
-    gapResult = await callAI(model, prompt);
+    // Use 900 max_tokens for Pass 3 to stay within qwen OTPM limit (1000 tokens/min)
+    gapResult = await callAI(client, prompt, 3, 'qwen/qwen3.8-27b', 900);
   } catch (err) {
     // Gap filling is best-effort — if it fails, continue with what we have
     console.error('[AI VALIDATOR] Gap-fill AI call failed:', (err as Error).message);
@@ -475,10 +477,9 @@ export const aiService = {
    * Validates Fibonacci on the regenerated item before returning.
    */
   async regenerateItem(itemId: string, itemType: string, context: any, promptAddition: string) {
-    const apiKey = process.env.GEMINI_API_KEY || '';
-    if (!apiKey) throw new Error('GEMINI_API_KEY is not configured.');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig: { temperature: 0.3 } });
+    const apiKey = process.env.GROQ_API_KEY || '';
+    if (!apiKey) throw new Error('GROQ_API_KEY is not configured.');
+    const client = new Groq({ apiKey });
 
     const prompt = `You are an expert Agile Project Manager.
 Regenerate a single ${itemType} based on the following context.
@@ -522,8 +523,13 @@ ${itemType === 'TASK' ? `Return this exact structure:
   "tasks": [...]
 }`}`;
 
-    const result = await model.generateContent(prompt);
-    let text = result.response.text();
+    const completion = await client.chat.completions.create({
+      model: 'qwen/qwen3.8-27b',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      response_format: { type: 'json_object' }
+    });
+    let text = completion.choices[0]?.message?.content || '{}';
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
     const startIdx = text.indexOf('{');
     const endIdx = text.lastIndexOf('}');

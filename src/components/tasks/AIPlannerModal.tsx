@@ -232,7 +232,8 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
         userMsg = 'Session expired. Please refresh the page and log in again.';
       } else if (serverMsg.includes('extract')) {
         userMsg = serverMsg + '\n\nTip: Make sure your requirements describe features clearly.';
-      } else if (serverMsg && serverMsg.length < 200) {
+      } else if (serverMsg) {
+        // Show the full server message even if it is long, so the user sees the real AI error
         userMsg = serverMsg;
       } else if (err.message) {
         userMsg = err.message;
