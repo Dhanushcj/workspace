@@ -215,7 +215,14 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
     } catch (err: any) {
       clearTimeout(timeout);
       clearInterval(passTimer);
-      const serverMsg = err.response?.data?.message || err.response?.data?.error || '';
+      let serverMsg = '';
+      if (typeof err.response?.data === 'string') {
+        // Handle HTML error pages or plain text
+        serverMsg = err.response.data;
+      } else {
+        serverMsg = err.response?.data?.message || err.response?.data?.error || '';
+      }
+      
       let userMsg = 'AI Analysis failed. Please try again.';
       if (serverMsg.includes('GEMINI_API_KEY')) {
         userMsg = '⚠️ GEMINI_API_KEY is not set on the server. Add it in Render → Environment Variables.';
@@ -225,8 +232,10 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
         userMsg = 'Session expired. Please refresh the page and log in again.';
       } else if (serverMsg.includes('extract')) {
         userMsg = serverMsg + '\n\nTip: Make sure your requirements describe features clearly.';
-      } else if (serverMsg) {
+      } else if (serverMsg && serverMsg.length < 200) {
         userMsg = serverMsg;
+      } else if (err.message) {
+        userMsg = err.message;
       }
       toast.error(userMsg, { duration: 7000 });
       setPhase('INPUT');

@@ -40,9 +40,11 @@ function getModel() {
 }
 
 async function callAI(model: any, prompt: string, retries = 3): Promise<any> {
+  console.log('[3] AI request started...');
   for (let i = 0; i < retries; i++) {
     try {
       const result = await model.generateContent(prompt);
+      console.log('[4] AI response received');
       let text = result.response.text();
 
       // Strip markdown code blocks if AI wraps in ```json ... ``` or ``` ... ```
@@ -425,7 +427,7 @@ export const aiService = {
     console.log(`[AI PASS 2] ✓ Sprints planned: ${pass2Result.sprints?.length || 0}`);
 
     // ── Schema Validation & Fibonacci Repair ──────────────────────────────────
-    console.log(`\n[AI VALIDATOR] Running schema validation and Fibonacci repair...`);
+    console.log(`\n[5] JSON/schema validation starting...`);
     const { repairedPlan, errors } = validateAndRepairPlan(pass2Result);
     if (errors.length > 0) {
       console.log(`[AI VALIDATOR] Repaired ${errors.length} schema issues:`);

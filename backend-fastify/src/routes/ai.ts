@@ -15,6 +15,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/project-plan/analyze', { preValidation: [authenticate] }, async (request, reply) => {
     const { projectId, requirements: bodyReqs, sprintCapacity } = request.body as any;
     try {
+      request.log.info('[1] Request received: POST /project-plan/analyze');
       if (!projectId) return reply.code(400).send({ message: 'projectId is required' });
 
       // Retrieve ACTUAL project requirements from DB
@@ -27,8 +28,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(400).send({ message: 'No project requirements were found. Add project requirements before generating an AI plan.' });
       }
 
+      request.log.info(`[2] Requirements validated for project: ${project.name}`);
       request.log.info(`[AI PLANNER] Project ID: ${projectId}`);
-      request.log.info(`[AI PLANNER] Project Name: ${project.name}`);
       request.log.info(`[AI PLANNER] Requirements length: ${requirements.length} characters`);
       request.log.info(`[AI PLANNER] Sprint capacity: ${sprintCapacity || 40} points`);
 
@@ -80,16 +81,20 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       });
       await draft.save();
 
-      request.log.info(`[AI PLANNER] Draft saved successfully. ID: ${draft._id}`);
+      request.log.info(`[6] Database save: Draft saved successfully. ID: ${draft._id}`);
 
       // Return the draft with 'epics' alias for frontend compatibility
       const responseData = draft.toObject() as any;
       responseData.epics = responseData.modules || [];
 
+      request.log.info('[7] Response returned: Sending AI plan to client');
       return reply.send(responseData);
     } catch (err: any) {
-      request.log.error('[AI Analyze Error] ' + err.message);
-      return reply.code(500).send({ message: err.message || 'AI Analysis failed' });
+      request.log.error('[AI Analyze Error] ' + err.stack);
+      let safeMsg = err.message || 'AI Analysis failed';
+      // Scrub API keys from error message if any
+      safeMsg = safeMsg.replace(/AIza[0-9A-Za-z-_]{35}/g, '***API_KEY_HIDDEN***');
+      return reply.code(500).send({ message: safeMsg });
     }
   });
 
