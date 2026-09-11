@@ -1,34 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import TasksLayout from '../components/TasksLayout';
-import { fetchTasks } from '../api/tasksApi';
+import { useWorkflowStore } from '../store/workflowStore';
 import { PieChart, Calendar, TrendingUp } from 'lucide-react';
 
 const StatCard = ({ title, value, subValue, highlight }) => (
   <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between">
     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</div>
     <div className="mt-4">
-      <div className={`text-3xl font-black ${highlight ? 'text-[#0F5A3E]' : 'text-slate-800'}`}>{value}</div>
+      <div className={`text-3xl font-black ${highlight ? 'text-[#1B4FAB]' : 'text-slate-800'}`}>{value}</div>
       <div className="text-[11px] font-semibold text-slate-400 mt-1">{subValue}</div>
     </div>
   </div>
 );
 
 const ManagerDashboard = () => {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-  const workspaceId = auth.workspaceId || 'forge-india-connect';
-
-  useEffect(() => {
-    fetchTasks(workspaceId)
-      .then(data => setTasks(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [workspaceId]);
+  const currentProject = useWorkflowStore(state => state.currentProject);
+  const tasks = useWorkflowStore(state => state.tasks) || [];
+  const loading = useWorkflowStore(state => state.isLoading);
 
   const total = tasks.length;
-  const done = tasks.filter(t => t.status === 'done').length;
-  const risks = tasks.filter(t => t.status === 'blocked').length;
+  const done = tasks.filter(t => t.status === 'DONE' || t.status?.toLowerCase() === 'completed').length;
+  const risks = tasks.filter(t => t.status === 'BLOCKED').length;
   const completion = total === 0 ? 0 : Math.round((done / total) * 100);
 
   // Group by assignee for resource allocation
@@ -51,7 +43,7 @@ const ManagerDashboard = () => {
       <button className="px-5 py-2 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm">
         <Calendar size={14} /> Timeline
       </button>
-      <button className="px-5 py-2 rounded-full bg-[#0F5A3E] text-white text-sm font-bold shadow-md hover:bg-[#0B4A3F] transition-colors flex items-center gap-2">
+      <button className="px-5 py-2 rounded-full bg-[#1B4FAB] text-white text-sm font-bold shadow-md hover:bg-[#1A3A8F] transition-colors flex items-center gap-2">
         <PieChart size={14} /> Generate Report
       </button>
     </>
@@ -117,3 +109,4 @@ const ManagerDashboard = () => {
 };
 
 export default ManagerDashboard;
+

@@ -10,7 +10,7 @@ const StatCard = ({ title, value, subValue, highlight }) => (
   <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between">
     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</div>
     <div className="mt-4">
-      <div className={`text-3xl font-black ${highlight ? 'text-red-500' : 'text-[#0F5A3E]'}`}>{value}</div>
+      <div className={`text-3xl font-black ${highlight ? 'text-red-500' : 'text-[#1B4FAB]'}`}>{value}</div>
       <div className="text-[11px] font-semibold text-slate-400 mt-1">{subValue}</div>
     </div>
   </div>
@@ -18,28 +18,24 @@ const StatCard = ({ title, value, subValue, highlight }) => (
 
 const TeamLeadDashboard = () => {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const currentProject = useWorkflowStore(state => state.currentProject);
+  const tasks = useWorkflowStore(state => state.tasks) || [];
+  const loading = useWorkflowStore(state => state.isLoading);
+  const currentSprint = useWorkflowStore(state => state.activeSprint);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-  const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-  const workspaceId = auth.workspaceId || 'forge-india-connect';
-  const currentSprint = useWorkflowStore(state => state.currentSprint);
 
-  useEffect(() => {
-    fetchTasks(workspaceId)
-      .then(data => setTasks(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [workspaceId]);
-
+  // Instead of 'todo', the new statuses are usually 'TO DO', 'IN PROGRESS', 'IN REVIEW', 'DONE'
+  // Or if it's backlog, they might not have a sprintId.
   const total = tasks.length;
-  const done = tasks.filter(t => t.status === 'done').length;
-  const blocked = tasks.filter(t => t.status === 'blocked').length;
-  const inReview = tasks.filter(t => t.status === 'in-review').length;
-  const todo = tasks.filter(t => t.status === 'todo').length;
+  const done = tasks.filter(t => t.status === 'DONE' || t.status?.toLowerCase() === 'completed').length;
+  const blocked = tasks.filter(t => t.status === 'BLOCKED').length;
+  const inReview = tasks.filter(t => t.status === 'IN REVIEW').length;
+  
+  // Backlog items are tasks with no sprint assigned
+  const todo = tasks.filter(t => !t.sprintId || ['null', '', 'undefined'].includes(String(t.sprintId).trim().toLowerCase())).length;
   const completion = total === 0 ? 0 : Math.round((done / total) * 100);
 
-  const activeBlockers = tasks.filter(t => t.status === 'blocked');
+  const activeBlockers = tasks.filter(t => t.status === 'BLOCKED');
 
   const headerActions = null;
 
@@ -126,3 +122,4 @@ const TeamLeadDashboard = () => {
 };
 
 export default TeamLeadDashboard;
+

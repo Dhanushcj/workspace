@@ -56,23 +56,27 @@ export async function issueRoutes(fastify: FastifyInstance) {
 
       const issues = await Issue.find(filter).sort({ createdAt: -1 }).lean();
 
-      // Populate assignee details
-      const populatedIssues = await Promise.all(issues.map(async (issue: any) => {
-        if (issue.assigneeId) {
-          const user = await User.findById(issue.assigneeId).lean();
-          if (user) {
-            issue.assignee = {
-              id: user._id,
-              name: user.name,
-              email: user.email,
-              avatar: user.avatarUrl
-            };
-          }
+      // Populate assignee details efficiently (Fix N+1 query)
+      const assigneeIds = [...new Set(issues.filter((i: any) => i.assigneeId).map((i: any) => i.assigneeId))];
+      const users = await User.find({ _id: { $in: assigneeIds } }).lean();
+      const userMap = users.reduce((acc: any, user: any) => {
+        acc[user._id.toString()] = {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatarUrl
+        };
+        return acc;
+      }, {});
+
+      const populatedIssues = issues.map((issue: any) => {
+        if (issue.assigneeId && userMap[issue.assigneeId.toString()]) {
+          issue.assignee = userMap[issue.assigneeId.toString()];
         }
         // UI expects id instead of _id
         issue.id = issue._id;
         return issue;
-      }));
+      });
 
       return reply.code(200).send(populatedIssues);
     } catch (err: any) {
@@ -218,8 +222,8 @@ export async function issueRoutes(fastify: FastifyInstance) {
       const { ids, ...updates } = request.body as any;
       if (!ids || !Array.isArray(ids)) return reply.code(400).send({ error: 'Missing ids array' });
       
-      const role = request.user?.role || 'DEVELOPER';
-      if (role !== 'TEAM_LEAD' && role !== 'MANAGER') {
+      const role = (request.user?.role || 'DEVELOPER').toUpperCase().replace(/ /g, '_');
+      if (role !== 'TEAM_LEAD' && role !== 'MANAGER' && role !== 'ADMIN') {
         const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
         const allowedProjectIds = memberships.map(m => m.projectId);
         
@@ -235,6 +239,32 @@ export async function issueRoutes(fastify: FastifyInstance) {
       return reply.code(200).send({ message: 'Issues updated successfully' });
     } catch (err: any) {
       return reply.code(500).send({ error: 'Failed to bulk update issues', details: err.message });
+    }
+  });
+
+  // 6.5 BULK DELETE
+  fastify.post('/bulk-delete', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { ids } = request.body as any;
+      if (!ids || !Array.isArray(ids)) return reply.code(400).send({ error: 'Missing ids array' });
+      
+      const role = (request.user?.role || 'DEVELOPER').toUpperCase().replace(/ /g, '_');
+      if (role !== 'TEAM_LEAD' && role !== 'MANAGER' && role !== 'ADMIN') {
+        const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
+        const allowedProjectIds = memberships.map(m => m.projectId);
+        
+        const issuesToDelete = await Issue.find({ _id: { $in: ids } }).lean();
+        for (const issue of issuesToDelete) {
+          if (!allowedProjectIds.includes(issue.projectId)) {
+             return reply.code(403).send({ error: 'Access denied to some of the issues' });
+          }
+        }
+      }
+
+      await Issue.deleteMany({ _id: { $in: ids } });
+      return reply.code(200).send({ message: 'Issues deleted successfully' });
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to bulk delete issues', details: err.message });
     }
   });
   // 7. GET comments (mock)

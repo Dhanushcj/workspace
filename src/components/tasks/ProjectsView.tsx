@@ -6,12 +6,14 @@ import {
   CircleCheck, GitPullRequest, Layout, Activity,
   ArrowUpRight, LayoutGrid, List, Users, Kanban,
   TrendingUp, Plus, ExternalLink, ChevronRight,
-  ShieldAlert, Clock, Target
+  ShieldAlert, Clock, Target, UserPlus, Pencil, Trash2
 } from 'lucide-react';
 import { useNavigate as useRouter } from 'react-router-dom';
 import { useWorkflowStore } from '../../store/workflowStore';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { ProjectMembersModal } from './ProjectMembersModal';
+import { EditProjectModal } from './EditProjectModal';
 
 interface Project { 
   id: string; 
@@ -56,9 +58,22 @@ const activityFeed = [
 
 export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject }: ProjectsViewProps) => {
   const router = useRouter();
-  const { setCurrentProject } = useWorkflowStore();
+  const { setCurrentProject, deleteProject } = useWorkflowStore();
   const { user } = useAuthStore();
-  const role = user?.role || 'DEVELOPER';
+  
+  // Fallback to localStorage if store isn't populated
+  const authLocal = JSON.parse(localStorage.getItem('auth') || '{}');
+  const userEmail = (user?.email || authLocal.email || '').toLowerCase();
+  
+  // Normalize role to handle values like "Team Lead" from DB
+  let rawRole = user?.role || 'DEVELOPER';
+  
+  // Hardcoded role assignment logic as requested in layout
+  if (userEmail === 'avinash@fic.com') rawRole = 'MANAGER';
+  if (userEmail === 'agila@fic.com' || userEmail === 'akila@fic.com') rawRole = 'TEAM_LEAD';
+
+  const role = rawRole.toUpperCase().replace(/\s+/g, '_');
+  
   const rolePath = role === 'TEAM_LEAD' ? 'lead' : role === 'MANAGER' ? 'manager' : role === 'TESTER' ? 'tester' : 'developer';
   const accentColor = role === 'TEAM_LEAD' ? 'bg-[#065F46]' : 'bg-[#1A3A8F]';
   const accentHover = role === 'TEAM_LEAD' ? 'hover:bg-[#047857]' : 'hover:bg-blue-800';
@@ -67,6 +82,19 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterMode>('All');
   const [view, setView] = useState<ViewMode>('grid');
+  const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<Project | null>(null);
+  const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<Project | null>(null);
+
+  const handleDelete = async (project: Project) => {
+    if (window.confirm(`Are you sure you want to delete the project "${project.name}"? This action cannot be undone.`)) {
+      try {
+        await deleteProject(project.id || (project as any)._id);
+        toast.success('Project deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete project');
+      }
+    }
+  };
 
   const filtered = useMemo(() => {
     let list = projects || [];
@@ -146,12 +174,13 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
               return (
                 <div
                   key={project.id}
-                  className={`bg-white rounded-[24px] border-t-4 ${h.borderColor} border-x border-b border-slate-100 shadow-sm p-6 flex flex-col gap-5 hover:shadow-lg transition-all cursor-default`}
+                  onClick={() => onOpenProject?.(project)}
+                  className={`bg-white rounded-[24px] border-t-4 ${h.borderColor} border-x border-b border-slate-100 shadow-sm p-6 flex flex-col gap-5 hover:shadow-lg transition-all cursor-pointer group`}
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col">
-                        <h3 className="text-[15px] font-semibold text-slate-900 leading-tight">{project.name}</h3>
+                        <h3 className="text-[15px] font-semibold text-slate-900 leading-tight group-hover:text-[#1B4FAB] transition-colors">{project.name}</h3>
                         <p className="text-[11px] text-slate-400 font-medium mt-1">{sprint}</p>
                     </div>
                     <span className={`px-2.5 py-1 ${
@@ -165,12 +194,15 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                   </div>
 
                   {/* Status Selection */}
-                  <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100">
+                  <div 
+                    className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-2">Status</span>
                     <select 
                       value={project.status || 'TO DO'}
                       onChange={(e) => useWorkflowStore.getState().updateProject(project.id, { status: e.target.value })}
-                      className="bg-white border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20"
+                      className="bg-white border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1B4FAB]/20"
                     >
                       <option value="TO DO">To Do</option>
                       <option value="IN PROGRESS">In Progress</option>
@@ -188,6 +220,34 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                     </div>
                   </div>
 
+                  {/* Action Buttons */}
+                  {(role === 'TEAM_LEAD' || role === 'MANAGER' || role === 'ADMIN' || role === 'COMPANY_ADMIN') && (
+                    <div className="flex items-center justify-end gap-2 mt-2 pt-4 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => setSelectedProjectForMembers(project)}
+                          title="Assign Team"
+                          className="w-9 h-9 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition-colors"
+                        >
+                          <UserPlus size={14} />
+                        </button>
+                        <button
+                          onClick={() => setSelectedProjectForEdit(project)}
+                          title="Edit Project"
+                          className="w-9 h-9 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl transition-colors"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(project)}
+                          title="Delete Project"
+                          className="w-9 h-9 flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -198,13 +258,17 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
             {filtered.map(project => {
               const h = projectHealth[project.name] || projectHealth.default;
               return (
-                <div key={project.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-all">
+                <div 
+                  key={project.id} 
+                  onClick={() => onOpenProject?.(project)}
+                  className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-all cursor-pointer group"
+                >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className={`w-9 h-9 ${h.bg} rounded-xl flex items-center justify-center ${h.text} shrink-0`}>
                       <Layout size={18} />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[13px] font-semibold text-slate-900 truncate">{project.name}</div>
+                      <div className="text-[13px] font-semibold text-slate-900 truncate group-hover:text-[#1B4FAB] transition-colors">{project.name}</div>
                       <div className="text-[11px] text-slate-400 font-medium truncate">{project.description || 'No description'}</div>
                     </div>
                     <span className={`px-2.5 py-1 ${
@@ -216,12 +280,12 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                       {project.status || 'TO DO'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-6 shrink-0 ml-4">
+                  <div className="flex items-center gap-6 shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
                     <div className="text-center hidden md:block">
                       <select 
                         value={project.status || 'TO DO'}
                         onChange={(e) => useWorkflowStore.getState().updateProject(project.id, { status: e.target.value })}
-                        className="bg-white border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F5A3E]/20"
+                        className="bg-white border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1B4FAB]/20"
                       >
                         <option value="TO DO">To Do</option>
                         <option value="IN PROGRESS">In Progress</option>
@@ -233,13 +297,30 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                       <div className="text-[13px] font-semibold text-slate-900">{project.prCount ?? h.prs}</div>
                       <div className="text-[9px] font-medium text-slate-400 uppercase">PRs</div>
                     </div>
-                    {onOpenProject && (
-                      <button 
-                        onClick={() => onOpenProject(project)}
-                        className={`p-2 rounded-lg ${h.bg} ${h.text} hover:opacity-80 transition-opacity`}
-                      >
-                        <ChevronRight size={18} />
-                      </button>
+                    {(role === 'TEAM_LEAD' || role === 'MANAGER' || role === 'ADMIN' || role === 'COMPANY_ADMIN') && (
+                      <div className="flex gap-1 ml-1">
+                        <button
+                          onClick={() => setSelectedProjectForMembers(project)}
+                          className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-opacity"
+                          title="Assign Team"
+                        >
+                          <UserPlus size={16} />
+                        </button>
+                        <button
+                          onClick={() => setSelectedProjectForEdit(project)}
+                          className="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-opacity"
+                          title="Edit Project"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(project)}
+                          className="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-opacity"
+                          title="Delete Project"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -249,7 +330,27 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
         )}
       </div>
 
+      {/* Render Project Members Modal */}
+      {selectedProjectForMembers && (
+        <ProjectMembersModal
+          isOpen={true}
+          onClose={() => setSelectedProjectForMembers(null)}
+          projectId={selectedProjectForMembers.id || (selectedProjectForMembers as any)._id}
+          projectName={selectedProjectForMembers.name}
+        />
+      )}
+
+      {/* Render Edit Project Modal */}
+      {selectedProjectForEdit && (
+        <EditProjectModal
+          isOpen={true}
+          onClose={() => setSelectedProjectForEdit(null)}
+          project={selectedProjectForEdit}
+        />
+      )}
+
     </div>
   );
 };
+
 

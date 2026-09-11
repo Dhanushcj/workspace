@@ -37,6 +37,12 @@ export default function SprintPlanner() {
   const [isAIPlannerOpen, setIsAIPlannerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [goalInput, setGoalInput] = useState('');
+  const [isDatesModalOpen, setIsDatesModalOpen] = useState(false);
+  const [startDateInput, setStartDateInput] = useState('');
+  const [endDateInput, setEndDateInput] = useState('');
+  
   // Local state for optimistic updates
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
   const [activeDragTask, setActiveDragTask] = useState<Task | null>(null);
@@ -170,20 +176,25 @@ export default function SprintPlanner() {
     }
   };
 
-  const handleSetGoal = async () => {
+  const handleSetGoal = () => {
     if (!activeSprintId) return;
-    const goal = prompt('Enter sprint goal:', activeSprint?.goal || '');
-    if (goal === null) return;
+    setGoalInput(activeSprint?.goal || '');
+    setIsGoalModalOpen(true);
+  };
+
+  const saveGoal = async () => {
+    if (!activeSprintId) return;
     
     try {
       setIsUpdating(true);
-      const res = await api.put(`/sprints/${activeSprintId}`, { goal });
+      const res = await api.put(`/sprints/${activeSprintId}`, { goal: goalInput });
       const updatedSprint = res.data?.data || res.data;
       addToast({ type: 'SUCCESS', title: 'Goal Updated', message: 'Sprint goal saved successfully.' });
       setCurrentSprint({ ...activeSprint, ...updatedSprint });
       
-      const sprintsRes = await api.get(`/projects/${currentProject?.id}/sprints`);
+      const sprintsRes = await api.get(`/projects/${currentProject?.id || (currentProject as any)._id}/sprints`);
       setSprints(Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []));
+      setIsGoalModalOpen(false);
     } catch (err) {
       addToast({ type: 'ERROR', title: 'Update Failed', message: 'Could not update sprint goal.' });
     } finally {
@@ -191,21 +202,26 @@ export default function SprintPlanner() {
     }
   };
 
-  const handleChangeDates = async () => {
+  const handleChangeDates = () => {
     if (!activeSprintId) return;
-    const start = prompt('Start Date (YYYY-MM-DD):', activeSprint?.startDate?.split('T')[0] || '');
-    const end = prompt('End Date (YYYY-MM-DD):', activeSprint?.endDate?.split('T')[0] || '');
-    if (!start || !end) return;
+    setStartDateInput(activeSprint?.startDate?.split('T')[0] || '');
+    setEndDateInput(activeSprint?.endDate?.split('T')[0] || '');
+    setIsDatesModalOpen(true);
+  };
+
+  const saveDates = async () => {
+    if (!activeSprintId || !startDateInput || !endDateInput) return;
 
     try {
       setIsUpdating(true);
-      const res = await api.put(`/sprints/${activeSprintId}`, { startDate: start, endDate: end });
+      const res = await api.put(`/sprints/${activeSprintId}`, { startDate: startDateInput, endDate: endDateInput });
       const updatedSprint = res.data?.data || res.data;
       addToast({ type: 'SUCCESS', title: 'Dates Updated', message: 'Sprint timeline adjusted.' });
       setCurrentSprint({ ...activeSprint, ...updatedSprint });
       
-      const sprintsRes = await api.get(`/projects/${currentProject?.id}/sprints`);
+      const sprintsRes = await api.get(`/projects/${currentProject?.id || (currentProject as any)._id}/sprints`);
       setSprints(Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []));
+      setIsDatesModalOpen(false);
     } catch (err) {
       addToast({ type: 'ERROR', title: 'Update Failed', message: 'Could not adjust dates.' });
     } finally {
@@ -315,14 +331,14 @@ export default function SprintPlanner() {
             <div className="flex items-center gap-2">
               {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
                 <button onClick={() => setIsAIPlannerOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F5A3E] text-white rounded-lg text-[12px] font-medium hover:bg-[#0B4A3F] transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
               >
-                  <Bot size={14} /> ✨ AI Plan Project
+                   AI Plan Project
                 </button>
               ) : null}
               <button 
                 onClick={() => setIsTaskModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F5A3E] text-white rounded-lg text-[12px] font-medium hover:bg-[#0B4A3F] transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
               >
                 <Plus size={14} /> Add Task
               </button>

@@ -140,16 +140,17 @@ export const CreateTaskModal = ({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} />
       
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-8 py-5 flex items-center justify-between border-b border-slate-100">
+        <div className="px-8 py-5 flex items-center justify-between border-b border-slate-100 shrink-0">
           <h2 className="text-[18px] font-semibold text-slate-800">Create New Task</h2>
           <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg transition-all text-slate-400">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden min-h-0">
+          <div className="p-8 space-y-6 overflow-y-auto flex-1">
           {error && (
             <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2 text-red-600 text-[13px]">
               <AlertCircle size={16} /> {error}
@@ -284,9 +285,10 @@ export const CreateTaskModal = ({
               </div>
             </div>
           </div>
+          </div>
 
           {/* Footer Buttons */}
-          <div className="pt-4 flex items-center justify-end gap-3">
+          <div className="px-8 py-5 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0 bg-slate-50">
             <button 
               type="button"
               onClick={onClose}

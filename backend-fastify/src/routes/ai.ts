@@ -264,7 +264,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
                 parentId: storyIssueId || storyIssueMap[story.id] || undefined,
                 title: task.title,
                 description: taskDescParts.join(''),
-                type: 'TASK',
+                type: task.category || 'BACKEND', // Default to BACKEND if not provided, maps to Task Type
                 status: 'TO_DO',
                 priority: task.priority || 'MEDIUM',
                 storyPoints: task.storyPoints,

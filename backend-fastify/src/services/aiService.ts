@@ -196,6 +196,7 @@ Each task must have:
 - why: Why is this task required?
 - expectedResult: What should happen when it is completed?
 - dependency: What needs to exist before this task can be completed (e.g. "None", "TASK-001").
+- category: MUST be one of: "FRONTEND", "BACKEND", "DESIGN", or "BUG".
 
 ══════════════════════════════════════
 STEP 4 — STORY POINT ESTIMATION
@@ -248,7 +249,7 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
               "why": "The system needs user information before users can log in.",
               "expectedResult": "User login information can be stored in the database.",
               "dependency": "None",
-              "category": "DATABASE",
+              "category": "BACKEND",
               "requirementIds": ["FR-001"],
               "storyPoints": 2,
               "estimateReason": "Standard table structure — 2 points.",
@@ -262,7 +263,7 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
               "why": "The frontend needs a backend service to authenticate users.",
               "expectedResult": "A successful login response is returned when details are correct.",
               "dependency": "TASK-001",
-              "category": "API",
+              "category": "BACKEND",
               "requirementIds": ["FR-001"],
               "storyPoints": 3,
               "estimateReason": "Simple authentication API — 3 points.",

@@ -84,9 +84,13 @@ interface WorkflowState {
   fetchProjects: (silent?: boolean) => Promise<void>;
   createProject: (data: { name: string, description: string }) => Promise<void>;
   updateProject: (projectId: string, updates: any) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
   updateTask: (taskId: string, updates: any) => Promise<boolean>;
   updateTaskStatus: (taskId: string, status: string, role: string) => Promise<boolean>;
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  bulkDeleteTasks: (taskIds: string[]) => Promise<void>;
+  bulkUpdateTasks: (ids: string[], updates: any) => Promise<boolean>;
   resolveBlocker: (blockerId: string, resolutionNote: string) => Promise<boolean>;
   setCurrentProject: (project: any) => void;
   setCurrentSprint: (sprint: any) => void;
@@ -105,7 +109,6 @@ interface WorkflowState {
   addStatus: (projectId: string, data: { name: string, color: string, order: number }) => Promise<any>;
   updateStatus: (statusId: string, data: { name?: string, color?: string, order?: number }) => Promise<any>;
   deleteStatus: (statusId: string) => Promise<boolean>;
-  bulkUpdateTasks: (ids: string[], updates: { status?: TaskStatus | string, assigneeId?: string, priority?: TaskPriority | string }) => Promise<boolean>;
   fetchMembers: (projectId?: string) => Promise<void>;
   updateTaskAssignee: (taskId: string, userId: string) => Promise<boolean>;
   clearTasks: () => void;
@@ -251,6 +254,20 @@ export const useWorkflowStore = create<WorkflowState>()(
           }));
         } catch (error) {
           console.error('Failed to update project', error);
+          throw error;
+        }
+      },
+
+      deleteProject: async (projectId: string) => {
+        try {
+          await api.delete(`/projects/${projectId}`);
+          set((state) => ({
+            projects: state.projects.filter(p => p.id !== projectId && (p as any)._id !== projectId),
+            currentProject: (state.currentProject?.id === projectId || (state.currentProject as any)?._id === projectId) ? null : state.currentProject
+          }));
+        } catch (error) {
+          console.error('Failed to delete project', error);
+          throw error;
         }
       },
 
@@ -259,6 +276,63 @@ export const useWorkflowStore = create<WorkflowState>()(
           const response = await api.post('/issues', taskData);
           set((state) => ({ tasks: [...state.tasks, response.data] }));
         } catch (error) {}
+      },
+
+      deleteTask: async (taskId: string) => {
+        try {
+          await api.delete(`/issues/${taskId}`);
+          set((state) => ({ tasks: state.tasks.filter(t => t.id !== taskId && (t as any)._id !== taskId) }));
+        } catch (error) {
+          console.error('Failed to delete task', error);
+          throw error;
+        }
+      },
+
+      bulkDeleteTasks: async (taskIds: string[]) => {
+        try {
+          await api.post('/issues/bulk-delete', { ids: taskIds });
+          set((state) => ({ tasks: state.tasks.filter(t => !taskIds.includes(t.id) && !taskIds.includes((t as any)._id)) }));
+        } catch (error) {
+          console.error('Failed to bulk delete tasks', error);
+          throw error;
+        }
+      },
+
+      bulkUpdateTasks: async (taskIds: string[], updates: any) => {
+        try {
+          await api.patch('/issues/bulk', { ids: taskIds, ...updates });
+          set((state) => ({
+            tasks: state.tasks.map((t) => {
+              if (taskIds.includes(t.id) || taskIds.includes((t as any)._id)) {
+                const updatedTask = { ...t, ...updates, updatedAt: new Date().toISOString() };
+                if (updates.assigneeId !== undefined) {
+                  if (updates.assigneeId === '' || updates.assigneeId === null || updates.assigneeId === 'null') {
+                    updatedTask.assignee = undefined;
+                    updatedTask.assigneeId = undefined;
+                    updatedTask.assigneeName = undefined;
+                  } else {
+                    const member = state.members.find(m => m.id === updates.assigneeId || (m as any)._id === updates.assigneeId);
+                    if (member) {
+                      updatedTask.assignee = {
+                        id: member.id || (member as any)._id,
+                        name: member.name,
+                        email: member.email,
+                        avatar: member.avatarUrl
+                      };
+                      updatedTask.assigneeName = member.name;
+                    }
+                  }
+                }
+                return updatedTask;
+              }
+              return t;
+            })
+          }));
+          return true;
+        } catch (error) {
+          console.error('Failed to bulk update tasks', error);
+          return false;
+        }
       },
 
       updateTask: async (taskId: string, updates: any) => {
@@ -515,21 +589,6 @@ export const useWorkflowStore = create<WorkflowState>()(
           return true;
         } catch (error) {
           console.error('Failed to delete status', error);
-          return false;
-        }
-      },
-
-      bulkUpdateTasks: async (ids, updates) => {
-        try {
-          await api.patch('/issues/bulk', { ids, ...updates });
-          set(state => ({
-            tasks: state.tasks.map(t => 
-              ids.includes(t.id) ? { ...t, ...updates, updatedAt: new Date().toISOString() } as any : t
-            )
-          }));
-          return true;
-        } catch (error) {
-          console.error('Bulk update failed', error);
           return false;
         }
       },

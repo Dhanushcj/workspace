@@ -17,10 +17,10 @@ export async function projectRoutes(fastify: FastifyInstance) {
     try {
       const { workspaceId } = request.query as any;
       const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId;
-      const role = request.user?.role || 'DEVELOPER';
+      const role = (request.user?.role || 'DEVELOPER').toUpperCase().replace(/ /g, '_');
       
       let projectIds: string[] | null = null;
-      if (role !== 'TEAM_LEAD' && role !== 'MANAGER') {
+      if (role !== 'TEAM_LEAD' && role !== 'MANAGER' && role !== 'ADMIN') {
         const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
         projectIds = memberships.map(m => m.projectId);
       }
@@ -67,15 +67,29 @@ export async function projectRoutes(fastify: FastifyInstance) {
         projects.push(defaultProject);
       }
 
-      // Populate sprints for each project so workflowStore can pick up activeSprint
-      const populatedProjects = await Promise.all(projects.map(async (project: any) => {
-        const sprints = await Sprint.find({ projectId: project._id }).sort({ createdAt: -1 }).lean();
-        const memberCount = await ProjectMember.countDocuments({ projectId: project._id });
+      // Populate sprints and member count efficiently (Fix N+1 query)
+      const allProjectIds = projects.map((p: any) => p._id);
+      
+      const allSprints = await Sprint.find({ projectId: { $in: allProjectIds } }).sort({ createdAt: -1 }).lean();
+      const allMembers = await ProjectMember.find({ projectId: { $in: allProjectIds } }).lean();
+
+      const sprintsMap = allSprints.reduce((acc: any, sprint: any) => {
+        if (!acc[sprint.projectId.toString()]) acc[sprint.projectId.toString()] = [];
+        acc[sprint.projectId.toString()].push(sprint);
+        return acc;
+      }, {});
+
+      const memberCountMap = allMembers.reduce((acc: any, member: any) => {
+        acc[member.projectId.toString()] = (acc[member.projectId.toString()] || 0) + 1;
+        return acc;
+      }, {});
+
+      const populatedProjects = projects.map((project: any) => {
         const pObj = project.toObject ? project.toObject() : project;
-        pObj.sprints = sprints;
-        pObj.memberCount = memberCount;
+        pObj.sprints = sprintsMap[project._id.toString()] || [];
+        pObj.memberCount = memberCountMap[project._id.toString()] || 0;
         return pObj;
-      }));
+      });
 
       return reply.code(200).send(populatedProjects);
     } catch (err: any) {
@@ -102,12 +116,52 @@ export async function projectRoutes(fastify: FastifyInstance) {
         status: 'PLANNING',
       });
 
-      if (body.members && Array.isArray(body.members)) {
-        const memberDocs = body.members.map((userId: string) => ({
+      // Add default statuses
+      const statuses = [
+        { name: 'To Do', key: 'TO_DO', color: '#94a3b8', order: 1 },
+        { name: 'In Progress', key: 'IN_PROGRESS', color: '#3b82f6', order: 2 },
+        { name: 'In Review', key: 'PR_SUBMITTED', color: '#eab308', order: 3 },
+        { name: 'Testing', key: 'TESTING', color: '#a855f7', order: 4 },
+        { name: 'Done', key: 'DONE', color: '#22c55e', order: 5 },
+        { name: 'Blocked', key: 'BLOCKED', color: '#ef4444', order: 6 },
+      ];
+
+      for (const status of statuses) {
+        await Status.create({
           projectId: project.id,
-          userId,
-          assignedBy: request.user?.id || 'system',
-        }));
+          ...status
+        });
+      }
+
+      // Handle member assignments
+      const memberDocs: any[] = [];
+      const assignedIds = new Set<string>();
+
+      // Ensure creator is added if they have an ID
+      if (request.user?.id) {
+        memberDocs.push({
+          projectId: project.id,
+          userId: request.user.id,
+          assignedBy: request.user.id,
+        });
+        assignedIds.add(request.user.id);
+      }
+
+      // Add any additional members specified
+      if (body.members && Array.isArray(body.members)) {
+        for (const userId of body.members) {
+          if (!assignedIds.has(userId)) {
+            memberDocs.push({
+              projectId: project.id,
+              userId,
+              assignedBy: request.user?.id || 'system',
+            });
+            assignedIds.add(userId);
+          }
+        }
+      }
+
+      if (memberDocs.length > 0) {
         await ProjectMember.insertMany(memberDocs);
       }
 
@@ -136,6 +190,30 @@ export async function projectRoutes(fastify: FastifyInstance) {
       return reply.code(200).send(project);
     } catch (err: any) {
       return reply.code(500).send({ error: 'Failed to update project', details: err.message });
+    }
+  });
+
+  // 2.6 DELETE a project
+  fastify.delete('/:projectId', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { projectId } = request.params as any;
+      
+      const project = await Project.findByIdAndDelete(projectId);
+      if (!project) {
+        return reply.code(404).send({ error: 'Project not found' });
+      }
+      
+      // Cleanup associated data
+      await Promise.all([
+        Sprint.deleteMany({ projectId }),
+        Status.deleteMany({ projectId }),
+        ProjectMember.deleteMany({ projectId }),
+        Epic.deleteMany({ projectId })
+      ]);
+      
+      return reply.code(200).send({ message: 'Project deleted successfully' });
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to delete project', details: err.message });
     }
   });
 
@@ -240,8 +318,11 @@ export async function projectRoutes(fastify: FastifyInstance) {
 
   fastify.post('/:projectId/members', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      if (request.user?.role !== 'TEAM_LEAD') {
-        return reply.code(403).send({ error: 'Only Team Leads can assign members' });
+      const userRole = (request.user?.role || '').toUpperCase().replace(/\s+/g, '_');
+      const allowedRoles = ['TEAM_LEAD', 'MANAGER', 'ADMIN', 'COMPANY_ADMIN'];
+      
+      if (!allowedRoles.includes(userRole)) {
+        return reply.code(403).send({ error: 'Only Team Leads or Admins can assign members' });
       }
       const { projectId } = request.params as any;
       const { userIds } = request.body as any;
