@@ -69,9 +69,19 @@ export const SprintBoard = ({
   // Filter tasks by current sprint and assignee if individual employee
   const sprintTasks = useMemo(() => {
     const sid = currentSprint?.id || (currentSprint as any)?._id;
-    if (!sid) return [];
     
-    let filtered = tasks.filter(t => (t as any).sprintId === sid || t.sprintId === sid);
+    let filtered: Task[];
+    if (sid) {
+      // Sprint active: show tasks that belong to this sprint OR have no sprint (unassigned tasks)
+      filtered = tasks.filter(t => {
+        const taskSprintId = (t as any).sprintId;
+        return taskSprintId === sid || taskSprintId === (currentSprint as any)?._id ||
+          !taskSprintId || taskSprintId === '' || taskSprintId === 'null' || taskSprintId === null;
+      });
+    } else {
+      // No sprint: show all tasks so the board is never empty
+      filtered = [...tasks];
+    }
     
     // Filter tasks so individual employees only see tasks assigned to them (except MANAGER / TEAM_LEAD / ADMIN)
     const rawRole = (user?.role || '').toUpperCase().replace(' ', '_');
@@ -124,7 +134,11 @@ export const SprintBoard = ({
 
   useEffect(() => {
     if (currentProject) {
-      fetchStatuses(currentProject.id || (currentProject as any)?._id);
+      const projectId = currentProject.id || (currentProject as any)?._id;
+      fetchStatuses(projectId);
+      // Always fetch all project tasks — the filter is done client-side
+      const { fetchTasks } = useWorkflowStore.getState();
+      fetchTasks({ projectId });
     }
   }, [currentProject?.id, currentProject?._id]);
 

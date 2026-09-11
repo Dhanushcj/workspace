@@ -44,18 +44,21 @@ const TaskBoard = () => {
       <div className="flex flex-col gap-8 h-full">
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-2 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-medium mb-2 uppercase tracking-widest" style={{ color: '#1B4FAB', opacity: 0.6 }}>
               <span>Projects</span>
               <span>/</span>
-              <span className="text-[#0056B3]">{currentProject?.name || 'Platform'}</span>
+              <span style={{ color: '#1B4FAB', fontWeight: 700, opacity: 1 }}>{currentProject?.name || 'Platform'}</span>
             </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Kanban Board</h2>
+            <h2 className="text-3xl font-black tracking-tight" style={{ color: '#1B4FAB' }}>Kanban Board</h2>
           </div>
           <div className="flex items-center gap-3 relative">
              <div className="relative">
-               <button 
+             <button 
                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                 className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+                 className="px-4 py-2 border text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2"
+                 style={{ borderColor: '#1B4FAB', color: '#1B4FAB', background: 'white' }}
+                 onMouseEnter={e => e.currentTarget.style.background = '#EFF4FF'}
+                 onMouseLeave={e => e.currentTarget.style.background = 'white'}
                >
                   <Filter size={16} /> Filter
                </button>
@@ -80,7 +83,11 @@ const TaskBoard = () => {
                                <button 
                                  key={f}
                                  onClick={() => setActiveFilter(f)}
-                                 className={`px-2 py-1 rounded-md text-xs font-bold capitalize ${activeFilter === f ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                 className={`px-2 py-1 rounded-md text-xs font-bold capitalize`}
+                                 style={activeFilter === f
+                                   ? { background: '#1B4FAB', color: '#F5C300' }
+                                   : { background: '#F0F4FF', color: '#1B4FAB' }
+                                 }
                                >
                                  {f === 'pr' ? 'Open PRs' : f}
                                </button>
@@ -121,7 +128,8 @@ const TaskBoard = () => {
              
              <button 
                onClick={() => setIsCreateTaskModalOpen(true)}
-               className="px-4 py-2 bg-[#1A3A8F] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-900/10 hover:bg-blue-800 transition-all flex items-center gap-2"
+               className="px-4 py-2 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2"
+               style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.3)' }}
              >
                 <Plus size={16} /> New Task
              </button>

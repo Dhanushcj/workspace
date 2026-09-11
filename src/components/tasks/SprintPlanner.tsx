@@ -94,13 +94,13 @@ export default function SprintPlanner() {
 
   const filteredTasks = useMemo(() => {
     return localTasks.filter(t => 
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (t.title && t.title.toLowerCase().includes(searchQuery.toLowerCase())) || 
       (t.id && t.id.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [localTasks, searchQuery]);
 
   const sprintTasks = filteredTasks.filter(t => t.sprintId === activeSprintId);
-  const backlogTasks = filteredTasks.filter(t => !t.sprintId || t.sprintId === 'null' || t.sprintId === '');
+  const backlogTasks = filteredTasks.filter(t => !t.sprintId || ['null', '', 'undefined'].includes(String(t.sprintId).trim().toLowerCase()));
 
   const totalPoints = sprintTasks.reduce((sum, t) => sum + (t.storyPoints || t.estimate || 0), 0);
   const teamCapacity = 40;

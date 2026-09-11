@@ -335,42 +335,42 @@ export default function DeveloperDashboard() {
   // if (loading || !data) return <Preloader />;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#FAFAFA] font-sans">
+    <div className="flex h-screen w-screen overflow-hidden font-sans" style={{ background: 'linear-gradient(135deg, #EFF4FF 0%, #F7F9FF 100%)' }}>
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA] font-sans text-slate-900">
+      <div className="flex-1 flex flex-col min-w-0 font-sans text-slate-900">
         
         {/* Top Header Row */}
-        <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0">
+        <header className="h-[72px] bg-white border-b-2 border-[#1B4FAB]/10 flex items-center justify-between px-8 shrink-0" style={{ boxShadow: '0 2px 16px 0 rgba(27,79,171,0.06)' }}>
           <div className="flex-1" />
           <div className="flex items-center gap-4">
             <div className="relative group">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1B4FAB]/40 group-focus-within:text-[#1B4FAB] transition-colors" />
               <input
                 type="text"
                 placeholder="Search Workspace..."
-                className="w-64 bg-slate-50 border border-slate-100 rounded-full py-1.5 pl-9 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                className="w-64 bg-[#F0F4FF] border border-[#1B4FAB]/10 rounded-full py-1.5 pl-9 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4FAB]/20 focus:border-[#1B4FAB] transition-all"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white border border-slate-200 text-slate-400 shadow-sm">⌘</kbd>
-                <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white border border-slate-200 text-slate-400 shadow-sm">K</kbd>
+                <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white border border-[#1B4FAB]/10 text-[#1B4FAB]/40 shadow-sm">⌘</kbd>
+                <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white border border-[#1B4FAB]/10 text-[#1B4FAB]/40 shadow-sm">K</kbd>
               </div>
             </div>
             
-            <button className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+            <button className="relative p-2 text-[#1B4FAB]/50 hover:text-[#1B4FAB] transition-colors">
               <Bell size={20} strokeWidth={1.5} />
-              {(unreadCount > 0) && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white" />}
+              {(unreadCount > 0) && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F5C300] border-2 border-white" />}
             </button>
-            <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+            <button className="p-2 text-[#1B4FAB]/50 hover:text-[#1B4FAB] transition-colors">
               <Sun size={20} strokeWidth={1.5} />
             </button>
             
-            <div className="flex items-center gap-2 pl-4 border-l border-slate-100 cursor-pointer hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shadow-sm">
+            <div className="flex items-center gap-2 pl-4 border-l border-[#1B4FAB]/10 cursor-pointer hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-sm" style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', color: '#F5C300' }}>
                 {user?.user?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'D'}
               </div>
               <div className="hidden md:block">
                 <div className="text-xs font-bold text-slate-800 leading-tight">{user?.user || 'Developer'}</div>
-                <div className="text-[10px] font-semibold text-slate-400">{user?.role || 'DEVELOPER'}</div>
+                <div className="text-[10px] font-semibold text-[#1B4FAB]/60">{user?.role || 'DEVELOPER'}</div>
               </div>
             </div>
           </div>
@@ -383,8 +383,8 @@ export default function DeveloperDashboard() {
             {/* HEADER */}
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-800">Developer Workspace</h1>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">
+                <h1 className="text-2xl font-black tracking-tight text-[#1B4FAB]">Developer Workspace</h1>
+                <p className="text-xs font-bold text-[#1B4FAB]/50 uppercase tracking-wider mt-1">
                   {user?.name || 'Nexus Developer'} · {currentProject?.name || 'No Project Selected'}
                 </p>
               </div>
@@ -397,7 +397,8 @@ export default function DeveloperDashboard() {
                 </button>
                 <button 
                   onClick={() => setIsCreateTaskModalOpen(true)}
-                  className="px-4 py-2 bg-[#1A3A8F] text-white rounded-xl text-[12px] font-bold shadow-lg shadow-blue-900/10 hover:bg-blue-800 transition-all flex items-center gap-2">
+                  className="px-4 py-2 text-white rounded-xl text-[12px] font-bold transition-all flex items-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.3)' }}>
                   <Plus size={16} /> New Task
                 </button>
               </div>
@@ -415,8 +416,8 @@ export default function DeveloperDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
               <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">My Active Tasks</h2>
-                  <button className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 flex items-center gap-1 transition-colors">
+                  <h2 className="text-[13px] font-bold text-[#1B4FAB] uppercase tracking-wider">My Active Tasks</h2>
+                  <button className="text-[10px] font-bold text-[#1B4FAB]/50 uppercase tracking-widest hover:text-[#F5C300] flex items-center gap-1 transition-colors">
                     All tasks <ArrowUpRight size={12} />
                   </button>
                 </div>
@@ -434,8 +435,8 @@ export default function DeveloperDashboard() {
                     />
                   ))}
                   {stats.recentTasks.length === 0 && (
-                    <div className="p-8 border-2 border-dashed border-slate-100 rounded-2xl text-center">
-                       <p className="text-[12px] text-slate-400 italic">No active tasks assigned to you in this project.</p>
+                    <div className="p-8 border-2 border-dashed border-[#1B4FAB]/10 rounded-2xl text-center bg-white/50">
+                       <p className="text-[12px] text-[#1B4FAB]/40 italic">No active tasks assigned to you in this project.</p>
                     </div>
                   )}
                 </div>
@@ -444,7 +445,7 @@ export default function DeveloperDashboard() {
               <div className="space-y-10">
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Bug Inbox</h2>
+                    <h2 className="text-[13px] font-bold text-[#1B4FAB] uppercase tracking-wider">Bug Inbox</h2>
                   </div>
                   <div className="space-y-3">
                     {data.bugs.slice(0, 3).map((bug: any) => (
@@ -455,7 +456,7 @@ export default function DeveloperDashboard() {
                 </div>
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">My PRs</h2>
+                    <h2 className="text-[13px] font-bold text-[#1B4FAB] uppercase tracking-wider">My PRs</h2>
                   </div>
                   <div className="space-y-3">
                     {data.prs.slice(0, 3).map((pr: any) => (
@@ -522,12 +523,13 @@ export default function DeveloperDashboard() {
           <div className="p-10 w-full space-y-10">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pull Requests</h1>
-                <p className="text-[12px] font-medium text-slate-400 mt-1">{user?.name || 'Nexus Developer'} · My submitted PRs</p>
+                <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Pull Requests</h1>
+                <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">{user?.name || 'Nexus Developer'} · My submitted PRs</p>
               </div>
               <button 
                 onClick={handleCreatePRClick}
-                className="px-5 py-2.5 bg-[#1A3A8F] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-blue-900/10 hover:bg-blue-800 transition-all flex items-center gap-2"
+                className="px-5 py-2.5 text-white rounded-xl text-[13px] font-bold transition-all flex items-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.3)' }}
               >
                 <GitPullRequest size={18} /> Create PR
               </button>
@@ -548,8 +550,8 @@ export default function DeveloperDashboard() {
           <div className="p-10 w-full space-y-10">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Blockers</h1>
-                <p className="text-[12px] font-medium text-slate-400 mt-1">{data.blockers.length} active blockers</p>
+                <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Blockers</h1>
+                <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">{data.blockers.length} active blockers</p>
               </div>
               <button 
                 onClick={handleRaiseBlockerClick}
@@ -576,8 +578,8 @@ export default function DeveloperDashboard() {
           <div className="p-10 w-full space-y-10">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Bug Inbox</h1>
-                <p className="text-[12px] font-medium text-slate-400 mt-1">Bugs logged on your tasks by QA</p>
+                <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Bug Inbox</h1>
+                <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">Bugs logged on your tasks by QA</p>
               </div>
             </div>
             <div className="space-y-4">
@@ -604,21 +606,21 @@ export default function DeveloperDashboard() {
             {/* HEADER */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Analytics</h1>
-                <p className="text-[12px] font-medium text-slate-400 mt-1">
+                <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Analytics</h1>
+                <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">
                   Sprint velocity, workload, and quality metrics
                 </p>
               </div>
-              <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[12px] font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
+              <button className="px-4 py-2 bg-white border border-[#1B4FAB]/10 text-[#1B4FAB] rounded-xl text-[12px] font-bold hover:bg-[#EFF4FF] transition-all flex items-center gap-2 shadow-sm">
                 <Download size={16} /> Export CSV
               </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* SPRINT VELOCITY */}
-              <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm space-y-8">
+              <div className="bg-white border border-[#1B4FAB]/10 rounded-[32px] p-8 shadow-sm space-y-8">
                 <div className="flex items-center justify-between">
-                   <h3 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Sprint Velocity</h3>
+                   <h3 className="text-[13px] font-bold text-[#1B4FAB] uppercase tracking-wider">Sprint Velocity</h3>
                 </div>
                 <div className="h-48 flex items-end gap-4 px-4">
                    <VelocityBar label="S1" val={32} />
@@ -626,48 +628,48 @@ export default function DeveloperDashboard() {
                    <VelocityBar label="S3" val={58} />
                    <VelocityBar label="S4 (est)" val={72} active />
                 </div>
-                <div className="pt-4 border-t border-slate-50 flex items-center justify-between text-[11px] font-medium text-slate-400">
+                <div className="pt-4 border-t border-[#1B4FAB]/5 flex items-center justify-between text-[11px] font-medium text-[#1B4FAB]/50">
                    <p>Avg: 46 pts/sprint — Target: 50 pts</p>
                 </div>
               </div>
 
               {/* SPRINT 3 BURNDOWN */}
-              <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm space-y-8">
+              <div className="bg-white border border-[#1B4FAB]/10 rounded-[32px] p-8 shadow-sm space-y-8">
                 <div className="flex items-center justify-between">
-                   <h3 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Sprint 3 Burndown</h3>
+                   <h3 className="text-[13px] font-bold text-[#1B4FAB] uppercase tracking-wider">Sprint 3 Burndown</h3>
                 </div>
                 <div className="space-y-6">
                    <AnalyticsProgressBar label="Done" val={88} color="bg-emerald-500" />
                    <AnalyticsProgressBar label="Remaining" val={32} color="bg-rose-500" />
-                   <AnalyticsProgressBar label="Blocked pts" val={22} color="bg-amber-600" />
+                   <AnalyticsProgressBar label="Blocked pts" val={22} color="bg-amber-500" />
                 </div>
               </div>
 
               {/* TASK STATUS BREAKDOWN */}
-              <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm space-y-8">
+              <div className="bg-white border border-[#1B4FAB]/10 rounded-[32px] p-8 shadow-sm space-y-8">
                 <div className="flex items-center justify-between">
-                   <h3 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Task Status Breakdown</h3>
+                   <h3 className="text-[13px] font-bold text-[#1B4FAB] uppercase tracking-wider">Task Status Breakdown</h3>
                 </div>
                 <div className="space-y-4">
                    <StatusBreakdownRow label="Done" count={8} total={28} color="bg-emerald-600" />
-                   <StatusBreakdownRow label="In Progress" count={6} total={28} color="bg-blue-500" />
+                   <StatusBreakdownRow label="In Progress" count={6} total={28} color="bg-[#1B4FAB]" />
                    <StatusBreakdownRow label="In Review" count={4} total={28} color="bg-indigo-500" />
-                   <StatusBreakdownRow label="Testing" count={3} total={28} color="bg-orange-500" />
+                   <StatusBreakdownRow label="Testing" count={3} total={28} color="bg-[#F5C300]" />
                    <StatusBreakdownRow label="Blocked" count={2} total={28} color="bg-rose-500" />
                    <StatusBreakdownRow label="To Do" count={5} total={28} color="bg-slate-300" />
                 </div>
               </div>
 
               {/* TEAM WORKLOAD DISTRIBUTION */}
-              <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm space-y-8">
+              <div className="bg-white border border-[#1B4FAB]/10 rounded-[32px] p-8 shadow-sm space-y-8">
                 <div className="flex items-center justify-between">
-                   <h3 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Team Workload Distribution</h3>
+                   <h3 className="text-[13px] font-bold text-[#1B4FAB] uppercase tracking-wider">Team Workload Distribution</h3>
                 </div>
                 <div className="space-y-5">
-                   <WorkloadRow name="Ravi" initials="RK" val={76} color="bg-amber-600" />
-                   <WorkloadRow name="Nexus" initials="ND" val={60} color="bg-blue-600" />
-                   <WorkloadRow name="Arjun" initials="AP" val={85} color="bg-amber-700" />
-                   <WorkloadRow name="Sneha" initials="SM" val={45} color="bg-blue-400" />
+                   <WorkloadRow name="Ravi" initials="RK" val={76} color="bg-[#F5C300]" />
+                   <WorkloadRow name="Nexus" initials="ND" val={60} color="bg-[#1B4FAB]" />
+                   <WorkloadRow name="Arjun" initials="AP" val={85} color="bg-[#F5C300]/80" />
+                   <WorkloadRow name="Sneha" initials="SM" val={45} color="bg-[#1B4FAB]/60" />
                    <WorkloadRow name="Dev" initials="DV" val={95} color="bg-rose-500" />
                 </div>
               </div>
@@ -678,8 +680,8 @@ export default function DeveloperDashboard() {
         {activeTab === 'ActivityLog' && (
           <div className="p-10 w-full space-y-10">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Activity Log</h1>
-              <p className="text-[12px] font-medium text-slate-400 mt-1">Audit trail of all actions in the workspace</p>
+              <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Activity Log</h1>
+              <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">Audit trail of all actions in the workspace</p>
             </div>
             <div className="p-20 border-2 border-dashed border-slate-100 rounded-[32px] text-center">
               <History size={48} className="mx-auto text-slate-200 mb-4" />
@@ -691,8 +693,8 @@ export default function DeveloperDashboard() {
         {activeTab === 'TimeTracker' && (
           <div className="p-10 w-full space-y-10">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Time Tracker</h1>
-              <p className="text-[12px] font-medium text-slate-400 mt-1">Track billable hours and task duration</p>
+              <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Time Tracker</h1>
+              <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">Track billable hours and task duration</p>
             </div>
             <div className="p-20 border-2 border-dashed border-slate-100 rounded-[32px] text-center">
               <Clock size={48} className="mx-auto text-slate-200 mb-4" />
@@ -789,11 +791,13 @@ export default function DeveloperDashboard() {
 
                      {currentChatMessages.map(msg => (
                        <div key={msg.id} className={`flex items-start gap-3 ${msg.sender === 'me' ? 'flex-row-reverse' : ''}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${msg.sender === 'me' ? 'bg-[#1A3A8F] text-white' : 'bg-slate-100 border border-slate-200 text-slate-600'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${msg.sender === 'me' ? 'text-[#F5C300]' : 'bg-slate-100 border border-slate-200 text-slate-600'}`}
+                               style={msg.sender === 'me' ? { background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)' } : {}}>
                             {msg.sender === 'me' ? (user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'ME') : selectedInitials}
                           </div>
                           <div className={`max-w-[70%] space-y-1 ${msg.sender === 'me' ? 'items-end flex flex-col' : ''}`}>
-                             <div className={`p-4 rounded-2xl shadow-sm ${msg.sender === 'me' ? 'bg-[#1A3A8F] text-white rounded-tr-none' : 'bg-white border border-slate-100 rounded-tl-none'}`}>
+                             <div className={`p-4 rounded-2xl shadow-sm ${msg.sender === 'me' ? 'text-white rounded-tr-none' : 'bg-white border border-[#1B4FAB]/10 rounded-tl-none'}`}
+                                  style={msg.sender === 'me' ? { background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)' } : {}}>
                                 <div className="text-[13px] leading-relaxed [&>p]:m-0" dangerouslySetInnerHTML={{ __html: msg.text }} />
                              </div>
                              <p className="text-[10px] font-medium text-slate-400">{msg.time}</p>
@@ -814,7 +818,8 @@ export default function DeveloperDashboard() {
                       />
                       <button 
                         onClick={handleSendMessage}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#1A3A8F] text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 hover:bg-blue-800 transition-all"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-xl flex items-center justify-center shadow-lg transition-all"
+                        style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.3)' }}
                       >
                         <Zap size={18} />
                       </button>
@@ -859,7 +864,8 @@ export default function DeveloperDashboard() {
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Role</label>
                   <input type="text" value={user?.role || 'Developer'} disabled className="w-full px-4 py-3 bg-slate-100 border border-slate-100 rounded-xl text-sm font-medium text-slate-500 cursor-not-allowed" />
                 </div>
-                <button className="px-6 py-2.5 bg-[#1A3A8F] text-white rounded-xl text-[12px] font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/10 flex items-center gap-2">
+                <button className="px-6 py-2.5 text-white rounded-xl text-[12px] font-bold transition-all flex items-center gap-2"
+                   style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.25)' }}>
                    Save Profile
                 </button>
               </div>
@@ -889,7 +895,8 @@ export default function DeveloperDashboard() {
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">New password</label>
                   <input type="password" placeholder="Enter new password" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
                 </div>
-                <button className="px-6 py-2.5 bg-[#1A3A8F] text-white rounded-xl text-[12px] font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/10 flex items-center gap-2">
+                <button className="px-6 py-2.5 text-white rounded-xl text-[12px] font-bold transition-all flex items-center gap-2"
+                   style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.25)' }}>
                    <RefreshCw size={14} /> Update Password
                 </button>
               </div>
@@ -904,7 +911,10 @@ export default function DeveloperDashboard() {
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Team</h1>
                 <p className="text-[12px] font-medium text-slate-400 mt-1">E-Commerce Platform · Sprint 3 · 8 members</p>
               </div>
-              <button className="px-5 py-2.5 bg-[#1A3A8F] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-blue-900/10 hover:bg-blue-800 transition-all flex items-center gap-2"><UserPlus size={18} /> Invite Member</button>
+              <button className="px-5 py-2.5 text-white rounded-xl text-[13px] font-bold transition-all flex items-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.25)' }}>
+                <UserPlus size={18} /> Invite Member
+              </button>
             </div>
             <div className="grid grid-cols-4 gap-6">
                <StatCard label="Total members" val={members.length} />
@@ -1003,10 +1013,15 @@ export default function DeveloperDashboard() {
 }
 
 // OPTIMIZED: Wrap reusable UI components in React.memo to avoid unnecessary re-renders
-const StatCard = React.memo(({ label, val, color = 'text-slate-900', active = false }: any) => {
+const StatCard = React.memo(({ label, val, color = 'text-[#1B4FAB]', active = false }: any) => {
   return (
-    <div className={`p-6 rounded-2xl border transition-all ${active ? 'bg-white border-slate-900/10 shadow-sm' : 'bg-white border-slate-100 shadow-sm'}`}>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{label}</p>
+    <div className={`p-6 rounded-2xl border transition-all ${
+      active
+        ? 'bg-white border-[#1B4FAB]/20 shadow-md'
+        : 'bg-white border-[#1B4FAB]/10 shadow-sm'
+    }`}
+    style={active ? { borderLeft: '4px solid #F5C300' } : {}}>
+      <p className="text-[10px] font-bold text-[#1B4FAB]/50 uppercase tracking-widest mb-2">{label}</p>
       <p className={`text-2xl font-bold ${color} tracking-tight`}>{val}</p>
     </div>
   );
@@ -1017,7 +1032,7 @@ StatCard.displayName = 'StatCard';
 function MyTaskGroup({ title, tasks, onPRClick, onTaskClick }: any) {
   return (
     <div className="space-y-4">
-      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{title}</h3>
+      <h3 className="text-[10px] font-bold text-[#1B4FAB]/60 uppercase tracking-[0.2em]">{title}</h3>
       <div className="space-y-2">
         {tasks.map((t: any, i: number) => <MyTaskListItem key={i} task={t} onPRClick={onPRClick} isDone={t.status === 'DONE'} onClick={onTaskClick} />)}
       </div>
@@ -1037,19 +1052,19 @@ const MyTaskListItem = React.memo(({ task, onPRClick, isDone = false, onClick }:
   const displayId = `#${String(id || '').slice(-4).toUpperCase()}`;
   const meta = `${type} · ${storyPoints || 0} pts`;
   
-  const statusColor = status === 'DONE' ? 'bg-emerald-50 text-emerald-600' : status === 'BLOCKED' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600';
-  const priorityColor = priority === 'CRITICAL' ? 'bg-rose-600' : 'bg-blue-500';
+  const statusColor = status === 'DONE' ? 'bg-emerald-50 text-emerald-600' : status === 'BLOCKED' ? 'bg-rose-50 text-rose-600' : 'bg-[#EFF4FF] text-[#1B4FAB]';
+  const priorityColor = priority === 'CRITICAL' ? 'bg-rose-600' : 'bg-[#F5C300]';
 
   return (
     <div 
       onClick={() => onClick && onClick(task)}
-      className={`bg-white border border-slate-100 rounded-xl p-3 flex items-center justify-between hover:border-blue-200 transition-all shadow-sm group cursor-pointer ${isDone ? 'opacity-50' : ''}`}
+      className={`bg-white border border-[#1B4FAB]/10 rounded-xl p-3 flex items-center justify-between hover:border-[#1B4FAB]/30 hover:shadow-md transition-all shadow-sm group cursor-pointer ${isDone ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center gap-4 flex-1">
         <div className={`w-1.5 h-1.5 rounded-full ${priorityColor}`} />
-        <span className="text-[11px] font-bold text-slate-300 tracking-tighter w-8">{displayId}</span>
+        <span className="text-[11px] font-bold text-[#1B4FAB]/30 tracking-tighter w-8">{displayId}</span>
         <div className="flex flex-col">
-          <h4 className="text-[13px] font-bold text-slate-800 group-hover:text-blue-700 transition-colors">{title}</h4>
+          <h4 className="text-[13px] font-bold text-slate-800 group-hover:text-[#1B4FAB] transition-colors">{title}</h4>
           <p className="text-[11px] font-medium text-slate-400 mt-0.5">{meta}</p>
         </div>
       </div>
@@ -1057,7 +1072,7 @@ const MyTaskListItem = React.memo(({ task, onPRClick, isDone = false, onClick }:
         {(status === 'IN_PROGRESS' || status === 'IN_REVIEW') && (
           <button 
             onClick={() => onPRClick(task)}
-            className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all flex items-center gap-1.5"
+            className="px-3 py-1 bg-[#EFF4FF] text-[#1B4FAB] rounded-lg text-[10px] font-bold uppercase tracking-widest border border-[#1B4FAB]/10 hover:bg-[#1B4FAB] hover:text-white transition-all flex items-center gap-1.5"
           >
             <GitPullRequest size={12} /> PR
           </button>
@@ -1065,7 +1080,7 @@ const MyTaskListItem = React.memo(({ task, onPRClick, isDone = false, onClick }:
         <div className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${statusColor} border border-black/5`}>
           {status}
         </div>
-        <button className="p-1.5 text-slate-300 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all">
+        <button className="p-1.5 text-slate-300 hover:text-[#1B4FAB] hover:bg-[#EFF4FF] rounded-lg transition-all">
           <MoreHorizontal size={16} />
         </button>
       </div>
@@ -1155,7 +1170,8 @@ function DeveloperPRCard({ id, title, branch, author, time, files, churn, status
            <div className="flex items-center gap-2">
              {isLead && (
                <>
-                 <button className="px-4 py-1.5 bg-[#1A3A8F] text-white rounded-lg text-[11px] font-bold hover:bg-blue-800 transition-all shadow-sm shadow-blue-900/10 flex items-center gap-1.5">
+                 <button className="px-4 py-1.5 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5"
+                   style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)' }}>
                     <CheckCircle size={12} /> Approve
                  </button>
                  <button className="px-4 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-[11px] font-bold hover:bg-slate-50 transition-all flex items-center gap-1.5">

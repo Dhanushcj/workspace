@@ -45,7 +45,7 @@ export const BacklogView = ({ onNavigate = (tab: string) => {} }: { onNavigate?:
   }, [currentProject?.id, currentProject?._id, fetchTasks, fetchEpics]);
 
   const unplannedTasks = useMemo(() => {
-    return tasks.filter(t => t && (!t.sprintId || t.sprintId === 'null' || t.sprintId === ''));
+    return tasks.filter(t => t && (!t.sprintId || ['null', '', 'undefined'].includes(String(t.sprintId).trim().toLowerCase())));
   }, [tasks]);
 
   const filteredTasks = useMemo(() => {
@@ -76,8 +76,11 @@ export const BacklogView = ({ onNavigate = (tab: string) => {} }: { onNavigate?:
       }
     });
 
-    // Uncategorized tasks (not bug, no epic)
-    const uncategorized = filteredTasks.filter(t => !t.epicId && t.type?.toUpperCase() !== 'BUG');
+    // Uncategorized tasks (not bug, no epic, or epic not found)
+    const epicIds = new Set(epics.map(e => e.id));
+    const uncategorized = filteredTasks.filter(t => 
+      t.type?.toUpperCase() !== 'BUG' && (!t.epicId || !epicIds.has(t.epicId))
+    );
     if (uncategorized.length > 0) {
       result.push({
         title: 'UNCATEGORIZED TASKS',
