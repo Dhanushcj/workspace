@@ -158,6 +158,7 @@ You have a list of CUSTOMER REQUIREMENTS. Your job is to generate the developmen
 8. Use simple, non-technical language (e.g. "Add permission checks" instead of "Implement RBAC").
 9. Every task MUST contain: sequence, title (describing ONE clear action with a verb), simple description, why it is needed, expected result, and dependency.
 10. Do NOT invent UI details (like Pricing or Testimonials) unless explicitly requested.
+11. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database). DO NOT generate any tasks for "Testing", "QA", "Writing Test Cases", or "Reviewing".
 
 CUSTOMER PROJECT OBJECTIVE: ${pass1Result.objective}
 USER ROLES: ${(pass1Result.actors || []).join(', ')}
