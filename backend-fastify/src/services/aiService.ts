@@ -31,7 +31,7 @@ function getClient() {
   return new Groq({ apiKey });
 }
 
-async function callAI(client: Groq, prompt: string, retries = 3, model = 'qwen/qwen3.8-27b', maxTokens = 4096): Promise<any> {
+async function callAI(client: Groq, prompt: string, retries = 3, model = 'openai/gpt-oss-120b', maxTokens = 8192): Promise<any> {
   console.log('[3] AI request started...');
   for (let i = 0; i < retries; i++) {
     try {
@@ -80,12 +80,12 @@ async function callAI(client: Groq, prompt: string, retries = 3, model = 'qwen/q
 async function extractRequirements(rawRequirements: string): Promise<any> {
   const client = getClient();
 
-  const prompt = `You are an expert Business Analyst and Requirements Engineer.
+  const prompt = `You are an expert Business Analyst for a software development agency.
 
-Your ONLY job in this step is to extract and structure the requirements from the raw text provided.
+Your ONLY job is to read the customer's project requirements and extract the list of features and user roles.
 Do NOT generate tasks, modules, stories, or sprint plans in this step.
 
-RAW PROJECT REQUIREMENTS:
+CUSTOMER PROJECT REQUIREMENTS:
 """
 ${rawRequirements}
 """
@@ -93,13 +93,13 @@ ${rawRequirements}
 Extract the following and return as strict JSON (no markdown, no code blocks, start with {):
 
 {
-  "objective": "One sentence describing the project purpose",
+  "objective": "One sentence describing what the customer wants to build",
   "actors": ["Role1", "Role2"],
   "requirements": [
     {
       "id": "FR-001",
-      "title": "Short title of the requirement",
-      "description": "One to two sentence description",
+      "title": "Short feature title (e.g. Student Login, Attendance Management)",
+      "description": "One to two sentence description of the feature from the customer perspective",
       "priority": "HIGH",
       "type": "FUNCTIONAL"
     }
@@ -112,18 +112,19 @@ Extract the following and return as strict JSON (no markdown, no code blocks, st
     }
   ],
   "assumptions": ["Assumption 1"],
-  "clarifications": ["What is unclear or needs decision from the client?"],
+  "clarifications": ["What is unclear or needs a client decision?"],
   "securityRequirements": ["Role-based access control is required"]
 }
 
 RULES:
-1. Every distinct feature, role, screen, or operation must become a separate requirement with a unique ID starting at FR-001.
+1. Every distinct customer feature, role, screen, or operation must become a separate requirement.
 2. IDs must be sequential: FR-001, FR-002, FR-003, etc.
-3. Do NOT invent requirements that are not in the text. If the text says "student login" make FR-001 = "Student Authentication". Do not add "payment gateway" unless the text mentions payments.
-4. type must be one of: FUNCTIONAL, NON_FUNCTIONAL, SECURITY, TECHNICAL
-5. priority must be one of: HIGH, MEDIUM, LOW
-6. Extract ALL requirements — do not summarize multiple features into one if they are distinct.
-7. Return ONLY the JSON object. No explanations. No markdown.`;
+3. Titles must describe CUSTOMER FEATURES — e.g. "Student Login", "View Timetable", "Manage Fees". NOT internal implementation like "Database Schema", "API Layer", "JSON Parser".
+4. Do NOT invent requirements not in the text.
+5. type must be one of: FUNCTIONAL, NON_FUNCTIONAL, SECURITY, TECHNICAL
+6. priority must be one of: HIGH, MEDIUM, LOW
+7. Extract ALL requirements — do not merge distinct features.
+8. Return ONLY the JSON object. No explanations. No markdown.`;
 
   return callAI(client, prompt);
 }
@@ -139,101 +140,160 @@ async function generatePlan(
 
   const requirementsJson = JSON.stringify(pass1Result.requirements, null, 2);
   const existingIssuesStr = existingIssueTitles.length > 0
-    ? `\nEXISTING TASKS (already in the project — DO NOT duplicate these):\n${existingIssueTitles.map((t, i) => `- ${t}`).join('\n')}`
-    : '\nNo existing tasks found. Generate fresh plan.';
+    ? `\nEXISTING TASKS (already created — DO NOT duplicate these):\n${existingIssueTitles.map((t) => `- ${t}`).join('\n')}`
+    : '\nNo existing tasks. Generate a fresh plan.';
 
-  const prompt = `You are an expert Agile Product Manager, Software Architect, and Scrum Master.
+  const prompt = `You are a senior Agile Product Manager planning a software project for a customer.
 
-You have been given a structured list of project requirements extracted by a Business Analyst.
-Your job is to generate a complete, traceable Agile implementation plan.
+You have a list of CUSTOMER REQUIREMENTS. Your job is to generate the development plan the team will use to BUILD THIS CUSTOMER'S PRODUCT.
 
-PROJECT OBJECTIVE: ${pass1Result.objective}
-ACTORS / ROLES: ${(pass1Result.actors || []).join(', ')}
+⚠️ CRITICAL RULE — GRANULAR JUNIOR DEVELOPER TASKS:
+1. NEVER generate broad tasks like "Create Landing Page", "Build Dashboard", or "Implement Authentication".
+2. Break broad requirements into SMALL, SPECIFIC, ACTIONABLE implementation tasks (e.g. 10-20 tasks per story).
+3. UI tasks MUST specify the exact component (e.g., "Add Home, About, and Contact links to the topbar", "Create the Hero Section").
+4. DB tasks MUST be specific (e.g., "Create User table", "Add name, email, role fields").
+5. Form tasks MUST be specific (e.g., "Add Email input", "Add Password input", "Add required-field validation").
+6. Task descriptions must answer "WHAT EXACTLY DO I NEED TO DO?".
+7. Do NOT simply sort tasks alphabetically or by module name. Order them by actual implementation dependencies (Database -> API -> Layout -> Components).
+8. Use simple, non-technical language (e.g. "Add permission checks" instead of "Implement RBAC").
+9. Every task MUST contain: sequence, title (describing ONE clear action with a verb), simple description, why it is needed, expected result, and dependency.
+10. Do NOT invent UI details (like Pricing or Testimonials) unless explicitly requested.
 
-EXTRACTED REQUIREMENTS:
+CUSTOMER PROJECT OBJECTIVE: ${pass1Result.objective}
+USER ROLES: ${(pass1Result.actors || []).join(', ')}
+
+CUSTOMER REQUIREMENTS:
 ${requirementsJson}
 
 SPRINT CONFIGURATION:
-- Sprint Capacity: ${sprintCapacity} story points per sprint
-- Use Fibonacci story points ONLY: 1, 2, 3, 5, 8, 13
+- Sprint Capacity: ${sprintCapacity} story points
+- Fibonacci story points ONLY: 1, 2, 3, 5, 8, 13
 ${existingIssuesStr}
 
-INSTRUCTIONS:
+══════════════════════════════════════
+STEP 1 — MODULES (Customer Features)
+══════════════════════════════════════
+Group requirements into logical CUSTOMER-FACING modules and order them by implementation sequence (e.g., Authentication first, then dependent modules).
+Good module names: Authentication, Student Management, Course Management.
 
-STEP 1 — MODULE GROUPING:
-Group related requirements into logical modules (epics).
-Example: FR-001 (Student Login) + FR-002 (Faculty Login) + FR-003 (Admin Login) → Module: "Authentication & Role Management"
-Do NOT create a separate module for every single requirement.
-Do NOT create modules that have no corresponding requirement.
+══════════════════════════════════════
+STEP 2 — USER STORIES
+══════════════════════════════════════
+For each requirement, write one user story. Order stories logically based on dependencies (e.g., cannot view reports before creating data).
+"As a [role], I want [feature], so that [value]."
+Provide 3-5 simple, testable acceptance criteria.
+If a story is too large (e.g. "Complete Student Management"), split it.
 
-STEP 2 — USER STORIES:
-For each requirement, write a user story in proper Agile format:
-"As a [role], I want [feature], so that [business value]."
-Provide 3-5 acceptance criteria (testable, specific).
+══════════════════════════════════════
+STEP 3 — TASKS (Customer Feature Tasks)
+══════════════════════════════════════
+For each story, generate as many small, granular tasks as needed to fully build the feature (often 5-15 tasks per story).
+Task titles must start with a verb (Create, Add, Display, Validate, Connect).
+Tasks must be sequentially ordered (sequence: 1, 2, 3...) based on actual development dependencies.
 
-STEP 3 — TASKS:
-For each story, generate 2-3 concrete, high-level implementation tasks (e.g., Frontend, Backend, Testing).
-Keep descriptions CONCISE (1 sentence max) to avoid exceeding output limits.
-BAD tasks: "Start development", "Write code", "Complete feature", "Test application"
-GOOD tasks: "Design attendance UI component", "Create POST /api/attendance endpoint", "Write unit tests for attendance service"
+Each task must have:
+- sequence: Recommended implementation order across the entire project (1 to N).
+- why: Why is this task required?
+- expectedResult: What should happen when it is completed?
+- dependency: What needs to exist before this task can be completed (e.g. "None", "TASK-001").
 
-STEP 4 — STORY POINT ESTIMATION (FIBONACCI ONLY: 1, 2, 3, 5, 8, 13):
-1 = Trivial change (CSS tweak, label change)
-2 = Small simple feature (read-only list page)
-3 = Small feature with limited complexity (simple form with validation)
-5 = Moderate feature involving multiple components (CRUD with auth)
-8 = Large feature with multiple layers (real-time, integrations)
-13 = Very large/uncertain (MARK needsSplit: true and suggest splits)
-Provide estimateReason explaining WHY you chose that point value.
+══════════════════════════════════════
+STEP 4 — STORY POINT ESTIMATION
+══════════════════════════════════════
+Use ONLY Fibonacci values: 1, 2, 3, 5, 8, 13
+Assign story points based on actual complexity. Granular tasks should mostly be 1 or 2 points.
 
-STEP 5 — DEPENDENCIES:
-Identify which stories depend on other stories.
-Example: Attendance story depends on Course Management and Student Management.
+══════════════════════════════════════
+STEP 5 — SPRINT PLANNING
+══════════════════════════════════════
+Group stories into sprints:
+- Max ${sprintCapacity} story points per sprint.
+- Use logical progression based on dependencies.
 
-STEP 6 — SPRINT PLANNING:
-Group stories into sprints respecting:
-- Sprint capacity of ${sprintCapacity} points
-- Dependency order (authentication before features that need auth)
-- Logical progression
-
-Return ONLY this exact JSON structure (no markdown, start with {):
+Return ONLY this exact JSON (no markdown, no explanation, start with {):
 
 {
-  "projectSummary": "Brief one-paragraph project summary",
+  "projectSummary": "One paragraph describing what the customer is building",
   "modules": [
     {
       "id": "MOD-001",
-      "name": "Module Name",
-      "description": "What this module covers",
-      "requirementIds": ["FR-001", "FR-002"],
+      "sequence": 1,
+      "name": "Authentication",
+      "description": "User login, role management, and access control",
+      "requirementIds": ["FR-001"],
       "priority": "HIGH",
       "stories": [
         {
           "id": "ST-001",
-          "title": "Story title",
-          "userStory": "As a [role], I want [feature], so that [value].",
-          "description": "Detailed description",
+          "sequence": 1,
+          "title": "User Login",
+          "userStory": "As a user, I want to log in with my credentials, so that I can access my role dashboard.",
+          "description": "Login screen with email/password, role-based redirect after login",
           "requirementIds": ["FR-001"],
           "storyPoints": 5,
-          "estimateReason": "Requires frontend form, backend API, DB schema, role-based auth, and testing — 5 points.",
+          "estimateReason": "Involves login form, validation, role-based redirect, and auth integration — 5 points.",
           "needsSplit": false,
           "priority": "HIGH",
           "acceptanceCriteria": [
-            "User can submit form with valid data",
-            "System validates required fields",
-            "Error message shown for invalid input",
-            "Successful submission redirects to dashboard"
+            "User can enter email and password",
+            "Invalid credentials show an error message"
           ],
           "dependencies": [],
           "tasks": [
             {
               "id": "TASK-001",
-              "title": "Create login form UI component",
-              "description": "Build the login page with email/password fields and validation states",
-              "category": "FRONTEND",
+              "sequence": 1,
+              "title": "Create Login Database Structure",
+              "description": "Create the User table and add fields for email and password.",
+              "why": "The system needs user information before users can log in.",
+              "expectedResult": "User login information can be stored in the database.",
+              "dependency": "None",
+              "category": "DATABASE",
               "requirementIds": ["FR-001"],
               "storyPoints": 2,
-              "estimateReason": "Standard form component with validation — 2 points.",
+              "estimateReason": "Standard table structure — 2 points.",
+              "priority": "HIGH"
+            },
+            {
+              "id": "TASK-002",
+              "sequence": 2,
+              "title": "Create Login API",
+              "description": "Create an API that checks the user's email and password.",
+              "why": "The frontend needs a backend service to authenticate users.",
+              "expectedResult": "A successful login response is returned when details are correct.",
+              "dependency": "TASK-001",
+              "category": "API",
+              "requirementIds": ["FR-001"],
+              "storyPoints": 3,
+              "estimateReason": "Simple authentication API — 3 points.",
+              "priority": "HIGH"
+            },
+            {
+              "id": "TASK-003",
+              "sequence": 3,
+              "title": "Create Login Page Layout",
+              "description": "Set up the main container for the login screen.",
+              "why": "We need a structure to place the inputs.",
+              "expectedResult": "An empty login screen container is visible.",
+              "dependency": "None",
+              "category": "FRONTEND",
+              "requirementIds": ["FR-001"],
+              "storyPoints": 1,
+              "estimateReason": "Basic layout — 1 point.",
+              "priority": "HIGH"
+            },
+            {
+              "id": "TASK-004",
+              "sequence": 4,
+              "title": "Add Email Input",
+              "description": "Add an email text field to the login layout.",
+              "why": "User must input their email.",
+              "expectedResult": "Email input field is visible.",
+              "dependency": "TASK-003",
+              "category": "FRONTEND",
+              "requirementIds": ["FR-001"],
+              "storyPoints": 1,
+              "estimateReason": "Basic input — 1 point.",
               "priority": "HIGH"
             }
           ]
@@ -245,25 +305,24 @@ Return ONLY this exact JSON structure (no markdown, start with {):
     {
       "id": "sprint-1",
       "name": "Sprint 1",
-      "goal": "Establish authentication and core user management",
+      "goal": "Authentication and core dashboards",
       "storyIds": ["ST-001"],
       "totalStoryPoints": 5
     }
   ],
   "assumptions": ["Assumption 1"],
-  "clarifications": ["Unclear point requiring client decision"]
+  "clarifications": ["Unclear point needing client decision"]
 }
 
-CRITICAL RULES:
-- Every module, story, and task MUST have at least one requirementId from the list above.
-- Only use requirement IDs that exist in the provided requirements list: ${(pass1Result.requirements || []).map((r: any) => r.id).join(', ')}
-- Story points MUST be one of: 1, 2, 3, 5, 8, 13. No other values allowed.
-- Tasks must be concrete engineering actions. No vague tasks.
-- Do NOT generate modules/features not covered by the requirements.
-- Do NOT duplicate existing tasks: ${existingIssueTitles.slice(0, 20).join('; ')}
-- Keep descriptions concise. Do NOT generate massive text blocks.
+⚠️ FINAL CRITICAL RULES:
+- Every module, story, and task MUST trace to a requirement ID from: ${(pass1Result.requirements || []).map((r: any) => r.id).join(', ')}
+- Story points MUST be: 1, 2, 3, 5, 8, or 13. No other values.
+- Task names MUST describe SMALL, ACTIONABLE customer product features in simple, non-technical language.
+- ALL dependencies MUST be logically ordered so a Junior Developer can follow them from 1 to N.
+- Do NOT generate modules/features not in the requirements.
+- Do NOT duplicate: ${existingIssueTitles.slice(0, 15).join('; ')}
 - Sprints must not exceed ${sprintCapacity} story points.
-- Return ONLY the JSON object. No explanations. No markdown. Start with {.`;
+- Return ONLY the JSON. No markdown. Start with {.`;
 
   return callAI(client, prompt);
 }
@@ -294,36 +353,89 @@ async function validateAndFillGaps(
 
   // Only call AI if there are gaps or unrelated items to fix
   const missingReqs = requirements.filter(r => coverage.missing.includes(r.id));
-  const prompt = `You are a senior Agile coach validating a project plan.
+  const prompt = `You are a senior Agile coach reviewing a customer software project plan.
 
-The following requirements have NO implementation plan (no module, story, or task references them).
-Generate ONLY the missing modules/stories/tasks for these requirements.
-Append them to the existing plan.
+The following customer requirements have NO tasks planned yet. Generate ONLY the missing modules and tasks for them.
 
-MISSING REQUIREMENTS:
+⚠️ CRITICAL: You are filling gaps in a CUSTOMER PROJECT plan for a JUNIOR DEVELOPER.
+- NEVER generate broad tasks like "Create Page" or "Implement Feature". Break every feature into SMALL, SPECIFIC, ACTIONABLE tasks.
+- UI tasks MUST specify the exact component (e.g., "Add Email input", "Create the Hero Section", "Add navigation links to the topbar").
+- DB tasks MUST be specific (e.g., "Create User table", "Add name, email, role, status fields").
+- Form tasks MUST be specific (e.g., "Add Email input", "Add Password input", "Add required-field validation").
+- Every task MUST contain: sequence, title (with an action verb), simple description, why it is needed, expected result, and dependency.
+- A single task should represent ONE clear action only.
+- Do NOT invent features not mentioned in the requirements.
+
+MISSING REQUIREMENTS (generate tasks for these):
 ${JSON.stringify(missingReqs, null, 2)}
 
-UNRELATED MODULES DETECTED (may not be required):
+UNRELATED MODULES (may not be needed — flag for removal if not in requirements):
 ${coverage.unrelatedModules.join(', ') || 'None'}
 
-EXISTING PLAN SUMMARY (do not repeat these):
+EXISTING MODULES (do not repeat):
 ${(plan.modules || []).map((m: any) => m.name).join(', ')}
 
 SPRINT CAPACITY: ${sprintCapacity} points
 
-Return ONLY JSON with this structure (start with {):
+Return ONLY JSON (start with {):
 {
   "additionalModules": [
     {
       "id": "MOD-NEW-001",
-      "name": "Module Name",
+      "sequence": 99,
+      "name": "Customer Module Name (e.g. Reports, Notifications)",
       "description": "Description",
       "requirementIds": ["FR-XXX"],
-      "priority": "HIGH",
-      "stories": [...]
+      "priority": "MEDIUM",
+      "stories": [
+        {
+          "id": "ST-NEW-001",
+          "sequence": 99,
+          "title": "Story title",
+          "userStory": "As a [role], I want [feature], so that [value].",
+          "description": "Brief description",
+          "requirementIds": ["FR-XXX"],
+          "storyPoints": 3,
+          "estimateReason": "Simple feature — 3 points.",
+          "needsSplit": false,
+          "priority": "MEDIUM",
+          "acceptanceCriteria": ["Criterion 1"],
+          "dependencies": [],
+          "tasks": [
+            {
+              "id": "TASK-NEW-001",
+              "sequence": 99,
+              "title": "Create [Feature] Database Table",
+              "description": "Create the database table needed for this feature.",
+              "why": "We need to store this data before showing it to the user.",
+              "expectedResult": "Data can be stored in the database.",
+              "dependency": "None",
+              "category": "DATABASE",
+              "requirementIds": ["FR-XXX"],
+              "storyPoints": 1,
+              "estimateReason": "Standard table — 1 point.",
+              "priority": "MEDIUM"
+            },
+            {
+              "id": "TASK-NEW-002",
+              "sequence": 100,
+              "title": "Create [Feature] API",
+              "description": "Create the API endpoint to add/update [feature] data.",
+              "why": "The frontend needs a backend service to manage this data.",
+              "expectedResult": "Data can be submitted and retrieved via the API.",
+              "dependency": "TASK-NEW-001",
+              "category": "API",
+              "requirementIds": ["FR-XXX"],
+              "storyPoints": 2,
+              "estimateReason": "Standard API — 2 points.",
+              "priority": "MEDIUM"
+            }
+          ]
+        }
+      ]
     }
   ],
-  "removedModuleNames": ["Name of unrelated module to remove if any"]
+  "removedModuleNames": []
 }
 
 Use Fibonacci points only: 1, 2, 3, 5, 8, 13.
@@ -331,8 +443,8 @@ Return ONLY the JSON. No markdown.`;
 
   let gapResult: any = { additionalModules: [], removedModuleNames: [] };
   try {
-    // Use 900 max_tokens for Pass 3 to stay within qwen OTPM limit (1000 tokens/min)
-    gapResult = await callAI(client, prompt, 3, 'qwen/qwen3.8-27b', 900);
+    // Use openai/gpt-oss-120b for gap fill — same model, consistent
+    gapResult = await callAI(client, prompt, 3, 'openai/gpt-oss-120b', 4096);
   } catch (err) {
     // Gap filling is best-effort — if it fails, continue with what we have
     console.error('[AI VALIDATOR] Gap-fill AI call failed:', (err as Error).message);
@@ -494,14 +606,20 @@ ${promptAddition || 'Improve this item'}
 RULES:
 - Story points MUST be Fibonacci: 1, 2, 3, 5, 8, or 13 ONLY.
 - Every requirementId in the original context must be preserved.
-- Tasks must be concrete engineering actions.
+- If regenerating a TASK: make it SMALL and SPECIFIC (one clear action only). Title must start with a verb (Add, Create, Show, Validate, Connect). NEVER use broad titles like "Create Landing Page" or "Implement Feature".
+- If regenerating a STORY: ensure the tasks list contains 5-15 GRANULAR tasks that each describe ONE specific implementation action (component, input, section, API endpoint, DB field).
+- Use simple, non-technical language a Junior Developer can understand immediately.
 - Return ONLY the JSON. No markdown. Start with {.
 
 ${itemType === 'TASK' ? `Return this exact structure:
 {
   "id": "${context.id}",
+  "sequence": ${context.sequence || 99},
   "title": "improved task title",
-  "description": "concrete description of what to implement",
+  "description": "concrete, simple description of what to implement",
+  "why": "Why is this task needed?",
+  "expectedResult": "What happens when it is done?",
+  "dependency": "None or task ID",
   "category": "FRONTEND|BACKEND|DATABASE|API|TESTING|SECURITY",
   "requirementIds": ${JSON.stringify(context.requirementIds || [])},
   "storyPoints": 2,
@@ -510,6 +628,7 @@ ${itemType === 'TASK' ? `Return this exact structure:
 }` : `Return this exact structure:
 {
   "id": "${context.id}",
+  "sequence": ${context.sequence || 99},
   "title": "improved story title",
   "userStory": "As a [role], I want [feature], so that [value].",
   "description": "detailed description",
@@ -524,7 +643,7 @@ ${itemType === 'TASK' ? `Return this exact structure:
 }`}`;
 
     const completion = await client.chat.completions.create({
-      model: 'qwen/qwen3.8-27b',
+      model: 'openai/gpt-oss-120b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       response_format: { type: 'json_object' }

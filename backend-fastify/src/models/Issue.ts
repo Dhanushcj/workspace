@@ -5,6 +5,7 @@ export interface IIssue extends Document {
   projectId: string;
   sprintId?: string;
   epicId?: string;
+  parentId?: string;   // For TASK → parent STORY linkage
   title: string;
   description?: string;
   type: string;
@@ -27,6 +28,7 @@ const IssueSchema = new Schema<IIssue>({
   projectId: { type: String, required: true, index: true },
   sprintId: { type: String, index: true },
   epicId: { type: String },
+  parentId: { type: String, index: true },
   title: { type: String, required: true },
   description: { type: String },
   type: { type: String, default: 'FEATURE' },

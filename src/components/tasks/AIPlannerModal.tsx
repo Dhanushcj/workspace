@@ -691,36 +691,87 @@ Admin features:
                                       )}
 
                                       {/* Tasks */}
-                                      {(story.tasks || []).map((task: any) => (
-                                        <div key={task.id} className="flex items-center justify-between py-1.5 px-2 hover:bg-slate-50 rounded-lg group">
-                                          <div className="flex items-center gap-2 min-w-0">
-                                            <button onClick={() => toggleTask(task.id)} className={`text-slate-300 hover:text-indigo-400 flex-shrink-0 ${selectedTasks.has(task.id) ? 'text-indigo-500' : ''}`}>
-                                              {selectedTasks.has(task.id) ? <CheckSquare size={13} /> : <Square size={13} />}
-                                            </button>
-                                            <span className="text-[12px] text-slate-700 truncate">{task.title}</span>
+                                      <div className="grid gap-3 pt-2">
+                                        {(story.tasks || []).map((task: any) => (
+                                          <div key={task.id} className="flex gap-3 p-4 bg-white border border-slate-200 shadow-sm rounded-xl hover:border-indigo-200 transition-all relative group">
+                                            {/* Selection Checkbox & Sequence */}
+                                            <div className="flex flex-col items-center gap-2 flex-shrink-0 pt-0.5">
+                                              <button onClick={() => toggleTask(task.id)} className={`text-slate-300 hover:text-indigo-400 transition-all ${selectedTasks.has(task.id) ? 'text-indigo-500' : ''}`}>
+                                                {selectedTasks.has(task.id) ? <CheckSquare size={16} /> : <Square size={16} />}
+                                              </button>
+                                              <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                                #{task.sequence || '—'}
+                                              </div>
+                                            </div>
+
+                                            {/* Task Details */}
+                                            <div className="flex-1 min-w-0 space-y-3">
+                                              {/* Title & Actions */}
+                                              <div className="flex items-start justify-between gap-4">
+                                                <h6 className="text-[14px] font-bold text-slate-800 leading-snug">{task.title}</h6>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                  <ReqBadge ids={task.requirementIds} />
+                                                  <button
+                                                    onClick={() => handleRegenerate(task.id, 'TASK', task)}
+                                                    disabled={regeneratingId === task.id}
+                                                    className="text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1.5 rounded-lg flex items-center gap-1.5 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                                                  >
+                                                    <RefreshCw size={11} className={regeneratingId === task.id ? 'animate-spin' : ''} />
+                                                    Regen
+                                                  </button>
+                                                </div>
+                                              </div>
+
+                                              {/* Junior Dev Fields */}
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Simple Description</p>
+                                                  <p className="text-[12px] text-slate-700">{task.description || '—'}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expected Result</p>
+                                                  <p className="text-[12px] text-slate-700">{task.expectedResult || '—'}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Why</p>
+                                                  <p className="text-[12px] text-slate-700 italic">{task.why || '—'}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Depends On</p>
+                                                  <p className="text-[12px] text-slate-700">{task.dependency || 'None'}</p>
+                                                </div>
+                                              </div>
+
+                                              {/* Tags */}
+                                              <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+                                                <div className="flex items-center gap-1.5">
+                                                  <p className="text-[10px] text-slate-500">Points:</p>
+                                                  <PointBadge points={task.storyPoints} reason={task.estimateReason} />
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                  <p className="text-[10px] text-slate-500">Priority:</p>
+                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                                    task.priority === 'HIGH' ? 'bg-rose-100 text-rose-700' :
+                                                    task.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-slate-100 text-slate-700'
+                                                  }`}>{task.priority}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                  <p className="text-[10px] text-slate-500">Category:</p>
+                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                                    task.category === 'FRONTEND' ? 'bg-sky-100 text-sky-700'
+                                                    : task.category === 'BACKEND' ? 'bg-orange-100 text-orange-700'
+                                                    : task.category === 'DATABASE' ? 'bg-green-100 text-green-700'
+                                                    : task.category === 'TESTING' ? 'bg-pink-100 text-pink-700'
+                                                    : task.category === 'SECURITY' ? 'bg-red-100 text-red-700'
+                                                    : 'bg-slate-100 text-slate-600'
+                                                  }`}>{task.category}</span>
+                                                </div>
+                                              </div>
+                                            </div>
                                           </div>
-                                          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                            <ReqBadge ids={task.requirementIds} />
-                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                                              task.category === 'FRONTEND' ? 'bg-sky-100 text-sky-700'
-                                              : task.category === 'BACKEND' ? 'bg-orange-100 text-orange-700'
-                                              : task.category === 'DATABASE' ? 'bg-green-100 text-green-700'
-                                              : task.category === 'TESTING' ? 'bg-pink-100 text-pink-700'
-                                              : task.category === 'SECURITY' ? 'bg-red-100 text-red-700'
-                                              : 'bg-slate-100 text-slate-600'
-                                            }`}>{task.category}</span>
-                                            <PointBadge points={task.storyPoints} reason={task.estimateReason} />
-                                            <button
-                                              onClick={() => handleRegenerate(task.id, 'TASK', task)}
-                                              disabled={regeneratingId === task.id}
-                                              className="text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all"
-                                              title="Regenerate task"
-                                            >
-                                              <RefreshCw size={11} className={regeneratingId === task.id ? 'animate-spin' : ''} />
-                                            </button>
-                                          </div>
-                                        </div>
-                                      ))}
+                                        ))}
+                                      </div>
                                     </div>
                                   )}
                                 </div>

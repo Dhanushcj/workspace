@@ -144,140 +144,161 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const { planId, approvedEpicIds, approvedStoryIds, approvedTaskIds } = request.body as any;
-    const plan = await AIProjectPlan.findById(planId);
-    if (!plan) return reply.code(404).send({ message: 'Plan not found' });
 
-    request.log.info(`[AI APPROVE] Approving plan ${planId} for project ${plan.projectId}`);
-    request.log.info(`[AI APPROVE] Approved modules: ${approvedEpicIds?.length || 0}`);
-    request.log.info(`[AI APPROVE] Approved stories: ${approvedStoryIds?.length || 0}`);
-    request.log.info(`[AI APPROVE] Approved tasks: ${approvedTaskIds?.length || 0}`);
+    try {
+      const plan = await AIProjectPlan.findById(planId);
+      if (!plan) return reply.code(404).send({ message: 'Plan not found' });
 
-    // CRITICAL: Convert ObjectId to String for all references
-    const projectIdStr = plan.projectId.toString();
-    const workspaceId = (request.user as any)?.workspaceId || 'forge-india-connect';
-    const creatorId = (request.user as any)?.id || 'system';
+      request.log.info(`[AI APPROVE] Approving plan ${planId} for project ${plan.projectId}`);
+      request.log.info(`[AI APPROVE] Approved modules: ${approvedEpicIds?.length || 0}`);
+      request.log.info(`[AI APPROVE] Approved stories: ${approvedStoryIds?.length || 0}`);
+      request.log.info(`[AI APPROVE] Approved tasks: ${approvedTaskIds?.length || 0}`);
 
-    const sprintMap: Record<string, string> = {};
-    const epicMap: Record<string, string> = {};
+      const projectIdStr = plan.projectId.toString();
+      const creatorId = (request.user as any)?.id || 'system';
 
-    // Create AI-suggested sprints
-    for (const s of plan.sprints) {
-      const sprint = new Sprint({
-        projectId: projectIdStr,
-        name: s.name,
-        goal: s.goal,
-        status: 'PLANNING'
-      });
-      await sprint.save();
-      sprintMap[s.id] = sprint._id.toString();
-      request.log.info(`[AI APPROVE] Created sprint: "${s.name}" (${sprint._id})`);
-    }
+      // BUG FIX 1: Get real workspaceId from the project document, not hardcoded
+      const projectDoc = await Project.findById(projectIdStr).lean() as any;
+      const workspaceId = projectDoc?.workspaceId || (request.user as any)?.workspaceId || 'forge-india-connect';
 
-    const getSprintForStory = (sId: string): string | null => {
-      const sp = plan.sprints.find((s: any) => s.storyIds.includes(sId));
-      return sp ? (sprintMap[sp.id] || null) : null;
-    };
+      const sprintMap: Record<string, string> = {};
+      const epicMap: Record<string, string> = {};
 
-    // Use modules array (new schema) for creation
-    const modules: any[] = (plan as any).modules || [];
-
-    // Create Epics / Modules → Stories → Tasks
-    for (const mod of modules) {
-      const modId = mod.id || '';
-      // approvedEpicIds uses module IDs
-      if (approvedEpicIds.includes(modId)) {
-        const reqIds = (mod.requirementIds || []).join(', ');
-        const epic = new Epic({
+      // BUG FIX 2: Only create sprints if there are any; if sprints is empty, issues go to backlog (sprintId: null)
+      for (const s of (plan.sprints || [])) {
+        if (!s.id || !s.name) continue;
+        const sprint = new Sprint({
           projectId: projectIdStr,
-          name: mod.name,
-          description: (mod.description || '') + (reqIds ? ` [Requirements: ${reqIds}]` : ''),
-          status: 'TODO'
+          name: s.name,
+          goal: s.goal || '',
+          status: 'PLANNING'
         });
-        await epic.save();
-        epicMap[modId] = epic._id.toString();
-        request.log.info(`[AI APPROVE] Created epic/module: "${mod.name}" (${epic._id})`);
+        await sprint.save();
+        sprintMap[s.id] = sprint._id.toString();
+        request.log.info(`[AI APPROVE] Created sprint: "${s.name}" (${sprint._id})`);
       }
 
-      for (const story of (mod.stories || [])) {
-        if (approvedStoryIds.includes(story.id)) {
-          const sprintId = getSprintForStory(story.id);
-          const acText = Array.isArray(story.acceptanceCriteria)
-            ? story.acceptanceCriteria.map((c: string) => `- ${c}`).join('\n')
-            : '';
-          const reqIdsStr = (story.requirementIds || []).join(', ');
+      const getSprintForStory = (sId: string): string | null => {
+        const sp = (plan.sprints || []).find((s: any) => Array.isArray(s.storyIds) && s.storyIds.includes(sId));
+        return sp ? (sprintMap[sp.id] || null) : null;
+      };
 
-          const descParts = [
-            story.description || '',
-            story.userStory ? `\n\n**User Story:** ${story.userStory}` : '',
-            acText ? `\n\n**Acceptance Criteria:**\n${acText}` : '',
-            story.estimateReason ? `\n\n**Estimate Reason:** ${story.estimateReason}` : '',
-            reqIdsStr ? `\n\n**Requirements:** ${reqIdsStr}` : ''
-          ];
+      const modules: any[] = (plan as any).modules || [];
 
-          const storyIssue = new Issue({
-            workspaceId,
+      // BUG FIX 3: Track story issue DB IDs so tasks can link parentId
+      const storyIssueMap: Record<string, string> = {};
+
+      for (const mod of modules) {
+        const modId = mod.id || '';
+
+        // Create Epic if approved
+        if ((approvedEpicIds || []).includes(modId)) {
+          const reqIds = (mod.requirementIds || []).join(', ');
+          const epic = new Epic({
             projectId: projectIdStr,
-            epicId: epicMap[modId] || undefined,
-            sprintId: sprintId,
-            title: story.title,
-            description: descParts.join(''),
-            type: 'STORY',
-            status: 'TO_DO',
-            priority: story.priority || 'MEDIUM',
-            storyPoints: story.storyPoints,
-            creatorId
+            name: mod.name,
+            description: (mod.description || '') + (reqIds ? ` [Requirements: ${reqIds}]` : ''),
+            status: 'TODO'
           });
-          await storyIssue.save();
+          await epic.save();
+          epicMap[modId] = epic._id.toString();
+          request.log.info(`[AI APPROVE] Created epic/module: "${mod.name}" (${epic._id})`);
         }
 
-        for (const task of (story.tasks || [])) {
-          if (approvedTaskIds.includes(task.id)) {
-            const sprintId = getSprintForStory(story.id);
-            const reqIdsStr = (task.requirementIds || story.requirementIds || []).join(', ');
+        // Create Story Issues first, then Tasks linked to them
+        for (const story of (mod.stories || [])) {
+          let storyIssueId: string | null = null;
 
-            const taskDescParts = [
-              task.description || '',
-              task.estimateReason ? `\n\n**Estimate Reason:** ${task.estimateReason}` : '',
+          if ((approvedStoryIds || []).includes(story.id)) {
+            const sprintId = getSprintForStory(story.id);
+            const acText = Array.isArray(story.acceptanceCriteria)
+              ? story.acceptanceCriteria.map((c: string) => `- ${c}`).join('\n')
+              : '';
+            const reqIdsStr = (story.requirementIds || []).join(', ');
+
+            const descParts = [
+              story.description || '',
+              story.userStory ? `\n\n**User Story:** ${story.userStory}` : '',
+              acText ? `\n\n**Acceptance Criteria:**\n${acText}` : '',
+              story.estimateReason ? `\n\n**Estimate Reason:** ${story.estimateReason}` : '',
               reqIdsStr ? `\n\n**Requirements:** ${reqIdsStr}` : ''
             ];
 
-            const taskIssue = new Issue({
+            const storyIssue = new Issue({
               workspaceId,
               projectId: projectIdStr,
               epicId: epicMap[modId] || undefined,
-              sprintId: sprintId,
-              title: task.title,
-              description: taskDescParts.join(''),
-              type: 'TASK',
+              sprintId: sprintId || undefined,
+              title: story.title,
+              description: descParts.join(''),
+              type: 'STORY',
               status: 'TO_DO',
-              priority: task.priority || 'MEDIUM',
-              storyPoints: task.storyPoints,
+              priority: story.priority || 'MEDIUM',
+              storyPoints: story.storyPoints,
               creatorId
             });
-            await taskIssue.save();
+            await storyIssue.save();
+            storyIssueId = storyIssue._id.toString();
+            storyIssueMap[story.id] = storyIssueId;
+            request.log.info(`[AI APPROVE] Created story: "${story.title}" (${storyIssue._id})`);
+          }
 
-            // Also create a legacy Task for the old dashboard views
-            const legacyTask = new Task({
-              workspaceId,
-              title: task.title,
-              description: taskDescParts.join(''),
-              status: 'todo',
-              priority: (task.priority || 'MEDIUM').toLowerCase(),
-              createdByEmail: (request.user as any)?.email || 'ai-planner@system.local',
-              assigneeEmail: task.suggestedAssignee ? task.suggestedAssignee + '@forge.local' : undefined,
-              assigneeName: task.suggestedAssignee || undefined
-            });
-            await legacyTask.save();
+          // Create Task Issues linked to their parent story
+          for (const task of (story.tasks || [])) {
+            if ((approvedTaskIds || []).includes(task.id)) {
+              const sprintId = getSprintForStory(story.id);
+              const reqIdsStr = (task.requirementIds || story.requirementIds || []).join(', ');
+
+              const taskDescParts = [
+                task.description || '',
+                task.estimateReason ? `\n\n**Estimate Reason:** ${task.estimateReason}` : '',
+                reqIdsStr ? `\n\n**Requirements:** ${reqIdsStr}` : ''
+              ];
+
+              const taskIssue = new Issue({
+                workspaceId,
+                projectId: projectIdStr,
+                epicId: epicMap[modId] || undefined,
+                sprintId: sprintId || undefined,
+                // BUG FIX 3: Link task to parent story issue
+                parentId: storyIssueId || storyIssueMap[story.id] || undefined,
+                title: task.title,
+                description: taskDescParts.join(''),
+                type: 'TASK',
+                status: 'TO_DO',
+                priority: task.priority || 'MEDIUM',
+                storyPoints: task.storyPoints,
+                creatorId
+              });
+              await taskIssue.save();
+              request.log.info(`[AI APPROVE] Created task: "${task.title}" (${taskIssue._id})`);
+
+              // Legacy Task record for old dashboard views
+              const legacyTask = new Task({
+                workspaceId,
+                projectId: projectIdStr,
+                title: task.title,
+                description: taskDescParts.join(''),
+                status: 'todo',
+                priority: (task.priority || 'MEDIUM').toLowerCase(),
+                createdByEmail: (request.user as any)?.email || 'ai-planner@system.local',
+              });
+              await legacyTask.save();
+            }
           }
         }
       }
+
+      plan.status = 'APPROVED';
+      await plan.save();
+
+      const totalCreated = Object.keys(storyIssueMap).length;
+      request.log.info(`[AI APPROVE] ✓ Plan approved. Project: ${projectIdStr}. Stories: ${totalCreated}`);
+
+      return reply.send({ success: true, message: 'Plan applied successfully', projectId: projectIdStr });
+    } catch (err: any) {
+      request.log.error('[AI APPROVE Error] ' + err.stack);
+      return reply.code(500).send({ message: err.message || 'Approval failed' });
     }
-
-    plan.status = 'APPROVED';
-    await plan.save();
-
-    request.log.info(`[AI APPROVE] ✓ Plan approved and persisted. Project: ${projectIdStr}`);
-
-    return reply.send({ success: true, message: 'Plan applied successfully', projectId: projectIdStr });
   });
 };

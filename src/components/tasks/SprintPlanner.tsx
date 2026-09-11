@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Target, Calendar, Play, 
   AlertCircle, User, 
-  GripVertical, CalendarDays
+  GripVertical, CalendarDays, Trash2
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -251,6 +251,20 @@ export default function SprintPlanner() {
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
+    try {
+      setIsUpdating(true);
+      await api.delete(`/issues/${taskId}`);
+      addToast({ type: 'SUCCESS', title: 'Task Deleted', message: 'Task deleted successfully.' });
+      await fetchTasks({ projectId: currentProject?.id || (currentProject as any)?._id });
+    } catch (err) {
+      addToast({ type: 'ERROR', title: 'Delete Failed', message: 'Could not delete task.' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const isWithinCapacity = totalPoints <= teamCapacity;
 
   return (
@@ -375,6 +389,7 @@ export default function SprintPlanner() {
                 key={task.id} 
                 task={task} 
                 onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
+                onDelete={() => handleDeleteTask(task.id)}
                 sprints={sprints}
               />
             ))}
@@ -399,6 +414,7 @@ export default function SprintPlanner() {
                 key={task.id} 
                 task={task} 
                 onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
+                onDelete={() => handleDeleteTask(task.id)}
                 sprints={sprints}
                 isBacklog
               />
@@ -428,7 +444,7 @@ export default function SprintPlanner() {
           projectName={currentProject.name}
       onSuccess={() => {
             const projectId = currentProject.id || (currentProject as any)._id;
-            // 1. Reload sprints so newly created AI sprints appear in navigator
+            // 1. Reload sprints so newly created AI sprints appear
             api.get(`/projects/${projectId}/sprints`).then(sRes => {
               const rawSprints = Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []);
               const normalized = rawSprints.map((s: any) => ({
@@ -437,16 +453,13 @@ export default function SprintPlanner() {
                 _id: s._id || s.id
               }));
               setSprints(normalized);
-              // Set the first new sprint as current if there are multiple
-              if (normalized.length > 0) {
-                const planning = normalized.find((s: any) => s.status === 'PLANNING');
-                if (planning) setCurrentSprint(planning);
-              }
+              // Activate first PLANNING sprint so backlog/sprint board updates
+              const planning = normalized.find((s: any) => s.status === 'PLANNING');
+              if (planning) setCurrentSprint(planning);
             });
-            // 2. Reload ALL tasks for this project (no sprint filter) so they show in backlog/sprint sections
-            fetchTasks({ projectId });
-            // 3. Refresh projects in case sprint counts changed
-            fetchProjects(true);
+            // 2. Reload tasks silently — CRITICAL: pass projectId explicitly so the correct project's backlog loads
+            fetchTasks({ projectId }, true);
+            // NOTE: do NOT call fetchProjects(true) here — it resets currentProject to the first in list
           }}
         />
       )}
@@ -486,7 +499,7 @@ function DroppableArea({ id, title, count, children, isUpdating }: any) {
 }
 
 /* ── Draggable Task Row ─────────────────────────────────────────── */
-function DraggableTask({ task, isOverlay }: any) {
+function DraggableTask({ task, isOverlay, onDelete }: any) {
   const taskId = task.id || task._id;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: taskId,
@@ -530,6 +543,18 @@ function DraggableTask({ task, isOverlay }: any) {
            </div>
         )}
         <span className="text-[12px] font-medium text-[var(--text2)] w-4 text-center">{task.storyPoints || task.estimate || '–'}</span>
+        {onDelete && !isOverlay && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-1 text-[var(--text3)] hover:text-[var(--redtext)] hover:bg-[var(--redbg)] rounded transition-colors ml-1"
+            title="Delete Task"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -186,13 +186,16 @@ export const useWorkflowStore = create<WorkflowState>()(
           }));
 
           const state = get();
-          const currentId = state.currentProject?.id || (state.currentProject as any)?._id;
-          const currentInList = apiData.find((p: any) => p.id === currentId || p._id === currentId);
+          const currentId = String(state.currentProject?.id || (state.currentProject as any)?._id || '');
+          const currentInList = apiData.find((p: any) =>
+            String(p.id || p._id || '') === currentId
+          );
 
           const updates: any = { projects: apiData, isLoading: false };
 
           if (apiData.length > 0) {
-            if (!state.currentProject || !currentInList) {
+            if (!state.currentProject || (!currentInList && !currentId)) {
+              // Only switch to first project if we genuinely have no current project
               const projectToSet = apiData[0];
               // Use activeSprint field returned by the enriched backend
               const activeSprint =
