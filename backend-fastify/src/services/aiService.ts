@@ -31,45 +31,42 @@ function getClient() {
   return new Groq({ apiKey });
 }
 
-async function callAI(client: Groq, prompt: string, retries = 3, model = 'openai/gpt-oss-120b', maxTokens = 8192): Promise<any> {
+async function callAI(client: any, prompt: string, retries = 3, modelName = 'gemini-3.1-flash-lite', maxTokens = 8192): Promise<any> {
   console.log('[3] AI request started...');
+  const { GoogleGenerativeAI } = require('@google/generative-ai');
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-3.1-flash-lite',
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: maxTokens,
+      responseMimeType: 'application/json'
+    }
+  });
   for (let i = 0; i < retries; i++) {
     try {
-      const completion = await client.chat.completions.create({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' }
-      });
+      const result = await model.generateContent(prompt);
       console.log('[4] AI response received');
-      let text = completion.choices[0]?.message?.content || '{}';
-
-      // Strip markdown code blocks if AI wraps in ```json ... ``` or ``` ... ```
-      text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-
-      // Find the first { and last } to extract the JSON object robustly
+      let text = result.response.text() || '{}';
+      text = text.replace(/^\\s*\`\`\`(?:json)?\\s*/i, '').replace(/\\s*\`\`\`\\s*$/i, '').trim();
       const startIdx = text.indexOf('{');
       const endIdx = text.lastIndexOf('}');
       if (startIdx === -1) {
         throw new Error('AI response did not contain valid JSON object. Raw: ' + text.substring(0, 300));
       }
-
-      // If it's severely truncated, endIdx might be before startIdx. We take from startIdx to end of string if so.
       const jsonText = endIdx > startIdx ? text.substring(startIdx, endIdx + 1) : text.substring(startIdx);
-      
       try {
-        const repairedJsonText = jsonrepair(jsonText);
+        const repairedJsonText = require('jsonrepair').jsonrepair(jsonText);
         return JSON.parse(repairedJsonText);
       } catch (repairErr: any) {
         throw new Error('JSON Repair failed: ' + repairErr.message);
       }
     } catch (error: any) {
       if (i === retries - 1) throw error;
-      // For rate limit errors (429), wait longer to let the TPM window reset
-      const isRateLimit = error.message?.includes('429') || error.message?.includes('rate_limit');
-      const waitMs = isRateLimit ? 15000 : 3000;
-      console.warn(`[AI Retry] Attempt ${i + 1} failed, retrying in ${waitMs / 1000}s... Error: ${error.message}`);
+      const waitMs = error.message?.includes('429') ? 15000 : 3000;
+      console.warn('[AI Retry] Attempt ' + (i + 1) + ' failed, retrying in ' + (waitMs / 1000) + 's... Error: ' + error.message);
       await new Promise(resolve => setTimeout(resolve, waitMs));
     }
   }
@@ -137,196 +134,185 @@ async function generatePlan(
   existingIssueTitles: string[]
 ): Promise<any> {
   const client = getClient();
-
-  const requirementsJson = JSON.stringify(pass1Result.requirements, null, 2);
+  const reqs = pass1Result.requirements || [];
+  const BATCH_SIZE = 12; // Process 12 requirements at a time to ensure high coverage
+  
+  let mergedModules: any[] = [];
+  let mergedSprints: any[] = [];
+  let projectSummary = "";
+  let allAssumptions: string[] = [];
+  let allClarifications: string[] = [];
+  
   const existingIssuesStr = existingIssueTitles.length > 0
-    ? `\nEXISTING TASKS (already created — DO NOT duplicate these):\n${existingIssueTitles.map((t) => `- ${t}`).join('\n')}`
-    : '\nNo existing tasks. Generate a fresh plan.';
+    ? "\nEXISTING TASKS (already created — DO NOT duplicate these):\n" + existingIssueTitles.map((t) => "- " + t).join('\n')
+    : "\nNo existing tasks. Generate a fresh plan.";
 
-  const prompt = `You are a senior Agile Product Manager planning a software project for a customer.
+  console.log("[AI PASS 2] Generating Agile plan from " + reqs.length + " requirements in batches of " + BATCH_SIZE + "...");
 
-You have a list of CUSTOMER REQUIREMENTS. Your job is to generate the development plan the team will use to BUILD THIS CUSTOMER'S PRODUCT.
+  for (let i = 0; i < reqs.length; i += BATCH_SIZE) {
+    const batchReqs = reqs.slice(i, i + BATCH_SIZE);
+    console.log("[AI PASS 2] Processing batch " + (Math.floor(i/BATCH_SIZE) + 1) + " of " + Math.ceil(reqs.length / BATCH_SIZE) + " (" + batchReqs.length + " requirements)...");
+    const requirementsJson = JSON.stringify(batchReqs, null, 2);
 
-⚠️ CRITICAL RULE — GRANULAR JUNIOR DEVELOPER TASKS:
-1. NEVER generate broad tasks like "Create Landing Page", "Build Dashboard", or "Implement Authentication".
-2. Break broad requirements into SMALL, SPECIFIC, ACTIONABLE implementation tasks (e.g. 10-20 tasks per story).
-3. UI tasks MUST specify the exact component (e.g., "Add Home, About, and Contact links to the topbar", "Create the Hero Section").
-4. DB tasks MUST be specific (e.g., "Create User table", "Add name, email, role fields").
-5. Form tasks MUST be specific (e.g., "Add Email input", "Add Password input", "Add required-field validation").
-6. Task descriptions must answer "WHAT EXACTLY DO I NEED TO DO?".
-7. Do NOT simply sort tasks alphabetically or by module name. Order them by actual implementation dependencies (Database -> API -> Layout -> Components).
-8. Use simple, non-technical language (e.g. "Add permission checks" instead of "Implement RBAC").
-9. Every task MUST contain: sequence, title (describing ONE clear action with a verb), simple description, why it is needed, expected result, and dependency.
-10. Do NOT invent UI details (like Pricing or Testimonials) unless explicitly requested.
-11. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database). DO NOT generate any tasks for "Testing", "QA", "Writing Test Cases", or "Reviewing".
+    const prompt = "You are a senior Agile Product Manager planning a software project for a customer.\n\n" +
+"You have a list of CUSTOMER REQUIREMENTS. Your job is to generate the development plan the team will use to BUILD THIS CUSTOMER'S PRODUCT.\n\n" +
+"⚠️ CRITICAL RULE — GRANULAR JUNIOR DEVELOPER TASKS:\n" +
+"1. NEVER generate broad tasks like 'Create Landing Page', 'Build Dashboard', or 'Implement Authentication'.\n" +
+"2. Break broad requirements into SMALL, SPECIFIC, ACTIONABLE implementation tasks (e.g. 5-10 tasks per story).\n" +
+"3. UI tasks MUST specify the exact component (e.g., 'Add Home, About, and Contact links to the topbar').\n" +
+"4. DB tasks MUST be specific (e.g., 'Create User table', 'Add name, email, role fields').\n" +
+"5. Form tasks MUST be specific (e.g., 'Add Email input', 'Add Password input').\n" +
+"6. Task descriptions must answer 'WHAT EXACTLY DO I NEED TO DO?'.\n" +
+"7. Order them by actual implementation dependencies (Database -> API -> Layout -> Components).\n" +
+"8. Use simple, non-technical language (e.g. 'Add permission checks' instead of 'Implement RBAC').\n" +
+"9. Every task MUST contain: sequence, title (describing ONE clear action with a verb), simple description, why it is needed, expected result, and dependency.\n" +
+"10. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database).\n\n" +
+"CUSTOMER PROJECT OBJECTIVE: " + pass1Result.objective + "\n" +
+"USER ROLES: " + (pass1Result.actors || []).join(', ') + "\n\n" +
+"CUSTOMER REQUIREMENTS (Batch " + (Math.floor(i/BATCH_SIZE) + 1) + "):\n" +
+requirementsJson + "\n\n" +
+"SPRINT CONFIGURATION:\n" +
+"- Sprint Capacity: " + sprintCapacity + " story points\n" +
+"- Fibonacci story points ONLY: 1, 2, 3, 5, 8, 13\n" +
+existingIssuesStr + "\n\n" +
+"══════════════════════════════════════\n" +
+"STEP 1 — MODULES (Customer Features)\n" +
+"══════════════════════════════════════\n" +
+"Group requirements into logical CUSTOMER-FACING modules and order them by implementation sequence.\n\n" +
+"══════════════════════════════════════\n" +
+"STEP 2 — USER STORIES\n" +
+"══════════════════════════════════════\n" +
+"For each requirement, write one user story. 'As a [role], I want [feature], so that [value].'\n\n" +
+"══════════════════════════════════════\n" +
+"STEP 3 — TASKS (Customer Feature Tasks)\n" +
+"══════════════════════════════════════\n" +
+"For each story, generate as many small, granular tasks as needed to fully build the feature.\n" +
+"Task titles must start with a verb (Create, Add, Display, Validate, Connect).\n\n" +
+"══════════════════════════════════════\n" +
+"STEP 4 — STORY POINT ESTIMATION\n" +
+"══════════════════════════════════════\n" +
+"Use ONLY Fibonacci values: 1, 2, 3, 5, 8, 13\n\n" +
+"══════════════════════════════════════\n" +
+"STEP 5 — SPRINT PLANNING\n" +
+"══════════════════════════════════════\n" +
+"Group stories into sprints:\n" +
+"- Max " + sprintCapacity + " story points per sprint.\n" +
+"- DO NOT STOP GENERATING when you reach " + sprintCapacity + " points! If you exceed the capacity, automatically create Sprint 2, Sprint 3, etc. until ALL stories for the complete project are planned.\n" +
+"- Give each sprint a descriptive name representing what is being built in that sprint (e.g., 'Sprint 1: Database & Auth Setup', 'Sprint 2: Student Dashboard MVP').\n\n" +
+"Return ONLY this exact JSON (no markdown, no explanation, start with {):\n\n" +
+"{\n" +
+"  \"projectSummary\": \"One paragraph describing what the customer is building\",\n" +
+"  \"modules\": [\n" +
+"    {\n" +
+"      \"id\": \"MOD-001\",\n" +
+"      \"sequence\": 1,\n" +
+"      \"name\": \"Authentication\",\n" +
+"      \"description\": \"User login, role management, and access control\",\n" +
+"      \"requirementIds\": [\"FR-001\"],\n" +
+"      \"priority\": \"HIGH\",\n" +
+"      \"stories\": [\n" +
+"        {\n" +
+"          \"id\": \"ST-001\",\n" +
+"          \"sequence\": 1,\n" +
+"          \"title\": \"User Login\",\n" +
+"          \"userStory\": \"As a user, I want to log in with my credentials, so that I can access my role dashboard.\",\n" +
+"          \"description\": \"Login screen with email/password\",\n" +
+"          \"requirementIds\": [\"FR-001\"],\n" +
+"          \"storyPoints\": 5,\n" +
+"          \"estimateReason\": \"Involves login form, validation — 5 points.\",\n" +
+"          \"needsSplit\": false,\n" +
+"          \"priority\": \"HIGH\",\n" +
+"          \"acceptanceCriteria\": [\"User can enter email\"],\n" +
+"          \"dependencies\": [],\n" +
+"          \"tasks\": [\n" +
+"            {\n" +
+"              \"id\": \"TASK-001\",\n" +
+"              \"sequence\": 1,\n" +
+"              \"title\": \"Create Login Database Structure\",\n" +
+"              \"description\": \"Create the User table.\",\n" +
+"              \"why\": \"The system needs user information before users can log in.\",\n" +
+"              \"expectedResult\": \"User login information can be stored.\",\n" +
+"              \"dependency\": \"None\",\n" +
+"              \"category\": \"BACKEND\",\n" +
+"              \"requirementIds\": [\"FR-001\"],\n" +
+"              \"storyPoints\": 2,\n" +
+"              \"estimateReason\": \"Standard table structure — 2 points.\",\n" +
+"              \"priority\": \"HIGH\"\n" +
+"            }\n" +
+"          ]\n" +
+"        }\n" +
+"      ]\n" +
+"    }\n" +
+"  ],\n" +
+"  \"sprints\": [\n" +
+"    {\n" +
+"      \"id\": \"SPRINT-1\",\n" +
+"      \"name\": \"Sprint 1: Database & Auth Setup\",\n" +
+"      \"goal\": \"Basic user authentication and database setup\",\n" +
+"      \"storyIds\": [\"ST-001\"],\n" +
+"      \"totalStoryPoints\": 5\n" +
+"    }\n" +
+"  ],\n" +
+"  \"assumptions\": [\"Assumption 1\"],\n" +
+"  \"clarifications\": [\"Unclear point needing client decision\"]\n" +
+"}\n\n" +
+"⚠️ FINAL CRITICAL RULES:\n" +
+"- Every module, story, and task MUST trace to a requirement ID from: " + batchReqs.map((r: any) => r.id).join(', ') + "\n" +
+"- Return ONLY the JSON. No markdown. Start with {.\n";
 
-CUSTOMER PROJECT OBJECTIVE: ${pass1Result.objective}
-USER ROLES: ${(pass1Result.actors || []).join(', ')}
+    try {
+      const result = await callAI(client, prompt);
+      
+      if (!projectSummary && result.projectSummary) {
+        projectSummary = result.projectSummary;
+      }
+      
+      if (result.assumptions) allAssumptions = [...allAssumptions, ...result.assumptions];
+      if (result.clarifications) allClarifications = [...allClarifications, ...result.clarifications];
 
-CUSTOMER REQUIREMENTS:
-${requirementsJson}
-
-SPRINT CONFIGURATION:
-- Sprint Capacity: ${sprintCapacity} story points
-- Fibonacci story points ONLY: 1, 2, 3, 5, 8, 13
-${existingIssuesStr}
-
-══════════════════════════════════════
-STEP 1 — MODULES (Customer Features)
-══════════════════════════════════════
-Group requirements into logical CUSTOMER-FACING modules and order them by implementation sequence (e.g., Authentication first, then dependent modules).
-Good module names: Authentication, Student Management, Course Management.
-
-══════════════════════════════════════
-STEP 2 — USER STORIES
-══════════════════════════════════════
-For each requirement, write one user story. Order stories logically based on dependencies (e.g., cannot view reports before creating data).
-"As a [role], I want [feature], so that [value]."
-Provide 3-5 simple, testable acceptance criteria.
-If a story is too large (e.g. "Complete Student Management"), split it.
-
-══════════════════════════════════════
-STEP 3 — TASKS (Customer Feature Tasks)
-══════════════════════════════════════
-For each story, generate as many small, granular tasks as needed to fully build the feature (often 5-15 tasks per story).
-Task titles must start with a verb (Create, Add, Display, Validate, Connect).
-Tasks must be sequentially ordered (sequence: 1, 2, 3...) based on actual development dependencies.
-
-Each task must have:
-- sequence: Recommended implementation order across the entire project (1 to N).
-- why: Why is this task required?
-- expectedResult: What should happen when it is completed?
-- dependency: What needs to exist before this task can be completed (e.g. "None", "TASK-001").
-- category: MUST be one of: "FRONTEND", "BACKEND", "DESIGN", or "BUG".
-
-══════════════════════════════════════
-STEP 4 — STORY POINT ESTIMATION
-══════════════════════════════════════
-Use ONLY Fibonacci values: 1, 2, 3, 5, 8, 13
-Assign story points based on actual complexity. Granular tasks should mostly be 1 or 2 points.
-
-══════════════════════════════════════
-STEP 5 — SPRINT PLANNING
-══════════════════════════════════════
-Group stories into sprints:
-- Max ${sprintCapacity} story points per sprint.
-- Use logical progression based on dependencies.
-
-Return ONLY this exact JSON (no markdown, no explanation, start with {):
-
-{
-  "projectSummary": "One paragraph describing what the customer is building",
-  "modules": [
-    {
-      "id": "MOD-001",
-      "sequence": 1,
-      "name": "Authentication",
-      "description": "User login, role management, and access control",
-      "requirementIds": ["FR-001"],
-      "priority": "HIGH",
-      "stories": [
-        {
-          "id": "ST-001",
-          "sequence": 1,
-          "title": "User Login",
-          "userStory": "As a user, I want to log in with my credentials, so that I can access my role dashboard.",
-          "description": "Login screen with email/password, role-based redirect after login",
-          "requirementIds": ["FR-001"],
-          "storyPoints": 5,
-          "estimateReason": "Involves login form, validation, role-based redirect, and auth integration — 5 points.",
-          "needsSplit": false,
-          "priority": "HIGH",
-          "acceptanceCriteria": [
-            "User can enter email and password",
-            "Invalid credentials show an error message"
-          ],
-          "dependencies": [],
-          "tasks": [
-            {
-              "id": "TASK-001",
-              "sequence": 1,
-              "title": "Create Login Database Structure",
-              "description": "Create the User table and add fields for email and password.",
-              "why": "The system needs user information before users can log in.",
-              "expectedResult": "User login information can be stored in the database.",
-              "dependency": "None",
-              "category": "BACKEND",
-              "requirementIds": ["FR-001"],
-              "storyPoints": 2,
-              "estimateReason": "Standard table structure — 2 points.",
-              "priority": "HIGH"
-            },
-            {
-              "id": "TASK-002",
-              "sequence": 2,
-              "title": "Create Login API",
-              "description": "Create an API that checks the user's email and password.",
-              "why": "The frontend needs a backend service to authenticate users.",
-              "expectedResult": "A successful login response is returned when details are correct.",
-              "dependency": "TASK-001",
-              "category": "BACKEND",
-              "requirementIds": ["FR-001"],
-              "storyPoints": 3,
-              "estimateReason": "Simple authentication API — 3 points.",
-              "priority": "HIGH"
-            },
-            {
-              "id": "TASK-003",
-              "sequence": 3,
-              "title": "Create Login Page Layout",
-              "description": "Set up the main container for the login screen.",
-              "why": "We need a structure to place the inputs.",
-              "expectedResult": "An empty login screen container is visible.",
-              "dependency": "None",
-              "category": "FRONTEND",
-              "requirementIds": ["FR-001"],
-              "storyPoints": 1,
-              "estimateReason": "Basic layout — 1 point.",
-              "priority": "HIGH"
-            },
-            {
-              "id": "TASK-004",
-              "sequence": 4,
-              "title": "Add Email Input",
-              "description": "Add an email text field to the login layout.",
-              "why": "User must input their email.",
-              "expectedResult": "Email input field is visible.",
-              "dependency": "TASK-003",
-              "category": "FRONTEND",
-              "requirementIds": ["FR-001"],
-              "storyPoints": 1,
-              "estimateReason": "Basic input — 1 point.",
-              "priority": "HIGH"
-            }
-          ]
+      // Merge modules
+      for (const mod of (result.modules || [])) {
+        const existing = mergedModules.find(m => m.name === mod.name);
+        if (existing) {
+          existing.stories = [...(existing.stories || []), ...(mod.stories || [])];
+          existing.requirementIds = Array.from(new Set([...(existing.requirementIds || []), ...(mod.requirementIds || [])]));
+        } else {
+          mergedModules.push(mod);
         }
-      ]
-    }
-  ],
-  "sprints": [
-    {
-      "id": "sprint-1",
-      "name": "Sprint 1",
-      "goal": "Authentication and core dashboards",
-      "storyIds": ["ST-001"],
-      "totalStoryPoints": 5
-    }
-  ],
-  "assumptions": ["Assumption 1"],
-  "clarifications": ["Unclear point needing client decision"]
-}
+      }
 
-⚠️ FINAL CRITICAL RULES:
-- Every module, story, and task MUST trace to a requirement ID from: ${(pass1Result.requirements || []).map((r: any) => r.id).join(', ')}
-- Story points MUST be: 1, 2, 3, 5, 8, or 13. No other values.
-- Task names MUST describe SMALL, ACTIONABLE customer product features in simple, non-technical language.
-- ALL dependencies MUST be logically ordered so a Junior Developer can follow them from 1 to N.
-- Do NOT generate modules/features not in the requirements.
-- Do NOT duplicate: ${existingIssueTitles.slice(0, 15).join('; ')}
-- Sprints must not exceed ${sprintCapacity} story points.
-- Return ONLY the JSON. No markdown. Start with {.`;
+      // Collect sprints
+      if (result.sprints) {
+        mergedSprints = [...mergedSprints, ...result.sprints];
+      }
+    } catch (err: any) {
+      console.error("[AI PASS 2] Batch " + (Math.floor(i/BATCH_SIZE) + 1) + " failed: " + err.message);
+    }
+  }
 
-  return callAI(client, prompt);
+  // Renumber modules sequentially
+  mergedModules.forEach((m, idx) => {
+    m.id = "MOD-" + String(idx + 1).padStart(3, '0');
+    m.sequence = idx + 1;
+  });
+
+  // Renumber sprints sequentially
+  mergedSprints.forEach((s, idx) => {
+    s.id = "SPRINT-" + (idx + 1);
+    if (!s.name || s.name === "Sprint " + (idx + 1)) {
+      s.name = "Sprint " + (idx + 1) + ": Core Features";
+    } else if (!s.name.startsWith('Sprint')) {
+      s.name = "Sprint " + (idx + 1) + ": " + s.name;
+    }
+  });
+
+  return {
+    projectSummary,
+    modules: mergedModules,
+    sprints: mergedSprints,
+    assumptions: Array.from(new Set(allAssumptions)),
+    clarifications: Array.from(new Set(allClarifications))
+  };
 }
 
 // ─── Pass 3: Validator / Gap Filler ──────────────────────────────────────────
@@ -446,7 +432,7 @@ Return ONLY the JSON. No markdown.`;
   let gapResult: any = { additionalModules: [], removedModuleNames: [] };
   try {
     // Use openai/gpt-oss-120b for gap fill — same model, consistent
-    gapResult = await callAI(client, prompt, 3, 'openai/gpt-oss-120b', 4096);
+    gapResult = await callAI(client, prompt, 3, 'gemini-3.1-flash-lite', 4096);
   } catch (err) {
     // Gap filling is best-effort — if it fails, continue with what we have
     console.error('[AI VALIDATOR] Gap-fill AI call failed:', (err as Error).message);
@@ -645,7 +631,7 @@ ${itemType === 'TASK' ? `Return this exact structure:
 }`}`;
 
     const completion = await client.chat.completions.create({
-      model: 'openai/gpt-oss-120b',
+      model: 'llama-3.1-8b-instant',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       response_format: { type: 'json_object' }
@@ -668,5 +654,67 @@ ${itemType === 'TASK' ? `Return this exact structure:
     }
 
     return parsed;
+  }
+
+  ,
+  /**
+   * Generates a high-level suggestion of features, topics, and layout for user confirmation.
+   *
+   * @param rawRequirements  Full requirement text from the user
+   * @returns                A markdown string with the suggested overview
+   */
+  async suggestProjectPlan(rawRequirements: string): Promise<string> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
+    
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const client = new GoogleGenerativeAI(apiKey);
+    
+    const prompt = `You are a Senior Technical Architect and Product Manager.
+The customer has provided the following requirements for a software project.
+
+CUSTOMER REQUIREMENTS:
+"""
+${rawRequirements}
+"""
+
+Analyze these requirements and suggest an extremely detailed and complete project structure.
+Your response MUST be in formatted Markdown.
+
+Include the following sections in a highly structured flow:
+1. **Project Topics & Overview**: A summary of the core objective and what the product aims to achieve.
+2. **Roles & Actors**: The exact types of users who will use the system, and what they can do.
+3. **Features & Modules to Build**: A detailed breakdown of EVERY single feature required. Break this down logically. Example: "Admin Dashboard -> Overview Tab, Settings Tab -> Functions needed in settings...". DO NOT skip any modules.
+4. **Sidebar / Navigation Layout**: A complete list of all recommended sidebar tabs, navigation links, and the sub-pages within them for the application layout.
+5. **Implementation Orderflow**: Suggest a clean, step-by-step sequential order of what should be built first to last (e.g., 1. Database schema, 2. Auth, 3. Landing Page, etc.).
+
+6. **No Conversational Filler**: NEVER ask the user what to generate next, and NEVER include conversational sign-offs. Generate the COMPLETE overview and stop.
+
+CRITICAL: Do NOT summarize broadly. Be exhaustively detailed. List every single tab, page, and feature so the user can perfectly visualize what is going to be built before they confirm and generate tasks. If the system is large, do NOT stop midway. Map out the ENTIRE system.`;
+
+    const model = client.getGenerativeModel({
+      model: 'gemini-3.1-flash-lite',
+      generationConfig: {
+        temperature: 0.5,
+        maxOutputTokens: 8192,
+      }
+    });
+
+    for (let i = 0; i < 3; i++) {
+      try {
+        const result = await model.generateContent(prompt);
+        return result.response.text() || 'No suggestion generated.';
+      } catch (err: any) {
+        if (i === 2) {
+          console.error('[AI SUGGEST] FAILED:', err.message);
+          require('fs').appendFileSync('ai-error.log', new Date().toISOString() + ' [AI SUGGEST ERROR]: ' + err.stack + '\n');
+          throw new Error('Failed to generate project suggestion: ' + err.message);
+        }
+        const waitMs = err.message?.includes('503') || err.message?.includes('429') ? 10000 : 3000;
+        console.warn(`[AI SUGGEST Retry] Attempt ${i + 1} failed, retrying in ${waitMs / 1000}s... Error: ${err.message}`);
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+      }
+    }
+    throw new Error('Failed to generate project suggestion.');
   }
 };

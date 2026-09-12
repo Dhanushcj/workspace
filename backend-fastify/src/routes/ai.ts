@@ -11,9 +11,34 @@ import { detectDuplicates } from '../services/aiValidator';
 
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
 
+  // ── POST /project-plan/suggest — Generate high-level project suggestion ───────────
+  fastify.post('/project-plan/suggest', { preValidation: [authenticate] }, async (request, reply) => {
+    const { projectId, requirements: bodyReqs } = request.body as any;
+    try {
+      request.log.info('[1] Request received: POST /project-plan/suggest');
+      if (!projectId) return reply.code(400).send({ message: 'projectId is required' });
+
+      const project = await Project.findById(projectId);
+      if (!project) return reply.code(404).send({ message: 'Project not found' });
+
+      const requirements = project.requirements?.trim() || bodyReqs?.trim();
+      if (!requirements) {
+        return reply.code(400).send({ message: 'No project requirements were found.' });
+      }
+
+      request.log.info(`[2] Generating suggestion for project: ${project.name}`);
+      const suggestion = await aiService.suggestProjectPlan(requirements);
+
+      return reply.send({ suggestion });
+    } catch (err: any) {
+      request.log.error('[AI Suggest Error] ' + err.stack);
+      return reply.code(500).send({ message: err.message || 'AI Suggestion failed' });
+    }
+  });
+
   // ── POST /project-plan/analyze — Run 3-pass AI analysis and save draft ──────────────────
   fastify.post('/project-plan/analyze', { preValidation: [authenticate] }, async (request, reply) => {
-    const { projectId, requirements: bodyReqs, sprintCapacity } = request.body as any;
+    const { projectId, requirements: bodyReqs, sprintCapacity, confirmedSuggestion } = request.body as any;
     try {
       request.log.info('[1] Request received: POST /project-plan/analyze');
       if (!projectId) return reply.code(400).send({ message: 'projectId is required' });
@@ -22,10 +47,14 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       const project = await Project.findById(projectId);
       if (!project) return reply.code(404).send({ message: 'Project not found' });
 
-      const requirements = project.requirements?.trim() || bodyReqs?.trim();
+      let requirements = project.requirements?.trim() || bodyReqs?.trim();
 
       if (!requirements) {
         return reply.code(400).send({ message: 'No project requirements were found. Add project requirements before generating an AI plan.' });
+      }
+
+      if (confirmedSuggestion) {
+        requirements = `ORIGINAL REQUIREMENTS:\n${requirements}\n\nCONFIRMED PROJECT OVERVIEW (FEATURES AND TABS TO BUILD):\n${confirmedSuggestion}`;
       }
 
       request.log.info(`[2] Requirements validated for project: ${project.name}`);

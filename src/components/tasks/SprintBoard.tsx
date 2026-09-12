@@ -72,16 +72,26 @@ export const SprintBoard = ({
     
     let filtered: Task[];
     if (sid) {
-      // Sprint active: show tasks that belong to this sprint OR have no sprint (unassigned tasks)
+      // Sprint active: ONLY show tasks that belong to this sprint
       filtered = tasks.filter(t => {
         const taskSprintId = (t as any).sprintId;
-        return taskSprintId === sid || taskSprintId === (currentSprint as any)?._id ||
-          !taskSprintId || taskSprintId === '' || taskSprintId === 'null' || taskSprintId === null;
+        return taskSprintId === sid || taskSprintId === (currentSprint as any)?._id;
       });
     } else {
       // No sprint: show all tasks so the board is never empty
       filtered = [...tasks];
     }
+
+    // ENFORCE STRICT PROJECT SEPARATION:
+    // Never show tasks from other projects, even if they are in the store.
+    const cpId = currentProject?.id || (currentProject as any)?._id;
+    if (cpId) {
+       filtered = filtered.filter(t => {
+          const taskProjectId = t.projectId || (t as any).project?.id || (t as any).project?._id || (t as any).project;
+          return taskProjectId === cpId || !taskProjectId;
+       });
+    }
+
     
     // Filter tasks so individual employees only see tasks assigned to them (except MANAGER / TEAM_LEAD / ADMIN)
     const rawRole = (user?.role || '').toUpperCase().replace(' ', '_');
@@ -252,9 +262,7 @@ export const SprintBoard = ({
             <div className="flex items-center gap-4">
                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Sprint Board</h1>
                <div className="flex items-center gap-2">
-                  <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
-                     {currentSprint?.name || 'No Active Sprint'} — {currentSprint?.status || 'Active'}
-                  </div>
+                  <SprintSelector />
                   {daysLeft > 0 && (
                     <div className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-md text-[10px] font-bold uppercase tracking-widest border border-amber-100">
                        {daysLeft} days left

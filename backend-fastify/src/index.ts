@@ -484,3 +484,20 @@ If the transcript is in Tamil, translate everything to English in the output.`;
 }
 
 bootstrap();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

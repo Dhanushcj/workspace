@@ -26,6 +26,7 @@ interface Project {
   completion?: number;
   prCount?: number;
   blockerCount?: number;
+  members?: any[];
 }
 interface ProjectsViewProps { 
   projects: Project[]; 
@@ -220,9 +221,29 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  {(role === 'TEAM_LEAD' || role === 'MANAGER' || role === 'ADMIN' || role === 'COMPANY_ADMIN') && (
-                    <div className="flex items-center justify-end gap-2 mt-2 pt-4 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                  {/* Action Buttons & Members */}
+                  <div className="flex items-center justify-between mt-2 pt-4 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                    {/* Members Avatar Stack */}
+                    <div className="flex -space-x-2 overflow-hidden items-center">
+                       {project.members && project.members.length > 0 ? (
+                         <>
+                           {project.members.slice(0, 3).map((member: any) => (
+                             <div key={member.userId} title={member.name} className="inline-flex h-8 w-8 rounded-full ring-2 ring-white bg-indigo-100 text-indigo-700 items-center justify-center text-[10px] font-bold z-10">
+                               {member.avatarUrl ? <img src={member.avatarUrl} alt={member.name} className="h-full w-full rounded-full object-cover" /> : (member.name?.charAt(0)?.toUpperCase() || 'U')}
+                             </div>
+                           ))}
+                           {project.members.length > 3 && (
+                             <div className="inline-flex h-8 w-8 rounded-full ring-2 ring-white bg-slate-100 text-slate-600 items-center justify-center text-[10px] font-bold z-0">
+                               +{project.members.length - 3}
+                             </div>
+                           )}
+                         </>
+                       ) : (
+                         <span className="text-[10px] font-medium text-slate-400 italic">Unassigned</span>
+                       )}
+                    </div>
+
+                    {(role === 'TEAM_LEAD' || role === 'MANAGER' || role === 'ADMIN' || role === 'COMPANY_ADMIN') && (
                       <div className="flex gap-1.5 shrink-0">
                         <button
                           onClick={() => setSelectedProjectForMembers(project)}
@@ -246,8 +267,8 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                           <Trash2 size={14} />
                         </button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               );
             })}

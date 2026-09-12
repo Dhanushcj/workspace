@@ -73,21 +73,40 @@ export async function projectRoutes(fastify: FastifyInstance) {
       const allSprints = await Sprint.find({ projectId: { $in: allProjectIds } }).sort({ createdAt: -1 }).lean();
       const allMembers = await ProjectMember.find({ projectId: { $in: allProjectIds } }).lean();
 
+      // Fetch User details for all members
+      const uniqueUserIds = [...new Set(allMembers.map(m => m.userId))];
+      const users = await User.find({ _id: { $in: uniqueUserIds } }).select('name email avatarUrl role').lean();
+      const userMap = users.reduce((acc: any, user: any) => {
+        acc[user._id.toString()] = user;
+        return acc;
+      }, {});
+
       const sprintsMap = allSprints.reduce((acc: any, sprint: any) => {
         if (!acc[sprint.projectId.toString()]) acc[sprint.projectId.toString()] = [];
         acc[sprint.projectId.toString()].push(sprint);
         return acc;
       }, {});
 
-      const memberCountMap = allMembers.reduce((acc: any, member: any) => {
-        acc[member.projectId.toString()] = (acc[member.projectId.toString()] || 0) + 1;
+      const memberMap = allMembers.reduce((acc: any, member: any) => {
+        if (!acc[member.projectId.toString()]) acc[member.projectId.toString()] = [];
+        const userDetails = userMap[member.userId.toString()];
+        if (userDetails) {
+           acc[member.projectId.toString()].push({
+             userId: member.userId,
+             name: userDetails.name,
+             email: userDetails.email,
+             avatarUrl: userDetails.avatarUrl,
+             role: userDetails.role
+           });
+        }
         return acc;
       }, {});
 
       const populatedProjects = projects.map((project: any) => {
         const pObj = project.toObject ? project.toObject() : project;
         pObj.sprints = sprintsMap[project._id.toString()] || [];
-        pObj.memberCount = memberCountMap[project._id.toString()] || 0;
+        pObj.members = memberMap[project._id.toString()] || [];
+        pObj.memberCount = pObj.members.length;
         return pObj;
       });
 

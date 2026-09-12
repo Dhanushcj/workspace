@@ -104,7 +104,9 @@ function AnalyzingScreen({ currentPhase }: { currentPhase: number }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AIPlannerModal({ isOpen, onClose, projectId, projectName, onSuccess }: AIPlannerModalProps) {
-  const [phase, setPhase] = useState<'INPUT' | 'ANALYZING' | 'REVIEW'>('INPUT');
+  const [phase, setPhase] = useState<'INPUT' | 'SUGGESTION' | 'ANALYZING' | 'REVIEW'>('INPUT');
+  const [suggestionText, setSuggestionText] = useState('');
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [analyzingPass, setAnalyzingPass] = useState(0);
   const [requirements, setRequirements] = useState('');
   const [sprintCapacity, setSprintCapacity] = useState(40);
@@ -180,7 +182,27 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
     setExpandedEpics(expanded);
   };
 
-  const handleAnalyze = async () => {
+  const handleSuggest = async () => {
+    if (!requirements.trim()) {
+      toast.error('Please enter project requirements');
+      return;
+    }
+    setIsSuggesting(true);
+    try {
+      const res = await api.post('/v1/ai/project-plan/suggest', {
+        projectId,
+        requirements
+      });
+      setSuggestionText(res.data.suggestion);
+      setPhase('SUGGESTION');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to generate suggestion');
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const handleConfirmSuggestion = async () => {
     if (!requirements.trim()) {
       toast.error('Please enter project requirements');
       return;
@@ -205,7 +227,8 @@ export default function AIPlannerModal({ isOpen, onClose, projectId, projectName
       const res = await api.post('/v1/ai/project-plan/analyze', {
         projectId,
         requirements,
-        sprintCapacity
+        sprintCapacity,
+        confirmedSuggestion: suggestionText
       });
       clearTimeout(timeout);
       clearInterval(passTimer);
@@ -481,13 +504,48 @@ Admin features:
 
                 <div className="flex justify-end pt-2">
                   <button
-                    onClick={handleAnalyze}
-                    disabled={!requirements.trim()}
+                    onClick={handleSuggest}
+                    disabled={!requirements.trim() || isSuggesting}
                     className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-[13px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-indigo-600/20"
                   >
-                    <Bot size={18} /> Analyze Requirements
+                    {isSuggesting ? <Loader size={18} className="animate-spin" /> : <Bot size={18} />} 
+                    {isSuggesting ? 'Analyzing...' : 'Suggest Project Flow'}
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── SUGGESTION PHASE ── */}
+          {phase === 'SUGGESTION' && (
+            <div className="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full flex flex-col">
+              <div className="mb-6 text-center space-y-2">
+                <h3 className="text-2xl font-bold text-slate-900">Review Suggested Project Flow</h3>
+                <p className="text-slate-500 text-sm max-w-lg mx-auto">
+                  The AI has proposed the following topics, features, and sidebar tabs based on your requirements. 
+                  You can edit this outline before generating the detailed development tasks.
+                </p>
+              </div>
+              <div className="flex-1 flex flex-col mb-4">
+                 <textarea
+                    value={suggestionText}
+                    onChange={e => setSuggestionText(e.target.value)}
+                    className="w-full flex-1 min-h-[400px] p-5 bg-white border border-indigo-200 rounded-2xl text-sm text-slate-700 focus:ring-4 focus:ring-indigo-500/10 outline-none resize-none shadow-sm leading-relaxed font-mono"
+                  />
+              </div>
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                <button
+                  onClick={() => setPhase('INPUT')}
+                  className="px-6 py-3 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl text-[13px] font-bold transition-all"
+                >
+                  Back to Requirements
+                </button>
+                <button
+                  onClick={handleConfirmSuggestion}
+                  className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
+                >
+                  <CheckCircle2 size={18} /> Confirm & Generate Tasks
+                </button>
               </div>
             </div>
           )}
