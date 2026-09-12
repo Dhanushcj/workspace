@@ -24,6 +24,7 @@ import { SprintBoard } from '../components/tasks/SprintBoard';
 import { SubmitPRModal } from '../components/tasks/SubmitPRModal';
 import { RaiseBlockerModal } from '../components/tasks/RaiseBlockerModal';
 import { CreateTaskModal } from '../components/tasks/CreateTaskModal';
+import ProjectSelector from '../components/tasks/ProjectSelector';
 
 import Sidebar from '../components/tasks/Sidebar';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
@@ -341,7 +342,9 @@ export default function DeveloperDashboard() {
         
         {/* Top Header Row */}
         <header className="h-[72px] bg-white border-b-2 border-[#1B4FAB]/10 flex items-center justify-between px-8 shrink-0" style={{ boxShadow: '0 2px 16px 0 rgba(27,79,171,0.06)' }}>
-          <div className="flex-1" />
+          <div className="flex-1 flex items-center">
+             <ProjectSelector />
+          </div>
           <div className="flex items-center gap-4">
             <div className="relative group">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1B4FAB]/40 group-focus-within:text-[#1B4FAB] transition-colors" />
@@ -592,9 +595,17 @@ export default function DeveloperDashboard() {
         )}
 
         {activeTab === 'Projects' && (
-           <div className="flex-1 overflow-y-auto">
-             <ProjectsView projects={projects} isLoading={loading} />
-           </div>
+          <div className="p-10 w-full h-full flex flex-col space-y-6 overflow-hidden">
+            <div className="flex items-center justify-between shrink-0">
+              <div>
+                <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Projects</h1>
+                <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">Workspace Directory · Projects you are assigned to</p>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto -mx-8 px-8">
+              <ProjectsView projects={projects} isLoading={loading} />
+            </div>
+          </div>
         )}
 
         {activeTab === 'SprintBoard' && (

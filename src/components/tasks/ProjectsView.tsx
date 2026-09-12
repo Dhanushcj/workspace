@@ -228,8 +228,21 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                        {project.members && project.members.length > 0 ? (
                          <>
                            {project.members.slice(0, 3).map((member: any) => (
-                             <div key={member.userId} title={member.name} className="inline-flex h-8 w-8 rounded-full ring-2 ring-white bg-indigo-100 text-indigo-700 items-center justify-center text-[10px] font-bold z-10">
-                               {member.avatarUrl ? <img src={member.avatarUrl} alt={member.name} className="h-full w-full rounded-full object-cover" /> : (member.name?.charAt(0)?.toUpperCase() || 'U')}
+                             <div key={member.userId} title={member.name} className="inline-flex h-8 w-8 rounded-full ring-2 ring-white bg-indigo-100 text-indigo-700 items-center justify-center text-[10px] font-bold z-10 relative overflow-hidden group">
+                               {member.avatarUrl ? (
+                                 <img 
+                                   src={member.avatarUrl} 
+                                   alt={member.name} 
+                                   className="h-full w-full rounded-full object-cover absolute inset-0" 
+                                   onError={(e) => { 
+                                     e.currentTarget.style.display = 'none'; 
+                                     if(e.currentTarget.nextElementSibling) (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                                   }} 
+                                 />
+                               ) : null}
+                               <span className="flex items-center justify-center w-full h-full text-[10px] font-bold uppercase" style={{ display: member.avatarUrl ? 'none' : 'flex' }}>
+                                 {member.name?.charAt(0) || 'U'}
+                               </span>
                              </div>
                            ))}
                            {project.members.length > 3 && (
