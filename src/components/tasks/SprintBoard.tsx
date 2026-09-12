@@ -99,10 +99,7 @@ export const SprintBoard = ({
     if (user && !isTeamLeadOrManager) {
       filtered = filtered.filter(t => 
         t.assigneeId === user.id || 
-        t.assignee?.id === user.id || 
-        !t.assigneeId || 
-        t.assigneeId === '' ||
-        t.assigneeId === 'null'
+        t.assignee?.id === user.id
       );
     }
     

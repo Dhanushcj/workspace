@@ -76,6 +76,25 @@ export const EditProjectModal = ({ isOpen, onClose, project }: EditProjectModalP
               disabled={isSaving} 
             />
           </div>
+
+          {/* Assigned Members (Read-only view) */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Assigned Members</label>
+            <div className="flex flex-wrap gap-2">
+              {project?.members && project.members.length > 0 ? (
+                project.members.map((member: any) => (
+                  <div key={member.userId} className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-full px-3 py-1.5 shadow-sm">
+                    <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px] font-bold overflow-hidden shrink-0">
+                      {member.avatarUrl ? <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" /> : (member.name?.charAt(0)?.toUpperCase() || 'U')}
+                    </div>
+                    <span className="text-[12px] font-medium text-slate-700">{member.name}</span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-[12px] text-slate-400 italic">No members assigned to this project yet.</span>
+              )}
+            </div>
+          </div>
           
           <div className="flex gap-3 pt-4 border-t border-slate-100">
             <button 

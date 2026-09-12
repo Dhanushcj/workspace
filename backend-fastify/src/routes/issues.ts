@@ -36,6 +36,11 @@ export async function issueRoutes(fastify: FastifyInstance) {
       }
 
       const filter: any = { workspaceId: activeWorkspaceId };
+      
+      // Enforce that non-leads ONLY see tasks explicitly assigned to them
+      if (!isLeadOrManager(role)) {
+        filter.assigneeId = request.user?.id;
+      }
       if (allowedProjectIds) {
         if (projectId) {
           if (!allowedProjectIds.includes(projectId)) {
