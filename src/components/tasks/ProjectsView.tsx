@@ -203,7 +203,12 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                     <select 
                       value={project.status || 'TO DO'}
                       onChange={(e) => useWorkflowStore.getState().updateProject(project.id, { status: e.target.value })}
-                      className="bg-white border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1B4FAB]/20"
+                      disabled={role !== 'TEAM_LEAD' && role !== 'MANAGER'}
+                      className={`text-[11px] font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1B4FAB]/20 transition-all ${
+                        role === 'TEAM_LEAD' || role === 'MANAGER'
+                          ? 'bg-white border border-slate-200 text-slate-700 cursor-pointer hover:border-slate-300'
+                          : 'bg-transparent border-transparent text-slate-500 appearance-none cursor-default pr-2'
+                      }`}
                     >
                       <option value="TO DO">To Do</option>
                       <option value="IN PROGRESS">In Progress</option>

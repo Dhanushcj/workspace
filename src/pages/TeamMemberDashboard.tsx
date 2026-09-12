@@ -359,7 +359,7 @@ export default function DeveloperDashboard() {
               </div>
             </div>
             
-            <button className="relative p-2 text-[#1B4FAB]/50 hover:text-[#1B4FAB] transition-colors">
+            <button onClick={() => router('?tab=Notifications')} className="relative p-2 text-[#1B4FAB]/50 hover:text-[#1B4FAB] transition-colors">
               <Bell size={20} strokeWidth={1.5} />
               {(unreadCount > 0) && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F5C300] border-2 border-white" />}
             </button>

@@ -140,6 +140,7 @@ const Sidebar = React.memo(function Sidebar() {
           title: 'CORE ARCHITECTURE',
           items: [
             { label: 'Overview', icon: LayoutGrid, href: `${baseUrl}?tab=Overview` },
+            { label: 'Sprint Board', icon: Kanban, href: `${baseUrl}?tab=SprintBoard` },
             { label: 'Projects', icon: Layers, href: `${baseUrl}?tab=Projects` },
           ]
         },
@@ -151,14 +152,6 @@ const Sidebar = React.memo(function Sidebar() {
           ]
         },
 
-        {
-          title: 'INSIGHTS',
-          items: [
-            { label: 'Activity Log', icon: History, href: `${baseUrl}?tab=ActivityLog` },
-            { label: 'My Analytics', icon: BarChart3, href: `${baseUrl}?tab=Analytics`, badge: 'NEW', badgeColor: 'bg-emerald-50 text-emerald-600' },
-            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker`, badge: 'NEW', badgeColor: 'bg-emerald-50 text-emerald-600' },
-          ]
-        },
         {
           title: 'SYSTEM',
           items: [
@@ -175,6 +168,7 @@ const Sidebar = React.memo(function Sidebar() {
           title: 'OVERVIEW',
           items: [
             { label: 'Dashboard', icon: LayoutGrid, href: `${baseUrl}?tab=Overview` },
+            { label: 'Sprint Board', icon: Kanban, href: `${baseUrl}?tab=SprintBoard` },
             { label: 'Projects', icon: Layers, href: `${baseUrl}?tab=Projects` },
           ]
         },
@@ -358,27 +352,27 @@ const Sidebar = React.memo(function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-        <div className="mb-4 opacity-80 hover:opacity-100 transition-opacity">
+      <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+        <div className="mb-3 opacity-80 hover:opacity-100 transition-opacity">
           <AppSwitcher workspaceId={workspaceId || 'demo'} />
         </div>
-        <div className="rounded-2xl p-4 mb-4 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.08)' }}>
-           <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shrink-0" style={{ background: '#F5C300', color: '#1B4FAB' }}>
+        <div className="rounded-xl p-3 mb-3 flex items-center gap-2.5" style={{ background: 'rgba(255,255,255,0.08)' }}>
+           <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0" style={{ background: '#F5C300', color: '#1B4FAB' }}>
              {user?.name?.[0] || 'D'}
            </div>
            <div className="min-w-0">
-             <p className="text-[13px] font-semibold text-white truncate">{user?.name || 'Nexus Developer'}</p>
-             <p className="text-[11px] font-medium capitalize" style={{ color: 'rgba(255,255,255,0.5)' }}>{role.toLowerCase().replace('_', ' ')}</p>
+             <p className="text-[12px] font-semibold text-white truncate leading-tight">{user?.name || 'Nexus Developer'}</p>
+             <p className="text-[10px] font-medium capitalize mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{role.toLowerCase().replace('_', ' ')}</p>
            </div>
         </div>
         <button
           onClick={() => logout()}
-          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all hover:opacity-100 opacity-60"
+          className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all hover:opacity-100 opacity-60"
           style={{ color: 'white', background: 'rgba(255,255,255,0.08)' }}
         >
-          <div className="flex items-center gap-3">
-            <LogOut size={18} strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.8)' }} />
-            <span className="text-sm font-semibold">Logout</span>
+          <div className="flex items-center gap-2.5">
+            <LogOut size={16} strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.8)' }} />
+            <span className="text-[13px] font-semibold">Logout</span>
           </div>
         </button>
       </div>
