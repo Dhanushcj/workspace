@@ -17,7 +17,7 @@ if (startIndex === -1 || endIndex === -1) {
   process.exit(1);
 }
 
-const newGeneratePlan = \`async function generatePlan(
+const newGeneratePlan = `async function generatePlan(
   pass1Result: any,
   sprintCapacity: number,
   existingIssueTitles: string[]
@@ -220,7 +220,7 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
   };
 }
 
-\`;
+`;
 
 const newCode = code.substring(0, startIndex) + newGeneratePlan + code.substring(endIndex);
 fs.writeFileSync(path, newCode, 'utf8');

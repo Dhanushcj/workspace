@@ -95,14 +95,6 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
       ]
     },
     {
-      title: 'MY WORK',
-      items: [
-        { label: 'My Tasks', icon: ListChecks, path: `/w/${workspaceId}/tasks/board`, isActive: location.pathname.includes('/tasks/board') },
-        { label: 'Pull Requests', icon: GitBranch, path: `/w/${workspaceId}/tasks/prs`, isActive: location.pathname.includes('/tasks/prs') },
-        { label: 'Blockers', icon: Bug, path: `/w/${workspaceId}/tasks/blockers`, isActive: location.pathname.includes('/tasks/blockers') },
-      ]
-    },
-    {
       title: 'COLLABORATION',
       items: [
         { label: 'Team', icon: Users, path: `/w/${workspaceId}/tasks/team`, isActive: location.pathname.includes('/tasks/team') },

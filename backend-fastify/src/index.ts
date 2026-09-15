@@ -185,6 +185,9 @@ async function bootstrap() {
   server.get('/api/notifications/unread-count', async () => {
     return { count: 0 };
   });
+  server.get('/api/notifications', async () => {
+    return [];
+  });
   server.get('/api/bug-reports', async () => {
     return [];
   });

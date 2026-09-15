@@ -53,4 +53,17 @@ export const sprintRoutes = async (fastify: FastifyInstance) => {
       return reply.code(500).send({ error: 'Failed to update sprint status' });
     }
   });
+
+  fastify.delete('/:sprintId', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sprintId } = request.params as any;
+      const sprint = await Sprint.findByIdAndDelete(sprintId);
+      if (!sprint) {
+        return reply.code(404).send({ error: 'Sprint not found' });
+      }
+      return reply.code(200).send({ success: true });
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to delete sprint' });
+    }
+  });
 };

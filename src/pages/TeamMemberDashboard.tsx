@@ -76,7 +76,7 @@ export default function DeveloperDashboard() {
 
   const handleSaveProfile = async () => {
     try {
-      const res = await api.put('/update-profile', { name: profileName, email: profileEmail });
+      const res = await api.put('/auth/update-profile', { name: profileName, email: profileEmail });
       addToast({ type: 'SUCCESS', title: 'Profile Updated', message: 'Your profile has been saved.' });
       if (res.data && res.data.user) {
         useAuthStore.getState().setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);

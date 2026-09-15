@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Search, Target, Calendar, Play,
-  AlertCircle, User, Bot,
-  GripVertical, CalendarDays
+  Calendar, Target, Bot, Plus, ArrowRight, BrainCircuit, ShieldAlert,
+  Play, Pause, AlertCircle, GripVertical, CheckCircle2, MoreHorizontal,
+  CalendarDays, Edit3, Trash2
 } from 'lucide-react';
 import {
   DndContext,
@@ -27,6 +27,8 @@ export default function SprintPlanner() {
   const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint } = useWorkflowStore();
   const { addToast } = useToastStore();
   const { user } = useAuthStore();
+  
+  const isLeadOrManager = ['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com';
   const [sprints, setSprints] = useState<any[]>([]);
   const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
   const [isAIPlannerOpen, setIsAIPlannerOpen] = useState(false);
@@ -232,6 +234,53 @@ export default function SprintPlanner() {
     }
   };
 
+  const handleEditSprint = async () => {
+    if (!activeSprint) return;
+    const newName = prompt('Enter new sprint name:', activeSprint.name);
+    if (!newName || newName === activeSprint.name) return;
+    
+    try {
+      setIsUpdating(true);
+      await api.put(`/sprints/${activeSprint.id || (activeSprint as any)._id}`, { name: newName });
+      addToast({ type: 'SUCCESS', title: 'Sprint Updated', message: 'Sprint name changed successfully.' });
+      
+      const projectId = currentProject?.id || (currentProject as any)?._id;
+      if (projectId) {
+        const res = await api.get(`/projects/${projectId}/sprints`);
+        setSprints(Array.isArray(res.data) ? res.data : (res.data?.data || []));
+        setCurrentSprint({ ...activeSprint, name: newName });
+      }
+    } catch (err) {
+      addToast({ type: 'ERROR', title: 'Update Failed', message: 'Could not update sprint.' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteSprint = async () => {
+    if (!activeSprint) return;
+    if (!confirm(`Are you sure you want to delete "${activeSprint.name}"?`)) return;
+    
+    try {
+      setIsUpdating(true);
+      await api.delete(`/sprints/${activeSprint.id || (activeSprint as any)._id}`);
+      addToast({ type: 'SUCCESS', title: 'Sprint Deleted', message: 'The sprint was deleted.' });
+      
+      const projectId = currentProject?.id || (currentProject as any)?._id;
+      if (projectId) {
+        const res = await api.get(`/projects/${projectId}/sprints`);
+        const sprintList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setSprints(sprintList);
+        setCurrentSprint(sprintList[0] || null);
+        await fetchTasks({ projectId });
+      }
+    } catch (err) {
+      addToast({ type: 'ERROR', title: 'Delete Failed', message: 'Could not delete sprint.' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleMoveTask = async (taskId: string, targetSprintId: string | null) => {
     try {
       setIsUpdating(true);
@@ -283,14 +332,29 @@ export default function SprintPlanner() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
-                <button
-                  onClick={() => setIsAIPlannerOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-[12px] font-bold hover:bg-indigo-100 transition-all shadow-sm"
-                >
-                  <Bot size={14} /> ✨ AI Plan Project
-                </button>
+              {isLeadOrManager ? (
+                <>
+                  <button
+                    onClick={() => setIsAIPlannerOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-[12px] font-bold hover:bg-indigo-100 transition-all shadow-sm"
+                  >
+                    <Bot size={14} /> ✨ AI Plan Project
+                  </button>
+                  <button
+                    onClick={handleEditSprint}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
+                  >
+                    <Edit3 size={14} /> Edit
+                  </button>
+                  <button
+                    onClick={handleDeleteSprint}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--redbg)] border border-red-200 text-[var(--redtext)] rounded-lg text-[12px] font-medium hover:opacity-90 transition-all"
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </>
               ) : null}
+
               <button
                 onClick={handleSetGoal}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"

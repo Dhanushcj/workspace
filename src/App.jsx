@@ -25,6 +25,7 @@ import TasksTeam from './pages/TasksTeam';
 import TasksWorkload from './pages/TasksWorkload';
 import TasksMessages from './pages/TasksMessages';
 import TasksSettings from './pages/TasksSettings';
+import TasksPRs from './pages/TasksPRs';
 import MeetingHome from './pages/MeetingHome';
 import MeetingsTab from './pages/MeetingsTab';
 import CalendarTab from './pages/CalendarTab';
@@ -103,6 +104,7 @@ function App() {
             <Route path="/w/:workspaceId/tasks/backlog" element={<TasksBacklog />} />
             <Route path="/w/:workspaceId/tasks/assignments" element={<TasksAssignment />} />
             <Route path="/w/:workspaceId/tasks/blockers" element={<TasksBlockers />} />
+            <Route path="/w/:workspaceId/tasks/prs" element={<TasksPRs />} />
             <Route path="/w/:workspaceId/tasks/team" element={<TasksTeam />} />
             <Route path="/w/:workspaceId/tasks/workload" element={<TasksWorkload />} />
             <Route path="/w/:workspaceId/tasks/messages" element={<TasksMessages />} />
