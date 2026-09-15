@@ -539,18 +539,25 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // 8. UPDATE PROFILE (Avatar URL)
+  // 8. UPDATE PROFILE
   fastify.put('/update-profile', { preHandler: authenticate }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { avatarUrl } = request.body as any;
-      if (!avatarUrl) {
-        return reply.code(400).send({ error: 'Avatar URL is required.' });
-      }
+      const { avatarUrl, name, email } = request.body as any;
 
       const user = await User.findById(request.user!.id);
       if (!user) return reply.code(404).send({ error: 'User not found.' });
 
-      user.avatarUrl = avatarUrl;
+      if (avatarUrl) user.avatarUrl = avatarUrl;
+      if (name) user.name = name;
+      if (email) {
+        // Basic check for uniqueness if changing email
+        const existing = await User.findOne({ email: email.toLowerCase() });
+        if (existing && existing._id.toString() !== user._id.toString()) {
+           return reply.code(409).send({ error: 'Email is already in use.' });
+        }
+        user.email = email.toLowerCase();
+      }
+      
       await user.save();
 
       const tokenBundle = await issueTokens(user);

@@ -48,8 +48,9 @@ export default function DeveloperDashboard() {
   const fetchProjects = useWorkflowStore(state => state.fetchProjects);
   const fetchMembers = useWorkflowStore(state => state.fetchMembers);
   const members = useWorkflowStore(state => state.members);
-  const unreadCount = useNotificationStore(state => state.unreadCount);
+  const { notifications, unreadCount, markAsRead, clearAll, fetchNotifications } = useNotificationStore();
 
+  useEffect(() => { fetchNotifications(); }, []);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ prs: [], bugs: [], blockers: [] });
   const [isPRModalOpen, setIsPRModalOpen] = useState(false);
@@ -63,6 +64,28 @@ export default function DeveloperDashboard() {
   const [selectedTaskDisplayId, setSelectedTaskDisplayId] = useState('');
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [msgInput, setMsgInput] = useState('');
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+    }
+  }, [user?.name, user?.email]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const res = await api.put('/update-profile', { name: profileName, email: profileEmail });
+      addToast({ type: 'SUCCESS', title: 'Profile Updated', message: 'Your profile has been saved.' });
+      if (res.data && res.data.user) {
+        useAuthStore.getState().setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);
+      }
+    } catch (err: any) {
+      addToast({ type: 'ERROR', title: 'Update Failed', message: err.response?.data?.error || 'Could not save profile' });
+    }
+  };
+
   const [onlineEmails, setOnlineEmails] = useState<string[]>(
     (window as any).latestOnlineEmails || []
   );
@@ -865,17 +888,19 @@ export default function DeveloperDashboard() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Display name</label>
-                  <input type="text" defaultValue={user?.name || 'Nexus Developer'} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                  <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
-                  <input type="email" defaultValue={user?.email || 'eng@forgeindia.com'} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                  <input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Role</label>
                   <input type="text" value={user?.role || 'Developer'} disabled className="w-full px-4 py-3 bg-slate-100 border border-slate-100 rounded-xl text-sm font-medium text-slate-500 cursor-not-allowed" />
                 </div>
-                <button className="px-6 py-2.5 text-white rounded-xl text-[12px] font-bold transition-all flex items-center gap-2"
+                <button 
+                   onClick={handleSaveProfile}
+                   className="px-6 py-2.5 text-white rounded-xl text-[12px] font-bold transition-all flex items-center gap-2"
                    style={{ background: 'linear-gradient(135deg, #1B4FAB 0%, #2563EB 100%)', boxShadow: '0 4px 16px rgba(27,79,171,0.25)' }}>
                    Save Profile
                 </button>
@@ -911,6 +936,39 @@ export default function DeveloperDashboard() {
                    <RefreshCw size={14} /> Update Password
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Notifications' && (
+          <div className="flex-1 overflow-y-auto p-10 bg-[#FDFBF7]">
+            <div className="max-w-[800px] mx-auto space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{notifications.filter(n => !n.read).length} unread</p>
+                </div>
+                <button onClick={() => clearAll()} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 shadow-sm">Mark all read</button>
+              </div>
+              {notifications.length === 0 ? (
+                <div className="text-center py-20">
+                  <Bell size={32} className="mx-auto text-slate-200 mb-4" />
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">No notifications</p>
+                  <p className="text-sm text-slate-400 mt-1">You're all caught up!</p>
+                </div>
+              ) : notifications.map((n:any) => (
+                <div key={n.id} onClick={() => markAsRead(n.id)} className={`p-5 rounded-2xl border cursor-pointer transition-all hover:shadow-md ${ n.read ? 'bg-white border-slate-100 opacity-60' : n.type === 'ERROR' ? 'bg-rose-50 border-rose-100' : n.type === 'WARNING' ? 'bg-amber-50 border-amber-100' : n.type === 'SUCCESS' ? 'bg-emerald-50 border-emerald-100' : 'bg-indigo-50 border-indigo-100'}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[13px] font-black text-slate-900">{n.title}</p>
+                      <p className="text-[12px] font-medium text-slate-600 mt-1">{n.message}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] font-bold text-slate-400">{new Date(n.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                      {!n.read && <div className="w-2 h-2 bg-indigo-500 rounded-full ml-auto mt-1" />}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
