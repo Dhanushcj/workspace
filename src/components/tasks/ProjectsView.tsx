@@ -82,7 +82,7 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterMode>('All');
-  const [view, setView] = useState<ViewMode>('grid');
+  const [view, setView] = useState<ViewMode>('list');
   const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<Project | null>(null);
   const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<Project | null>(null);
 
@@ -226,34 +226,32 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                     </div>
                   </div>
 
+                  {/* Progress Bar */}
+                  <div className="space-y-1.5 mt-1">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      <span>Progress</span>
+                      <span className="text-[#1B4FAB]">{completion}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#1B4FAB] rounded-full transition-all duration-500" style={{ width: `${completion}%` }} />
+                    </div>
+                  </div>
+
                   {/* Action Buttons & Members */}
                   <div className="flex items-center justify-between mt-2 pt-4 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
-                    {/* Members Avatar Stack */}
-                    <div className="flex -space-x-2 overflow-hidden items-center">
+                    {/* Members List */}
+                    <div className="flex flex-wrap gap-1.5 items-center max-w-[60%]">
                        {project.members && project.members.length > 0 ? (
                          <>
                            {project.members.slice(0, 3).map((member: any) => (
-                             <div key={member.userId} title={member.name} className="inline-flex h-8 w-8 rounded-full ring-2 ring-white bg-indigo-100 text-indigo-700 items-center justify-center text-[10px] font-bold z-10 relative overflow-hidden group">
-                               {member.avatarUrl ? (
-                                 <img 
-                                   src={member.avatarUrl} 
-                                   alt={member.name} 
-                                   className="h-full w-full rounded-full object-cover absolute inset-0" 
-                                   onError={(e) => { 
-                                     e.currentTarget.style.display = 'none'; 
-                                     if(e.currentTarget.nextElementSibling) (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
-                                   }} 
-                                 />
-                               ) : null}
-                               <span className="flex items-center justify-center w-full h-full text-[10px] font-bold uppercase" style={{ display: member.avatarUrl ? 'none' : 'flex' }}>
-                                 {member.name?.charAt(0) || 'U'}
-                               </span>
-                             </div>
+                             <span key={member.userId} title={member.name} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[10px] font-semibold truncate max-w-[80px]">
+                               {member.name || 'User'}
+                             </span>
                            ))}
                            {project.members.length > 3 && (
-                             <div className="inline-flex h-8 w-8 rounded-full ring-2 ring-white bg-slate-100 text-slate-600 items-center justify-center text-[10px] font-bold z-0">
+                             <span className="px-2 py-1 bg-slate-50 text-slate-600 rounded-md text-[10px] font-semibold">
                                +{project.members.length - 3}
-                             </div>
+                             </span>
                            )}
                          </>
                        ) : (
@@ -296,6 +294,7 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden divide-y divide-slate-50">
             {filtered.map(project => {
               const h = projectHealth[project.name] || projectHealth.default;
+              const completion = project.completion ?? h.completion;
               return (
                 <div 
                   key={project.id} 
@@ -335,6 +334,16 @@ export const ProjectsView = ({ projects, isLoading, onNewProject, onOpenProject 
                     <div className="text-center hidden md:block">
                       <div className="text-[13px] font-semibold text-slate-900">{project.prCount ?? h.prs}</div>
                       <div className="text-[9px] font-medium text-slate-400 uppercase">PRs</div>
+                    </div>
+                    
+                    <div className="w-24 hidden lg:block">
+                      <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+                        <span>Progress</span>
+                        <span className="text-[#1B4FAB]">{completion}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#1B4FAB] rounded-full transition-all duration-500" style={{ width: `${completion}%` }} />
+                      </div>
                     </div>
                     {(role === 'TEAM_LEAD' || role === 'MANAGER' || role === 'ADMIN' || role === 'COMPANY_ADMIN') && (
                       <div className="flex gap-1 ml-1">

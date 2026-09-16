@@ -77,6 +77,7 @@ const LoginPage = () => {
         id: normalizedAuthData.id,
         role: normalizedAuthData.role,
         user: normalizedAuthData.user,
+        name: normalizedAuthData.user,
         email: normalizedAuthData.email,
         workspaceId: normalizedAuthData.workspaceId,
         avatarUrl: data.user?.avatarUrl

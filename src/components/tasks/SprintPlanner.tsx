@@ -1,18 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Search, Target, Calendar, Play, 
-  AlertCircle, User, 
-  GripVertical, CalendarDays, Trash2
+import {
+  Search, Target, Calendar, Play,
+  AlertCircle, User,
+  GripVertical, CalendarDays, Trash2, LayoutGrid
 } from 'lucide-react';
-import { 
-  DndContext, 
-  DragOverlay, 
-  closestCenter, 
-  PointerSensor, 
-  useSensor, 
-  useSensors, 
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
   DragEndEvent,
   DragStartEvent
 } from '@dnd-kit/core';
@@ -29,20 +29,22 @@ import AIPlannerModal from './AIPlannerModal';
 
 export default function SprintPlanner() {
   const { user } = useAuthStore();
-  const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint } = useWorkflowStore();
+  const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint, epics, fetchEpics } = useWorkflowStore();
   const { addToast } = useToastStore();
   const [sprints, setSprints] = useState<any[]>([]);
   const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isAIPlannerOpen, setIsAIPlannerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalInput, setGoalInput] = useState('');
   const [isDatesModalOpen, setIsDatesModalOpen] = useState(false);
   const [startDateInput, setStartDateInput] = useState('');
   const [endDateInput, setEndDateInput] = useState('');
-  
+  const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
+  const [newModuleName, setNewModuleName] = useState('');
+
   // Local state for optimistic updates
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
   const [activeDragTask, setActiveDragTask] = useState<Task | null>(null);
@@ -72,14 +74,15 @@ export default function SprintPlanner() {
             _id: s._id || s.id
           }));
           setSprints(normalized);
-          
+
           if (normalized.length > 0 && !currentSprint) {
-            const active = normalized.find((s:any) => s.status === 'ACTIVE') || 
-                           normalized.find((s:any) => s.status === 'PLANNING') || 
-                           normalized[0];
+            const active = normalized.find((s: any) => s.status === 'ACTIVE') ||
+              normalized.find((s: any) => s.status === 'PLANNING') ||
+              normalized[0];
             setCurrentSprint(active);
           }
           await fetchTasks({ projectId });
+          await fetchEpics(projectId);
         } catch (error) {
           console.error('Failed to load sprint data', error);
         }
@@ -99,8 +102,8 @@ export default function SprintPlanner() {
   const activeSprintId = activeSprint?.id || activeSprint?._id;
 
   const filteredTasks = useMemo(() => {
-    return localTasks.filter(t => 
-      (t.title && t.title.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    return localTasks.filter(t =>
+      (t.title && t.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (t.id && t.id.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [localTasks, searchQuery]);
@@ -113,12 +116,70 @@ export default function SprintPlanner() {
 
   const sprintStartDate = activeSprint?.startDate ? new Date(activeSprint.startDate) : null;
   const sprintEndDate = activeSprint?.endDate ? new Date(activeSprint.endDate) : null;
-  const sprintDurationDays = sprintStartDate && sprintEndDate 
-    ? Math.ceil((sprintEndDate.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24)) 
+  const sprintDurationDays = sprintStartDate && sprintEndDate
+    ? Math.ceil((sprintEndDate.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24))
     : 14;
   const dateRangeLabel = sprintStartDate && sprintEndDate
     ? `${sprintStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${sprintEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
     : 'May 16–29';
+
+  const renderTasksByEpic = (taskList: Task[], isBacklog = false) => {
+    const epicGroups: Record<string, Task[]> = {};
+    const noEpicTasks: Task[] = [];
+
+    taskList.forEach(t => {
+      const epicId = t.epicId || (t as any).epic?._id || (t as any).epic?.id;
+      if (epicId) {
+        if (!epicGroups[epicId]) epicGroups[epicId] = [];
+        epicGroups[epicId].push(t);
+      } else {
+        noEpicTasks.push(t);
+      }
+    });
+
+    return (
+      <>
+        {Object.entries(epicGroups).map(([epicId, groupTasks]) => {
+          const epic = epics.find(e => e.id === epicId || (e as any)._id === epicId);
+          return (
+            <div key={epicId} className="mb-4 last:mb-0">
+              <h5 className="text-[11px] font-bold text-[var(--accent-tl)] uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5"><LayoutGrid size={13} /> {epic?.name || 'Unknown Module'}</h5>
+              <div className="space-y-1.5">
+                {groupTasks.map(task => (
+                  <DraggableTask
+                    key={task.id}
+                    task={task}
+                    onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
+                    onDelete={() => handleDeleteTask(task.id)}
+                    sprints={sprints}
+                    isBacklog={isBacklog}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {noEpicTasks.length > 0 && (
+          <div className="mb-4 last:mb-0">
+            {Object.keys(epicGroups).length > 0 && <h5 className="text-[11px] font-bold text-[var(--accent-tl)] uppercase tracking-wider mb-2 px-1 mt-4">Other Tasks</h5>}
+            <div className="space-y-1.5">
+              {noEpicTasks.map(task => (
+                <DraggableTask
+                  key={task.id}
+                  task={task}
+                  onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
+                  onDelete={() => handleDeleteTask(task.id)}
+                  sprints={sprints}
+                  isBacklog={isBacklog}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -129,7 +190,7 @@ export default function SprintPlanner() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragTask(null);
-    
+
     if (!over) return;
 
     const taskId = active.id as string;
@@ -155,7 +216,7 @@ export default function SprintPlanner() {
     if (!currentTask || currentTask.sprintId === targetSprintId) return;
 
     // 1. Optimistic Update
-    setLocalTasks(prev => prev.map(t => 
+    setLocalTasks(prev => prev.map(t =>
       (t.id === taskId || (t as any)._id === taskId) ? { ...t, sprintId: targetSprintId || '' } : t
     ));
 
@@ -184,14 +245,14 @@ export default function SprintPlanner() {
 
   const saveGoal = async () => {
     if (!activeSprintId) return;
-    
+
     try {
       setIsUpdating(true);
       const res = await api.put(`/sprints/${activeSprintId}`, { goal: goalInput });
       const updatedSprint = res.data?.data || res.data;
       addToast({ type: 'SUCCESS', title: 'Goal Updated', message: 'Sprint goal saved successfully.' });
       setCurrentSprint({ ...activeSprint, ...updatedSprint });
-      
+
       const sprintsRes = await api.get(`/projects/${currentProject?.id || (currentProject as any)._id}/sprints`);
       setSprints(Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []));
       setIsGoalModalOpen(false);
@@ -218,7 +279,7 @@ export default function SprintPlanner() {
       const updatedSprint = res.data?.data || res.data;
       addToast({ type: 'SUCCESS', title: 'Dates Updated', message: 'Sprint timeline adjusted.' });
       setCurrentSprint({ ...activeSprint, ...updatedSprint });
-      
+
       const sprintsRes = await api.get(`/projects/${currentProject?.id || (currentProject as any)._id}/sprints`);
       setSprints(Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []));
       setIsDatesModalOpen(false);
@@ -237,7 +298,7 @@ export default function SprintPlanner() {
       const updatedSprint = res.data?.data || res.data;
       addToast({ type: 'SUCCESS', title: 'Sprint Started', message: `${activeSprint?.name} is now active!` });
       setCurrentSprint({ ...activeSprint, ...updatedSprint });
-      
+
       const sprintsRes = await api.get(`/projects/${currentProject?.id || (currentProject as any)._id}/sprints`);
       const rawSprints = Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []);
       const normalized = rawSprints.map((s: any) => ({
@@ -248,6 +309,25 @@ export default function SprintPlanner() {
       setSprints(normalized);
     } catch (err) {
       addToast({ type: 'ERROR', title: 'Start Failed', message: 'Could not start the sprint.' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleCreateModule = async () => {
+    if (!newModuleName.trim() || !currentProject) return;
+    setIsUpdating(true);
+    try {
+      await useWorkflowStore.getState().createEpic({
+        name: newModuleName,
+        projectId: currentProject.id || (currentProject as any)._id,
+        color: '#4f46e5'
+      });
+      addToast({ type: 'SUCCESS', title: 'Module Created', message: `Module "${newModuleName}" created successfully.` });
+      setNewModuleName('');
+      setIsModuleModalOpen(false);
+    } catch (err) {
+      addToast({ type: 'ERROR', title: 'Failed', message: 'Could not create module.' });
     } finally {
       setIsUpdating(false);
     }
@@ -286,8 +366,8 @@ export default function SprintPlanner() {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       {isTaskModalOpen && (
-        <CreateTaskModal 
-          isOpen={isTaskModalOpen} 
+        <CreateTaskModal
+          isOpen={isTaskModalOpen}
           onClose={() => setIsTaskModalOpen(false)}
           projectId={currentProject?.id || (currentProject as any)?._id}
           onTaskCreated={(newTask) => {
@@ -296,8 +376,8 @@ export default function SprintPlanner() {
           }}
         />
       )}
-      <CreateSprintModal 
-        isOpen={isSprintModalOpen} 
+      <CreateSprintModal
+        isOpen={isSprintModalOpen}
         onClose={() => setIsSprintModalOpen(false)}
         onSuccess={(id) => {
           api.get(`/sprints/${id}`).then(res => {
@@ -306,17 +386,17 @@ export default function SprintPlanner() {
             // Reload list
             const projectId = currentProject?.id || (currentProject as any)?._id;
             api.get(`/projects/${projectId}/sprints`).then(sRes => {
-               setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
+              setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
             });
           });
         }}
       />
-      
+
       <div className="flex flex-col h-full bg-[var(--background)] overflow-hidden">
         {/* Sprint Navigator Bar */}
-        <SprintNavigatorBar 
-          sprints={sprints} 
-          onNewSprint={() => setIsSprintModalOpen(true)} 
+        <SprintNavigatorBar
+          sprints={sprints}
+          onNewSprint={() => setIsSprintModalOpen(true)}
         />
 
         {/* Action Header */}
@@ -331,35 +411,41 @@ export default function SprintPlanner() {
             <div className="flex items-center gap-2">
               {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
                 <button onClick={() => setIsAIPlannerOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
-              >
-                   AI Plan Project
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
+                >
+                  AI Plan Project
                 </button>
               ) : null}
-              <button 
+              <button
                 onClick={() => setIsTaskModalOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
               >
                 <Plus size={14} /> Add Task
               </button>
-              <button 
+              <button
+                onClick={() => setIsModuleModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
+              >
+                <Plus size={14} /> Add Module
+              </button>
+              <button
                 onClick={handleSetGoal}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
               >
                 <Target size={14} /> Set Goal
               </button>
-              <button 
+              <button
                 onClick={handleChangeDates}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
               >
                 <Calendar size={14} /> Change Dates
               </button>
-              <button 
+              <button
                 onClick={handleStartSprint}
                 disabled={isUpdating || activeSprint?.status === 'ACTIVE' || activeSprint?.status === 'COMPLETED'}
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--accent)] text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-all disabled:opacity-50"
               >
-                <Play size={12} fill="currentColor" /> 
+                <Play size={12} fill="currentColor" />
                 {activeSprint?.status === 'ACTIVE' ? 'Sprint Active' : `Start ${activeSprint?.name || 'Sprint'}`}
               </button>
             </div>
@@ -368,16 +454,15 @@ export default function SprintPlanner() {
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-5 space-y-5">
-          
+
           {/* Capacity Banner */}
-          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-[12px] ${
-            isWithinCapacity 
-              ? 'bg-[var(--greenbg)] text-[var(--greentext)] border border-green-200' 
+          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-[12px] ${isWithinCapacity
+              ? 'bg-[var(--greenbg)] text-[var(--greentext)] border border-green-200'
               : 'bg-[var(--redbg)] text-[var(--redtext)] border border-red-200'
-          }`}>
+            }`}>
             <AlertCircle size={14} />
             <span>
-              {isWithinCapacity 
+              {isWithinCapacity
                 ? `Within capacity by ${teamCapacity - totalPoints} pts — Current sprint has ${totalPoints} pts and team velocity is ${teamCapacity}. Ready to start.`
                 : `Over capacity by ${totalPoints - teamCapacity} pts — Remove tasks or increase capacity.`
               }
@@ -394,21 +479,13 @@ export default function SprintPlanner() {
           </div>
 
           {/* Sprint Tasks Section */}
-          <DroppableArea 
-            id="sprint-area" 
-            title={`${activeSprint?.name || 'Sprint'} Tasks — ${dateRangeLabel}`} 
-            count={sprintTasks.length} 
+          <DroppableArea
+            id="sprint-area"
+            title={`${activeSprint?.name || 'Sprint'} Tasks — ${dateRangeLabel}`}
+            count={sprintTasks.length}
             isUpdating={isUpdating}
           >
-            {sprintTasks.map(task => (
-              <DraggableTask 
-                key={task.id} 
-                task={task} 
-                onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
-                onDelete={() => handleDeleteTask(task.id)}
-                sprints={sprints}
-              />
-            ))}
+            {sprintTasks.length > 0 && renderTasksByEpic(sprintTasks, false)}
             {sprintTasks.length === 0 && (
               <div className="py-12 flex flex-col items-center justify-center gap-2 text-[var(--text3)]">
                 <CalendarDays size={28} strokeWidth={1.5} />
@@ -419,22 +496,13 @@ export default function SprintPlanner() {
           </DroppableArea>
 
           {/* Backlog Section */}
-          <DroppableArea 
-            id="backlog-area" 
-            title="Backlog" 
-            count={backlogTasks.length} 
+          <DroppableArea
+            id="backlog-area"
+            title="Backlog"
+            count={backlogTasks.length}
             isUpdating={isUpdating}
           >
-            {backlogTasks.map(task => (
-              <DraggableTask 
-                key={task.id} 
-                task={task} 
-                onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
-                onDelete={() => handleDeleteTask(task.id)}
-                sprints={sprints}
-                isBacklog
-              />
-            ))}
+            {backlogTasks.length > 0 && renderTasksByEpic(backlogTasks, true)}
             {backlogTasks.length === 0 && (
               <div className="py-8 flex flex-col items-center justify-center gap-1 text-[var(--text3)]">
                 <p className="text-[12px]">Backlog is empty</p>
@@ -447,7 +515,7 @@ export default function SprintPlanner() {
       <DragOverlay zIndex={1000}>
         {activeDragTask ? (
           <div className="opacity-90 shadow-2xl scale-[1.02] rotate-1">
-             <DraggableTask task={activeDragTask} isOverlay />
+            <DraggableTask task={activeDragTask} isOverlay />
           </div>
         ) : null}
       </DragOverlay>
@@ -458,7 +526,7 @@ export default function SprintPlanner() {
           onClose={() => setIsAIPlannerOpen(false)}
           projectId={currentProject.id || (currentProject as any)._id}
           projectName={currentProject.name}
-      onSuccess={() => {
+          onSuccess={() => {
             const projectId = currentProject.id || (currentProject as any)._id;
             // 1. Reload sprints so newly created AI sprints appear
             api.get(`/projects/${projectId}/sprints`).then(sRes => {
@@ -496,13 +564,12 @@ function MetricCard({ label, value, color }: { label: string; value: string; col
 /* ── Droppable Area ─────────────────────────────────────────────── */
 function DroppableArea({ id, title, count, children, isUpdating }: any) {
   const { setNodeRef, isOver } = useDroppable({ id });
-  
+
   return (
-    <div 
-      ref={setNodeRef} 
-      className={`bg-[var(--surface)] border border-[var(--border)] rounded-lg transition-all duration-200 ${
-        isOver ? 'ring-2 ring-[var(--accent-tl)] ring-inset bg-emerald-50/20' : ''
-      } ${isUpdating ? 'opacity-70 pointer-events-none' : ''}`}
+    <div
+      ref={setNodeRef}
+      className={`bg-[var(--surface)] border border-[var(--border)] rounded-lg transition-all duration-200 ${isOver ? 'ring-2 ring-[var(--accent-tl)] ring-inset bg-emerald-50/20' : ''
+        } ${isUpdating ? 'opacity-70 pointer-events-none' : ''}`}
     >
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)]">
         <h4 className="text-[13px] font-semibold text-[var(--text)]">{title}</h4>
@@ -526,16 +593,14 @@ function DraggableTask({ task, isOverlay, onDelete }: any) {
   } : undefined;
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
+    <div
+      ref={setNodeRef}
+      style={style}
       {...listeners}
       {...attributes}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all bg-[var(--surface)] border border-transparent ${
-        isDragging ? 'opacity-30 scale-95 border-[var(--border)]' : 'hover:bg-[var(--bg2)] hover:border-[var(--border)]'
-      } ${
-        isOverlay ? 'shadow-lg border-[var(--border)]' : 'cursor-grab active:cursor-grabbing'
-      }`}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all bg-[var(--surface)] border border-transparent ${isDragging ? 'opacity-30 scale-95 border-[var(--border)]' : 'hover:bg-[var(--bg2)] hover:border-[var(--border)]'
+        } ${isOverlay ? 'shadow-lg border-[var(--border)]' : 'cursor-grab active:cursor-grabbing'
+        }`}
     >
       <div className="p-1 text-[var(--text3)] hover:text-[var(--text2)]">
         <GripVertical size={14} />
@@ -543,20 +608,19 @@ function DraggableTask({ task, isOverlay, onDelete }: any) {
       <span className="text-[11px] font-medium text-[var(--text3)] tabular-nums w-10">{taskId?.slice(-4) || '—'}</span>
       <p className="text-[13px] text-[var(--text)] flex-1 line-clamp-1">{task.title}</p>
       <div className="flex items-center gap-2.5">
-        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-          task.priority === 'CRITICAL' ? 'bg-[var(--redbg)] text-[var(--redtext)]' :
-          task.priority === 'HIGH' ? 'bg-[var(--amberbg)] text-[var(--ambertext)]' :
-          task.priority === 'MEDIUM' ? 'bg-[var(--bluebg)] text-[var(--bluetext)]' :
-          'bg-[var(--bg2)] text-[var(--text3)]'
-        }`}>{task.priority}</span>
+        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${task.priority === 'CRITICAL' ? 'bg-[var(--redbg)] text-[var(--redtext)]' :
+            task.priority === 'HIGH' ? 'bg-[var(--amberbg)] text-[var(--ambertext)]' :
+              task.priority === 'MEDIUM' ? 'bg-[var(--bluebg)] text-[var(--bluetext)]' :
+                'bg-[var(--bg2)] text-[var(--text3)]'
+          }`}>{task.priority}</span>
         {task.assignee && (
-           <div className="w-6 h-6 rounded-full border border-[var(--border)] bg-[var(--bg2)] flex items-center justify-center text-[9px] font-medium text-[var(--text2)] overflow-hidden">
-             {task.assignee.avatarUrl ? (
-               <img src={task.assignee.avatarUrl} alt="" className="w-full h-full object-cover" />
-             ) : (
-               task.assignee.name?.[0]
-             )}
-           </div>
+          <div className="w-6 h-6 rounded-full border border-[var(--border)] bg-[var(--bg2)] flex items-center justify-center text-[9px] font-medium text-[var(--text2)] overflow-hidden">
+            {task.assignee.avatarUrl ? (
+              <img src={task.assignee.avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              task.assignee.name?.[0]
+            )}
+          </div>
         )}
         <span className="text-[12px] font-medium text-[var(--text2)] w-4 text-center">{task.storyPoints || task.estimate || '–'}</span>
         {onDelete && !isOverlay && (

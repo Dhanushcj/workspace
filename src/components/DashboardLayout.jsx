@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { AppSwitcher } from './AppLayout';
+import { NotificationBell } from './tasks/NotificationBell';
 
 const DashboardLayout = ({ children, isAdmin = false }) => {
   const { workspaceId } = useParams();
@@ -168,10 +169,7 @@ const DashboardLayout = ({ children, isAdmin = false }) => {
               <span className="text-xs" style={{ color: 'var(--text-3)' }}>{onlineCount} online</span>
             </div>
 
-            <button className="btn btn-ghost btn-icon relative">
-              <Bell size={16} />
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--danger)' }} />
-            </button>
+            <NotificationBell className="btn btn-ghost btn-icon relative" />
 
 
 

@@ -69,11 +69,30 @@ export interface Epic {
   projectId: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status?: string;
+  clientOrg?: string;
+  category?: string;
+  sprintName?: string;
+  completion?: number;
+  prCount?: number;
+  blockerCount?: number;
+  members?: any[];
+  gitRepo?: string;
+  frontendUrl?: string;
+  backendUrl?: string;
+  modules?: string[];
+  environments?: { key: string, value: string }[];
+}
+
 interface WorkflowState {
   tasks: Task[];
-  projects: any[];
+  projects: Project[];
   isLoading: boolean;
-  currentProject: any | null;
+  currentProject: Project | null;
   currentSprint: any | null;
   statuses: Status[];
   members: any[];
@@ -677,7 +696,7 @@ export const useWorkflowStore = create<WorkflowState>()(
       },
       fetchBugs: async () => {
         try {
-          const res = await api.get('/bug-reports?status=OPEN');
+          const res = await api.get('/issues?type=BUG');
           const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
           set({ bugs: data });
         } catch (error) {

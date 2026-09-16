@@ -3,11 +3,11 @@ import {
   ShieldAlert, GitPullRequest, 
   AlertCircle, Calendar, Check, X, UserPlus,
   Unlock, ChevronUp, ChevronDown, Minus,
-  Zap, Clock
+  Zap, Clock, Bug
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
-import { Task } from '../../store/workflowStore';
+import { useWorkflowStore, Task } from '../../store/workflowStore';
 
 interface Props {
   task: Task;
@@ -26,7 +26,9 @@ interface Props {
 }
 
 // Derive a stack label from task title / epic / type
-const deriveStack = (task: Task): string | null => {
+const deriveStack = (task: Task, taskEpicName?: string): string | null => {
+  if (taskEpicName) return taskEpicName;
+  if (task.epic?.name) return task.epic.name;
   const t = (task.title || '').toLowerCase();
   if (t.includes('payment') || t.includes('razorpay') || t.includes('invoice')) return 'Payments';
   if (t.includes('api') || t.includes('backend') || t.includes('webhook')) return 'Backend';
@@ -35,7 +37,6 @@ const deriveStack = (task: Task): string | null => {
   if (t.includes('cart') || t.includes('order') || t.includes('discount') || t.includes('coupon')) return 'Backend';
   if (t.includes('auth') || t.includes('jwt') || t.includes('otp') || t.includes('login')) return 'Backend';
   if (t.includes('full stack')) return 'Full stack';
-  if (task.epic?.name) return task.epic.name;
   if (task.type) {
     const type = task.type.toLowerCase();
     if (type === 'feature') return 'Feature';
@@ -81,13 +82,20 @@ export const TaskCard = React.memo(({
    isSelected, onSelect, onApprove, onReject, onAssign, onResolve,
    displayId, isTeamLead
 }: Props) => {
+  const epics = useWorkflowStore(state => state.epics);
+  const taskEpicId = task.epicId || (task as any).epic?._id || (task as any).epic?.id;
+  const taskEpic = taskEpicId ? epics.find(e => e.id === taskEpicId || (e as any)._id === taskEpicId) : null;
+
   const initials = getInitials(task.assignee?.name);
-  const stack = deriveStack(task);
+  const stack = deriveStack(task, taskEpic?.name);
   const isBlocked = task.status === 'BLOCKED';
   const isDone = task.status === 'DONE';
   const isInReview = task.status === 'IN_REVIEW' || task.status === 'PR_SUBMITTED';
   const isTesting = task.status === 'TESTING';
   const isUnassigned = !task.assignee?.name;
+
+  const bugs = useWorkflowStore(state => state.bugs);
+  const taskBugs = bugs.filter((b: any) => b.parentId === task.id || b.parentId === (task as any)._id);
 
   const prNum = task.prNumber || parseInt(task.id.replace(/\D/g, '').slice(-2) || '11', 10);
 
@@ -153,6 +161,13 @@ export const TaskCard = React.memo(({
           )}
         </div>
       ) : null}
+
+      {/* Raised Bugs Indicator */}
+      {taskBugs.length > 0 && (
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-rose-500 bg-rose-50 border border-rose-100 rounded-lg px-2 py-1 w-fit">
+          <Bug size={12} /> {taskBugs.length} bug{taskBugs.length > 1 ? 's' : ''} reported
+        </div>
+      )}
 
       {/* Tester badge (Testing) */}
       {isTesting && task.assignee?.name && (

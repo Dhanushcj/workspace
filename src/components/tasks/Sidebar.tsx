@@ -327,20 +327,20 @@ const Sidebar = React.memo(function Sidebar() {
                     to={item.href}
                     className="flex items-center justify-between px-4 py-2 rounded-xl transition-all group"
                     style={active
-                      ? { background: '#F5C300', color: '#1B4FAB', boxShadow: '0 4px 16px rgba(245,195,0,0.35)' }
+                      ? { background: '#F5C300', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(245,195,0,0.35)' }
                       : { color: 'rgba(255,255,255,0.65)' }
                     }
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#FFFFFF'; } }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; } }}
                   >
                     <div className="flex items-center gap-3">
-                      <item.icon size={18} className={active ? 'text-[#1B4FAB]' : 'text-white/50 group-hover:text-white'} strokeWidth={active ? 2.5 : 1.5} />
+                      <item.icon size={18} className={active ? 'text-[#FFFFFF]' : 'text-white/50 group-hover:text-white'} strokeWidth={active ? 2.5 : 1.5} />
                       <span className={`text-[13px] tracking-tight ${active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
                     </div>
                     {item.badge !== undefined && item.badge !== null && (
                       <span className={`
                         px-2 py-0.5 rounded-full text-[10px] font-bold
-                      `} style={{ background: active ? 'rgba(27,79,171,0.15)' : 'rgba(255,255,255,0.12)', color: active ? '#1B4FAB' : 'white' }}>
+                      `} style={{ background: active ? 'rgba(27,79,171,0.15)' : 'rgba(255,255,255,0.12)', color: active ? '#FFFFFF' : 'white' }}>
                         {item.badge}
                       </span>
                     )}

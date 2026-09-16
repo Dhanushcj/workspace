@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Issue } from '../models/Issue';
 import { ProjectMember } from '../models/ProjectMember';
 import { User } from '../models/User';
+import { Notification } from '../models/Notification';
 import { authenticate } from '../middlewares/auth';
 
 const defaultWorkspaceId = 'forge-india-connect';
@@ -124,6 +125,15 @@ export async function issueRoutes(fastify: FastifyInstance) {
         storyPoints: body.storyPoints,
       });
 
+      if (body.assigneeId && body.assigneeId !== request.user?.id) {
+        await Notification.create({
+          userId: body.assigneeId,
+          title: 'New Task Assigned',
+          message: `You have been assigned to a new task: ${title}`,
+          type: 'INFO'
+        });
+      }
+
       return reply.code(201).send(issue);
     } catch (err: any) {
       return reply.code(500).send({ error: 'Failed to create issue.', details: err.message });
@@ -145,6 +155,15 @@ export async function issueRoutes(fastify: FastifyInstance) {
       const issue = await Issue.findByIdAndUpdate(id, body, { new: true });
       if (!issue) {
         return reply.code(404).send({ error: 'Issue not found.' });
+      }
+
+      if (body.assigneeId && body.assigneeId !== existingIssue.assigneeId && body.assigneeId !== request.user?.id) {
+        await Notification.create({
+          userId: body.assigneeId,
+          title: 'Task Assigned',
+          message: `You have been assigned to task: ${existingIssue.title}`,
+          type: 'INFO'
+        });
       }
 
       return reply.code(200).send(issue);

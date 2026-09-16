@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, ShieldAlert, AlertCircle, Loader } from 'lucide-react';
+import { X, Bug, AlertCircle, Loader } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface Props {
   onSubmit: (taskId: string, description: string) => Promise<void>;
 }
 
-export const RaiseBlockerModal: React.FC<Props> = ({ isOpen, onClose, task, onSubmit }) => {
+export const RaiseBugModal: React.FC<Props> = ({ isOpen, onClose, task, onSubmit }) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export const RaiseBlockerModal: React.FC<Props> = ({ isOpen, onClose, task, onSu
       setDescription('');
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to raise blocker. Please try again.');
+      setError(err.response?.data?.message || 'Failed to raise bug. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,10 +58,10 @@ export const RaiseBlockerModal: React.FC<Props> = ({ isOpen, onClose, task, onSu
         <div className="flex items-center justify-between p-8 border-b border-slate-50 bg-slate-50/30">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 shadow-lg shadow-red-500/5">
-              <ShieldAlert size={24} />
+              <Bug size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">Report Blocker</h2>
+              <h2 className="text-xl font-black text-slate-800 tracking-tight">Report Bug</h2>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{task.title}</p>
             </div>
           </div>
@@ -83,7 +83,7 @@ export const RaiseBlockerModal: React.FC<Props> = ({ isOpen, onClose, task, onSu
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Blocker Description*</label>
+               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Bug Description*</label>
                <span className={`text-[10px] font-bold ${description.length > 500 ? 'text-red-500' : 'text-slate-400'}`}>
                  {description.length}/500
                </span>
@@ -92,13 +92,13 @@ export const RaiseBlockerModal: React.FC<Props> = ({ isOpen, onClose, task, onSu
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
-              placeholder="Describe what's blocking you — error, missing access, unclear requirement, dependency issue..."
+              placeholder="Describe the bug — expected vs actual behavior, steps to reproduce, errors..."
               className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-800 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all resize-none placeholder:text-slate-400"
             />
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                <p className="text-[11px] text-slate-500 font-medium leading-relaxed italic">
                  <span className="text-slate-800 font-bold block mb-1 not-italic">Pro-tip:</span>
-                 Include what you were trying to do, the error received, and what is needed to unblock you.
+                 Include reproduction steps and what the expected behavior should be.
                </p>
             </div>
           </div>
@@ -116,8 +116,8 @@ export const RaiseBlockerModal: React.FC<Props> = ({ isOpen, onClose, task, onSu
               disabled={loading || !isValid}
               className="flex-[2] py-4 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:bg-red-500 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:bg-slate-100 disabled:text-slate-400 disabled:translate-y-0 disabled:shadow-none"
             >
-              {loading ? <Loader className="animate-spin" size={16} /> : <ShieldAlert size={16} />}
-              {loading ? 'Submitting...' : 'Submit Blocker'}
+              {loading ? <Loader className="animate-spin" size={16} /> : <Bug size={16} />}
+              {loading ? 'Submitting...' : 'Submit Bug'}
             </button>
           </div>
         </form>

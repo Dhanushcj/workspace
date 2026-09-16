@@ -17,6 +17,7 @@ import ManagerDashboard from './pages/ManagerDashboard';
 import TeamLeadDashboard from './pages/TeamLeadDashboard';
 import TeamMemberDashboard from './pages/TeamMemberDashboard';
 import TasksProjects from './pages/TasksProjects';
+import TasksProjectDetail from './pages/TasksProjectDetail';
 import TasksSprintPlanner from './pages/TasksSprintPlanner';
 import TasksBacklog from './pages/TasksBacklog';
 import TasksAssignment from './pages/TasksAssignment';
@@ -100,6 +101,7 @@ function App() {
             <Route path="/w/:workspaceId/tasks" element={<TasksRouter />} />
             <Route path="/w/:workspaceId/tasks/board" element={<TaskBoard />} />
             <Route path="/w/:workspaceId/tasks/projects" element={<TasksProjects />} />
+            <Route path="/w/:workspaceId/tasks/projects/:projectId" element={<TasksProjectDetail />} />
             <Route path="/w/:workspaceId/tasks/planner" element={<TasksSprintPlanner />} />
             <Route path="/w/:workspaceId/tasks/backlog" element={<TasksBacklog />} />
             <Route path="/w/:workspaceId/tasks/assignments" element={<TasksAssignment />} />

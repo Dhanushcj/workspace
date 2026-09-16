@@ -22,7 +22,7 @@ import { TaskSelectionModal } from '../components/tasks/TaskSelectionModal';
 import { ProjectsView } from '../components/tasks/ProjectsView';
 import { SprintBoard } from '../components/tasks/SprintBoard';
 import { SubmitPRModal } from '../components/tasks/SubmitPRModal';
-import { RaiseBlockerModal } from '../components/tasks/RaiseBlockerModal';
+import { RaiseBugModal } from '../components/tasks/RaiseBugModal';
 import { CreateTaskModal } from '../components/tasks/CreateTaskModal';
 import ProjectSelector from '../components/tasks/ProjectSelector';
 
@@ -42,6 +42,7 @@ export default function DeveloperDashboard() {
   // OPTIMIZED: Using specific selectors for Zustand to prevent unnecessary re-renders
   const tasks = useWorkflowStore(state => state.tasks);
   const projects = useWorkflowStore(state => state.projects);
+  const storeBugs = useWorkflowStore(state => state.bugs);
   const currentProject = useWorkflowStore(state => state.currentProject);
   const currentSprint = useWorkflowStore(state => state.currentSprint);
   const fetchTasks = useWorkflowStore(state => state.fetchTasks);
@@ -56,7 +57,7 @@ export default function DeveloperDashboard() {
   const [isPRModalOpen, setIsPRModalOpen] = useState(false);
   const [isTaskSelectorOpen, setIsTaskSelectorOpen] = useState(false);
   const [selectedTaskForPR, setSelectedTaskForPR] = useState<any>(null);
-  const [isRaiseBlockerOpen, setIsRaiseBlockerOpen] = useState(false);
+  const [isRaiseBugOpen, setIsRaiseBugOpen] = useState(false);
   const [isBlockerTaskSelectorOpen, setIsBlockerTaskSelectorOpen] = useState(false);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [selectedTaskForBlocker, setSelectedTaskForBlocker] = useState<any>(null);
@@ -583,7 +584,7 @@ export default function DeveloperDashboard() {
                 onClick={handleRaiseBlockerClick}
                 className="px-4 py-2 border border-rose-200 text-rose-600 rounded-xl text-[12px] font-bold hover:bg-rose-50 transition-all shadow-sm flex items-center gap-2"
               >
-                <Plus size={16} /> Raise Blocker
+                <Plus size={16} /> Raise Bug
               </button>
             </div>
             <div className="space-y-10">
@@ -609,10 +610,10 @@ export default function DeveloperDashboard() {
               </div>
             </div>
             <div className="space-y-4">
-               {data.bugs.map((bug: any) => (
-                 <DeveloperBugCard key={bug.id} title={bug.title} meta={`Task #${bug.taskId?.slice(-4)} · ${bug.reporter?.name || 'QA'}`} priority={bug.priority?.toLowerCase()} status={bug.status?.toLowerCase()} showFix />
+               {storeBugs.map((bug: any) => (
+                 <DeveloperBugCard key={bug.id} title={bug.title} meta={`Task #${bug.parentId?.slice(-4)} · ${bug.reporter?.name || 'QA'}`} priority={bug.priority?.toLowerCase()} status={bug.status?.toLowerCase()} showFix />
                ))}
-               {data.bugs.length === 0 && <p className="text-[12px] text-slate-400 italic text-center py-10">Your bug inbox is empty. Nice work!</p>}
+               {storeBugs.length === 0 && <p className="text-[12px] text-slate-400 italic text-center py-10">Your bug inbox is empty. Nice work!</p>}
             </div>
           </div>
         )}
@@ -1047,10 +1048,10 @@ export default function DeveloperDashboard() {
           subtitle="Choose which task you want to report a blocker on"
         />
 
-        <RaiseBlockerModal 
-          isOpen={isRaiseBlockerOpen}
+        <RaiseBugModal 
+          isOpen={isRaiseBugOpen}
           onClose={() => {
-            setIsRaiseBlockerOpen(false);
+            setIsRaiseBugOpen(false);
             setSelectedTaskForBlocker(null);
           }}
           task={selectedTaskForBlocker}

@@ -161,14 +161,13 @@ You have a list of CUSTOMER REQUIREMENTS. Your job is to generate the developmen
 ⚠️ CRITICAL RULE — GRANULAR JUNIOR DEVELOPER TASKS:
 1. NEVER generate broad tasks like "Create Landing Page", "Build Dashboard", or "Implement Authentication".
 2. Break broad requirements into SMALL, SPECIFIC, ACTIONABLE implementation tasks (e.g. 5-10 tasks per story).
-3. UI tasks MUST specify the exact component (e.g., "Add Home, About, and Contact links to the topbar").
-4. DB tasks MUST be specific (e.g., "Create User table", "Add name, email, role fields").
-5. Form tasks MUST be specific (e.g., "Add Email input", "Add Password input").
-6. Task descriptions must answer "WHAT EXACTLY DO I NEED TO DO?".
-7. Order them by actual implementation dependencies (Database -> API -> Layout -> Components).
-8. Use simple, non-technical language (e.g. "Add permission checks" instead of "Implement RBAC").
-9. Every task MUST contain: sequence, title (describing ONE clear action with a verb), simple description, why it is needed, expected result, and dependency.
-10. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database).
+3. Prefix Module names with their sequence (e.g. "1. Authentication", "2. Dashboard").
+4. Prefix Task titles with their numerical sequence based on their module (e.g., "1.1 Create User table", "1.2 Build Login UI with Email and Password fields").
+5. TASK TITLES MUST BE EXTREMELY DETAILED. For example, instead of "Create member dashboard", use "1.3 Create Member Dashboard layout with Sidebar (Home, Profile, Settings) and top navbar".
+6. The description for each task MUST be highly detailed and explain the flow and implementation steps clearly using markdown. Use bullet points and bold text where necessary to make the workflow clear.
+7. Order them by actual implementation dependencies (Database -> API -> Layout -> Components) so they can be completed in perfect order.
+8. Every task MUST contain: sequence, title (describing ONE clear action with a verb), highly detailed markdown description, why it is needed, expected result, and dependency.
+9. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database).
 
 CUSTOMER PROJECT OBJECTIVE: ${pass1Result.objective}
 USER ROLES: ${(pass1Result.actors || []).join(', ')}
@@ -226,7 +225,7 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
         {
           "id": "ST-001",
           "sequence": 1,
-          "title": "User Login",
+          "title": "1.1 User Login",
           "userStory": "As a user, I want to log in with my credentials, so that I can access my role dashboard.",
           "description": "Login screen with email/password",
           "requirementIds": ["FR-001"],
@@ -240,8 +239,8 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
             {
               "id": "TASK-001",
               "sequence": 1,
-              "title": "Create Login Database Structure",
-              "description": "Create the User table.",
+              "title": "1.1.1 Create Login Database Structure",
+              "description": "**Goal:** Create the core User table.\n\n**Steps:**\n- Add `id`, `email`, and `password` fields.\n- Setup indexes.",
               "why": "The system needs user information before users can log in.",
               "expectedResult": "User login information can be stored.",
               "dependency": "None",

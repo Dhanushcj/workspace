@@ -6,6 +6,11 @@ export interface IProject extends Document {
   description?: string;
   requirements?: string;
   status: string;
+  gitRepo?: string;
+  frontendUrl?: string;
+  backendUrl?: string;
+  modules?: string[];
+  environments?: { key: string, value: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,6 +21,14 @@ const ProjectSchema = new Schema<IProject>({
   description: { type: String },
   requirements: { type: String },
   status: { type: String, default: 'TO DO' },
+  gitRepo: { type: String },
+  frontendUrl: { type: String },
+  backendUrl: { type: String },
+  modules: [{ type: String }],
+  environments: [{
+    key: { type: String },
+    value: { type: String }
+  }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

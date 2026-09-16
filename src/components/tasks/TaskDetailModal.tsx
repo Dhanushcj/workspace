@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, ChevronDown, Loader, AlertCircle, Save, Ban } from 'lucide-react';
+import { X, Calendar, ChevronDown, Loader, AlertCircle, Save, Ban, Bug, Edit3 } from 'lucide-react';
 import { Task, useWorkflowStore } from '../../store/workflowStore';
+import { marked } from 'marked';
 import { useToastStore } from '../../store/toastStore';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../lib/api';
 import { MessageSquare, Send, User } from 'lucide-react';
-import { RaiseBlockerModal } from './RaiseBlockerModal';
+import { RaiseBugModal } from './RaiseBugModal';
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -41,30 +42,32 @@ export const TaskDetailModal = ({
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
-  const [isRaiseBlockerOpen, setIsRaiseBlockerOpen] = useState(false);
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [isRaiseBugOpen, setIsRaiseBugOpen] = useState(false);
 
-  const handleRaiseBlockerSubmit = async (taskId: string, description: string) => {
+  const handleRaiseBugSubmit = async (taskId: string, description: string) => {
     try {
-      await api.post(`/tasks/${taskId}/blocker`, {
-        title: description.substring(0, 50) + (description.length > 50 ? '...' : ''),
+      await api.post('/issues', {
+        title: `Bug in ${task?.title || 'Task'}`,
         description: description,
-        severity: 'HIGH',
-        type: 'OTHER'
+        type: 'BUG',
+        priority: 'HIGH',
+        status: 'TO_DO',
+        projectId: task?.projectId,
+        sprintId: task?.sprintId,
+        parentId: taskId,
+        assigneeId: user?.id
       });
-      addToast({ type: 'SUCCESS', title: 'Blocker Raised', message: 'Blocker has been reported to the team.' });
+      addToast({ type: 'SUCCESS', title: 'Bug Raised', message: 'Bug has been reported to the team.' });
       
-      // Update local task state status to BLOCKED and refresh parent
-      if (task) {
-        task.status = 'BLOCKED';
-        setFormData(prev => ({ ...prev, status: 'BLOCKED' }));
-      }
       useWorkflowStore.getState().fetchTasks({ 
         projectId: useWorkflowStore.getState().currentProject?.id || '', 
         sprintId: useWorkflowStore.getState().currentSprint?.id || '' 
       });
-      setIsRaiseBlockerOpen(false);
+      useWorkflowStore.getState().fetchBugs();
+      setIsRaiseBugOpen(false);
     } catch (err) {
-      addToast({ type: 'ERROR', title: 'Failed', message: 'Could not raise blocker.' });
+      addToast({ type: 'ERROR', title: 'Failed', message: 'Could not raise bug.' });
     }
   };
 
@@ -233,19 +236,34 @@ export const TaskDetailModal = ({
 
           {/* Description */}
           <div className="space-y-2">
-            <label className="text-[12px] font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
-            <textarea 
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              readOnly={isDeveloper}
-              placeholder={isDeveloper ? "No description provided" : "Add more details..."}
-              rows={3}
-              className={`w-full px-5 py-4 border rounded-[20px] text-[14px] font-medium outline-none transition-all resize-none ${
-                isDeveloper
-                  ? 'bg-slate-100/30 border-slate-100 text-slate-600'
-                  : 'bg-slate-50 border-slate-100 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white'
-              }`}
-            />
+            <div className="flex items-center justify-between ml-1">
+              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-widest">Description</label>
+              {!isDeveloper && !isEditingDesc && (
+                <button onClick={() => setIsEditingDesc(true)} className="text-[10px] flex items-center gap-1 font-bold text-indigo-500 hover:text-indigo-600 transition-colors uppercase tracking-wider">
+                  <Edit3 size={12} /> Edit
+                </button>
+              )}
+            </div>
+            
+            {(!isDeveloper && isEditingDesc) ? (
+              <div className="space-y-2">
+                <textarea 
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Add more details using markdown..."
+                  rows={6}
+                  className="w-full px-5 py-4 bg-white border-2 border-indigo-100 rounded-[20px] text-[14px] font-medium focus:outline-none focus:border-indigo-500 transition-all resize-none"
+                />
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setIsEditingDesc(false)} className="px-3 py-1.5 text-[11px] font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">Done Editing</button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="w-full px-5 py-4 bg-slate-50/50 border border-slate-100 rounded-[20px] text-[14px] prose prose-sm prose-slate max-w-none"
+                dangerouslySetInnerHTML={{ __html: formData.description ? marked.parse(formData.description) : '<p class="text-slate-400 italic">No description provided</p>' }}
+              />
+            )}
           </div>
 
           {/* Comments Section */}
@@ -332,10 +350,10 @@ export const TaskDetailModal = ({
             </button>
             <button 
               type="button"
-              onClick={() => setIsRaiseBlockerOpen(true)}
+              onClick={() => setIsRaiseBugOpen(true)}
               className="flex items-center gap-2 px-6 py-3 bg-rose-50 text-rose-600 rounded-xl text-[13px] font-bold hover:bg-rose-100 transition-all border border-rose-100"
             >
-              <Ban size={16} /> Raise Blocker
+              <Bug size={16} /> Raise Bug
             </button>
             <button 
               onClick={handleSave}
@@ -349,11 +367,11 @@ export const TaskDetailModal = ({
         </div>
       </div>
 
-      <RaiseBlockerModal 
-        isOpen={isRaiseBlockerOpen}
-        onClose={() => setIsRaiseBlockerOpen(false)}
+      <RaiseBugModal 
+        isOpen={isRaiseBugOpen}
+        onClose={() => setIsRaiseBugOpen(false)}
         task={task ? { id: task.id || (task as any)._id, title: task.title } : null}
-        onSubmit={handleRaiseBlockerSubmit}
+        onSubmit={handleRaiseBugSubmit}
       />
     </div>
   );

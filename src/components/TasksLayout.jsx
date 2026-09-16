@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import LogoImage from '../assets/landing-logo.png';
 import ProjectSelector from './tasks/ProjectSelector';
+import { NotificationBell } from './tasks/NotificationBell';
 
 const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = false }) => {
   const { workspaceId } = useParams();
@@ -142,8 +143,8 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
                         onClick={handleLogout}
                         className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
                         style={{ color: 'rgba(255,255,255,0.5)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#FFFFFF'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
                       >
                         <div className="flex items-center gap-3">
                           <item.icon size={18} strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.4)' }} />
@@ -162,18 +163,18 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
                         ${item.isActive ? '' : ''}
                       `}
                       style={item.isActive
-                        ? { background: '#F5C300', color: '#1B4FAB', boxShadow: '0 4px 16px rgba(245,195,0,0.35)', fontWeight: 700 }
+                        ? { background: '#F5C300', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(245,195,0,0.35)', fontWeight: 700 }
                         : { color: 'rgba(255,255,255,0.65)' }
                       }
-                      onMouseEnter={e => { if (!item.isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-                      onMouseLeave={e => { if (!item.isActive) e.currentTarget.style.background = 'transparent'; }}
+                      onMouseEnter={e => { if (!item.isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#FFFFFF'; } }}
+                      onMouseLeave={e => { if (!item.isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; } }}
                     >
                       <div className="flex items-center gap-3">
-                        <item.icon size={18} strokeWidth={item.isActive ? 2.5 : 1.5} style={{ color: item.isActive ? '#1B4FAB' : 'rgba(255,255,255,0.6)' }} />
+                        <item.icon size={18} strokeWidth={item.isActive ? 2.5 : 1.5} style={{ color: item.isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)' }} />
                         <span className="text-sm font-semibold">{item.label}</span>
                       </div>
                       {item.badge && (
-                        <div className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: item.isActive ? 'rgba(27,79,171,0.15)' : 'rgba(255,255,255,0.12)', color: item.isActive ? '#1B4FAB' : 'white' }}>
+                        <div className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: item.isActive ? 'rgba(27,79,171,0.15)' : 'rgba(255,255,255,0.12)', color: item.isActive ? '#FFFFFF' : 'white' }}>
                           {item.badge}
                         </div>
                       )}
@@ -215,17 +216,11 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
                 placeholder="Search Project Data..."
                 className="w-64 bg-[#F0F4FF] border border-[#1B4FAB]/10 rounded-full py-1.5 pl-9 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4FAB]/20 focus:border-[#1B4FAB] transition-all"
               />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white border border-[#1B4FAB]/10 text-[#1B4FAB]/40 shadow-sm">⌘</kbd>
-                <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white border border-[#1B4FAB]/10 text-[#1B4FAB]/40 shadow-sm">K</kbd>
-              </div>
+
             </div>
             
             {/* Icons */}
-            <button className="relative p-2 text-[#1B4FAB]/50 hover:text-[#1B4FAB] transition-colors">
-              <Bell size={20} strokeWidth={1.5} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F5C300] border-2 border-white" />
-            </button>
+            <NotificationBell className="relative p-2 text-[#1B4FAB]/50 hover:text-[#1B4FAB] transition-colors" />
             <button className="p-2 text-[#1B4FAB]/50 hover:text-[#1B4FAB] transition-colors">
               <Zap size={20} strokeWidth={1.5} />
             </button>

@@ -57,7 +57,7 @@ const TasksProjects = () => {
     
     // Open the tasks dashboard for this workspace
     // The TasksRouter will automatically direct them to the appropriate role dashboard
-    navigate(`/w/${workspaceId || 'forge-india-connect'}/tasks`);
+    navigate(`/w/${workspaceId || 'forge-india-connect'}/tasks/projects/${proj.id || proj._id}`);
   };
 
   const headerActions = (

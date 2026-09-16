@@ -16,7 +16,7 @@ interface Notification {
   createdAt: string;
 }
 
-export const NotificationBell: React.FC = () => {
+export const NotificationBell: React.FC<{ className?: string }> = ({ className }) => {
   const router = useRouter();
   const { user, accessToken } = useAuthStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -38,14 +38,14 @@ export const NotificationBell: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Poll every 60s
+    const interval = setInterval(fetchNotifications, 10000); // Poll every 10s
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
   const markAsRead = async (id: string) => {
     try {
       // Requirement: PATCH /api/notifications/:id/read
-      await api.patch(`/notifications/${id}/read`);
+      await api.put(`/notifications/${id}/read`);
       setNotifications(prev => prev.filter(n => n.id !== id));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
@@ -85,7 +85,7 @@ export const NotificationBell: React.FC = () => {
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 bg-white/5 text-slate-400 hover:text-[#FFC107] rounded-xl border border-white/5 transition-all relative group"
+        className={className || "p-2 bg-white/5 text-slate-400 hover:text-[#FFC107] rounded-xl border border-white/5 transition-all relative group"}
       >
         <Bell size={20} className="group-hover:rotate-12 transition-transform" />
         {unreadCount > 0 && (

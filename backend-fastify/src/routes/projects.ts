@@ -3,6 +3,7 @@ import { Project } from '../models/Project';
 import { Sprint } from '../models/Sprint';
 import { Epic } from '../models/Epic';
 import { Status } from '../models/Status';
+import { Issue } from '../models/Issue';
 import { authenticate } from '../middlewares/auth';
 import { ProjectMember } from '../models/ProjectMember';
 import { User } from '../models/User';
@@ -73,6 +74,24 @@ export async function projectRoutes(fastify: FastifyInstance) {
       const allSprints = await Sprint.find({ projectId: { $in: allProjectIds } }).sort({ createdAt: -1 }).lean();
       const allMembers = await ProjectMember.find({ projectId: { $in: allProjectIds } }).lean();
 
+      // Aggregate issue stats
+      const issueStats = await Issue.aggregate([
+        { $match: { projectId: { $in: allProjectIds.map((id: any) => String(id)) } } },
+        {
+          $group: {
+            _id: '$projectId',
+            total: { $sum: 1 },
+            done: { $sum: { $cond: [{ $eq: ['$status', 'DONE'] }, 1, 0] } },
+            prs: { $sum: { $cond: [{ $in: ['$status', ['IN_REVIEW', 'PR_SUBMITTED']] }, 1, 0] } },
+            blocked: { $sum: { $cond: [{ $eq: ['$status', 'BLOCKED'] }, 1, 0] } }
+          }
+        }
+      ]);
+      const issueStatsMap = issueStats.reduce((acc: any, stat: any) => {
+        acc[stat._id] = stat;
+        return acc;
+      }, {});
+
       // Fetch User details for all members
       const uniqueUserIds = [...new Set(allMembers.map(m => m.userId))];
       const users = await User.find({ _id: { $in: uniqueUserIds } }).select('name email avatarUrl role').lean();
@@ -107,6 +126,18 @@ export async function projectRoutes(fastify: FastifyInstance) {
         pObj.sprints = sprintsMap[project._id.toString()] || [];
         pObj.members = memberMap[project._id.toString()] || [];
         pObj.memberCount = pObj.members.length;
+        
+        const stats = issueStatsMap[project._id.toString()];
+        if (stats && stats.total > 0) {
+          pObj.completion = Math.round((stats.done / stats.total) * 100);
+          pObj.prCount = stats.prs;
+          pObj.blockerCount = stats.blocked;
+        } else {
+          pObj.completion = 0;
+          pObj.prCount = 0;
+          pObj.blockerCount = 0;
+        }
+        
         return pObj;
       });
 
