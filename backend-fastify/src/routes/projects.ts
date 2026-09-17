@@ -7,6 +7,7 @@ import { Issue } from '../models/Issue';
 import { authenticate } from '../middlewares/auth';
 import { ProjectMember } from '../models/ProjectMember';
 import { User } from '../models/User';
+import { notifyAssignment } from '../services/notificationDispatcher';
 
 const defaultWorkspaceId = 'forge-india-connect';
 
@@ -389,6 +390,20 @@ export async function projectRoutes(fastify: FastifyInstance) {
 
       if (newAssignments.length > 0) {
         await ProjectMember.insertMany(newAssignments);
+        
+        // Notify new members
+        const project = await Project.findById(projectId).lean();
+        if (project) {
+          const projectUrl = `/projects/${projectId}`;
+          for (const assignment of newAssignments) {
+            notifyAssignment(
+              assignment.userId,
+              'Added to Project',
+              `You have been added to the project: ${project.name}`,
+              projectUrl
+            );
+          }
+        }
       }
 
       const toRemove = Array.from(existingIds).filter(id => !userIds.includes(id as string));

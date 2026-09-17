@@ -240,7 +240,7 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
               "id": "TASK-001",
               "sequence": 1,
               "title": "1.1.1 Create Login Database Structure",
-              "description": "**Goal:** Create the core User table.\n\n**Steps:**\n- Add `id`, `email`, and `password` fields.\n- Setup indexes.",
+              "description": "**Goal:** Create the core User table.\n\n**Steps:**\n- Add 'id', 'email', and 'password' fields.\n- Setup indexes.",
               "why": "The system needs user information before users can log in.",
               "expectedResult": "User login information can be stored.",
               "dependency": "None",

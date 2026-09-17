@@ -66,9 +66,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       console.error('Failed to fetch unread count', err);
     }
   },
-  markAsRead: (id) => set((state) => ({
-    notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
-  })),
+  markAsRead: (id) => set((state) => {
+    const wasUnread = state.notifications.find(n => n.id === id && !n.read);
+    return {
+      notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n),
+      unreadCount: wasUnread ? Math.max(0, state.unreadCount - 1) : state.unreadCount
+    };
+  }),
   markAsReadAPI: async (id) => {
     try {
       await api.put(`/notifications/${id}/read`);
@@ -80,7 +84,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   clearAll: async () => {
     try {
       await api.put('/notifications/read-all'); 
-      set({ notifications: [] });
+      set((state) => ({ 
+        notifications: state.notifications.map(n => ({ ...n, read: true })),
+        unreadCount: 0
+      }));
     } catch (err) {
       console.error('Failed to clear notifications', err);
     }

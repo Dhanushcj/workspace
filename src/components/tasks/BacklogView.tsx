@@ -42,7 +42,7 @@ export const BacklogView = ({ onNavigate = (tab: string) => {} }: { onNavigate?:
       }
     };
     loadData();
-  }, [currentProject?.id, currentProject?._id, fetchTasks, fetchEpics]);
+  }, [currentProject?.id, (currentProject as any)?._id, fetchTasks, fetchEpics]);
 
   const unplannedTasks = useMemo(() => {
     return tasks.filter(t => t && (!t.sprintId || ['null', '', 'undefined'].includes(String(t.sprintId).trim().toLowerCase())));

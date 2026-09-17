@@ -4,6 +4,7 @@ import { ProjectMember } from '../models/ProjectMember';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
 import { authenticate } from '../middlewares/auth';
+import { notifyAssignment } from '../services/notificationDispatcher';
 
 const defaultWorkspaceId = 'forge-india-connect';
 
@@ -132,6 +133,15 @@ export async function issueRoutes(fastify: FastifyInstance) {
           message: `You have been assigned to a new task: ${title}`,
           type: 'INFO'
         });
+        
+        // Trigger push and email notifications
+        const taskUrl = `/tasks/issues/${issue._id}`;
+        notifyAssignment(
+          body.assigneeId,
+          'New Task Assigned',
+          `You have been assigned to a new task: ${title}`,
+          taskUrl
+        );
       }
 
       return reply.code(201).send(issue);
@@ -164,6 +174,15 @@ export async function issueRoutes(fastify: FastifyInstance) {
           message: `You have been assigned to task: ${existingIssue.title}`,
           type: 'INFO'
         });
+        
+        // Trigger push and email notifications
+        const taskUrl = `/tasks/issues/${issue._id}`;
+        notifyAssignment(
+          body.assigneeId,
+          'Task Assigned',
+          `You have been assigned to task: ${existingIssue.title}`,
+          taskUrl
+        );
       }
 
       return reply.code(200).send(issue);

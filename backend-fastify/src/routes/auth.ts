@@ -542,7 +542,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   // 8. UPDATE PROFILE
   fastify.put('/update-profile', { preHandler: authenticate }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { avatarUrl, name, email } = request.body as any;
+      const { avatarUrl, name, email, notificationEmail } = request.body as any;
 
       const user = await User.findById(request.user!.id);
       if (!user) return reply.code(404).send({ error: 'User not found.' });
@@ -556,6 +556,9 @@ export async function authRoutes(fastify: FastifyInstance) {
            return reply.code(409).send({ error: 'Email is already in use.' });
         }
         user.email = email.toLowerCase();
+      }
+      if (notificationEmail !== undefined) {
+        user.notificationEmail = notificationEmail ? notificationEmail.toLowerCase() : '';
       }
       
       await user.save();

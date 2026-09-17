@@ -67,17 +67,23 @@ export default function DeveloperDashboard() {
   const [msgInput, setMsgInput] = useState('');
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [notificationEmail, setNotificationEmail] = useState(user?.notificationEmail || '');
   
   useEffect(() => {
     if (user) {
       setProfileName(user.name || '');
       setProfileEmail(user.email || '');
+      setNotificationEmail(user.notificationEmail || '');
     }
   }, [user?.name, user?.email]);
 
   const handleSaveProfile = async () => {
     try {
-      const res = await api.put('/auth/update-profile', { name: profileName, email: profileEmail });
+      const res = await api.put('/auth/update-profile', { 
+        name: profileName, 
+        email: profileEmail,
+        notificationEmail: notificationEmail
+      });
       addToast({ type: 'SUCCESS', title: 'Profile Updated', message: 'Your profile has been saved.' });
       if (res.data && res.data.user) {
         useAuthStore.getState().setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);
@@ -291,7 +297,7 @@ export default function DeveloperDashboard() {
   const handleBlockerTaskSelect = (task: Task) => {
     setSelectedTaskForBlocker(task);
     setIsBlockerTaskSelectorOpen(false);
-    setIsRaiseBlockerOpen(true);
+    setIsRaiseBugOpen(true);
   };
 
   const handleRaiseBlockerSubmit = async (taskId: string, description: string) => {
@@ -309,7 +315,7 @@ export default function DeveloperDashboard() {
       if (currentProjectId) {
         fetchTasks({ projectId: currentProjectId, sprintId: currentSprintId });
       }
-      setIsRaiseBlockerOpen(false);
+      setIsRaiseBugOpen(false);
     } catch (err) {
       addToast({ type: 'ERROR', title: 'Failed', message: 'Could not raise blocker.' });
     }
@@ -893,7 +899,11 @@ export default function DeveloperDashboard() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
-                  <input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                  <input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} disabled className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all opacity-70 cursor-not-allowed" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Notification Email</label>
+                  <input type="email" value={notificationEmail} onChange={(e) => setNotificationEmail(e.target.value)} placeholder="Alerts fallback to primary email if empty" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Role</label>
@@ -1065,7 +1075,7 @@ export default function DeveloperDashboard() {
           onTaskCreated={() => {
             setIsCreateTaskModalOpen(false);
             if (currentProject) {
-              fetchTasks(currentProject.id);
+              fetchTasks({ projectId: currentProject.id });
             }
           }}
         />

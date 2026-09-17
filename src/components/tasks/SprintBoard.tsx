@@ -147,7 +147,7 @@ export const SprintBoard = ({
       const { fetchTasks } = useWorkflowStore.getState();
       fetchTasks({ projectId });
     }
-  }, [currentProject?.id, currentProject?._id]);
+  }, [currentProject?.id, (currentProject as any)?._id]);
 
   // Meta bar calculations
   const totalTasks = sprintTasks.length;

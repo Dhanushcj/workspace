@@ -8,11 +8,33 @@ import {
 } from 'lucide-react';
 import { useNavigate as useRouter } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import api from '../../lib/api';
 
 export default function ProfileSettings() {
   const router = useRouter();
-  const { user, setPresence, logout } = useAuthStore();
+  const { user, setPresence, logout, setAuth } = useAuthStore();
   const [isOnline, setIsOnline] = useState(user?.isOnline ?? true);
+  
+  // Local state for form fields
+  const [fullName, setFullName] = useState(user?.name || '');
+  const [notificationEmail, setNotificationEmail] = useState(user?.notificationEmail || '');
+  
+  // Notification toggles
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Check if Push is already enabled on mount
+  React.useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) {
+          reg.pushManager.getSubscription().then(sub => {
+            setPushEnabled(!!sub);
+          });
+        }
+      });
+    }
+  }, []);
   
   const handleLogout = () => {
     logout();
@@ -23,6 +45,67 @@ export default function ProfileSettings() {
     const nextState = !isOnline;
     setIsOnline(nextState);
     setPresence(nextState);
+  };
+  
+  const handlePushToggle = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications are not supported in this browser.');
+      return;
+    }
+    
+    try {
+      if (pushEnabled) {
+        // Unsubscribe
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          await api.post('/auth/web-push/unsubscribe', { endpoint: sub.endpoint });
+        }
+        setPushEnabled(false);
+      } else {
+        // Subscribe
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          alert('Notification permission denied.');
+          return;
+        }
+        
+        const { data } = await api.get('/auth/web-push/public-key');
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: data.publicKey
+        });
+        
+        await api.post('/auth/web-push/subscribe', { subscription: sub });
+        setPushEnabled(true);
+      }
+    } catch (err) {
+      console.error('Failed to toggle push notifications:', err);
+      alert('Failed to configure push notifications.');
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+      const { data } = await api.put('/auth/update-profile', {
+        name: fullName,
+        notificationEmail: notificationEmail
+      });
+      // Optionally update user store here if needed
+      if (data.user) {
+        setAuth(data.user, data.accessToken, data.refreshToken);
+      }
+      alert('Settings saved successfully!');
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      alert('Failed to save settings.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -91,27 +174,30 @@ export default function ProfileSettings() {
                 <section className="space-y-6">
                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-300 border-l-4 border-blue-600 pl-4">Account Details</h3>
                    <div className="grid grid-cols-2 gap-6">
-                      <SettingsField label="Full Name" value={user?.name || ''} placeholder="John Doe" />
+                      <SettingsField label="Full Name" value={fullName} onChange={setFullName} placeholder="John Doe" />
                       <SettingsField label="Work Email" value={user?.email || ''} placeholder="john@forge.com" disabled />
                    </div>
                    <div className="grid grid-cols-2 gap-6">
-                      <SettingsField label="Designation" value="Senior Software Engineer" placeholder="e.g. Lead Designer" />
-                      <SettingsField label="Timezone" value="GMT +05:30 (IST)" placeholder="Select Timezone" />
+                      <SettingsField label="Notification Email" value={notificationEmail} onChange={setNotificationEmail} placeholder="alerts@example.com (Optional)" />
+                      <SettingsField label="Timezone" value="GMT +05:30 (IST)" placeholder="Select Timezone" disabled />
                    </div>
                 </section>
 
                 <section className="space-y-6 pt-10 border-t border-slate-50">
                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-300 border-l-4 border-slate-200 pl-4">Notifications</h3>
                    <div className="space-y-4">
-                      <ToggleItem icon={Bell} title="Email Alerts" desc="Receive daily summaries of your assigned tasks." active={true} />
+                      <ToggleItem icon={Bell} title="Email Alerts" desc="Receive emails via Firebase when assigned a task." active={true} />
                       <ToggleItem icon={Zap} title="System Toasts" desc="Real-time notifications for status updates and mentions." active={true} />
-                      <ToggleItem icon={Globe} title="Web Push" desc="Stay synchronized even when the Forge is in the background." active={false} />
+                      <ToggleItem icon={Globe} title="Web Push" desc="Stay synchronized even when the app is closed." active={pushEnabled} onClick={handlePushToggle} />
                    </div>
                 </section>
 
                 <div className="pt-6 flex justify-end">
-                   <button className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-slate-900/20 hover:bg-indigo-600 transition-all hover:-translate-y-1 active:scale-95">
-                      Save Changes
+                   <button 
+                     onClick={handleSaveChanges}
+                     disabled={isSaving}
+                     className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-slate-900/20 hover:bg-indigo-600 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50">
+                      {isSaving ? 'Saving...' : 'Save Changes'}
                    </button>
                 </div>
              </div>
@@ -130,12 +216,13 @@ function PermissionItem({ label, granted }: { label: string; granted: boolean })
   );
 }
 
-function SettingsField({ label, value, placeholder, disabled }: any) {
+function SettingsField({ label, value, onChange, placeholder, disabled }: any) {
   return (
     <div className="space-y-2">
        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{label}</label>
        <input 
-         defaultValue={value}
+         value={value}
+         onChange={(e) => onChange && onChange(e.target.value)}
          disabled={disabled}
          placeholder={placeholder}
          className={`w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all ${
@@ -146,7 +233,7 @@ function SettingsField({ label, value, placeholder, disabled }: any) {
   );
 }
 
-function ToggleItem({ icon: Icon, title, desc, active }: any) {
+function ToggleItem({ icon: Icon, title, desc, active, onClick }: any) {
   return (
     <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl hover:bg-white transition-all group border border-transparent hover:border-slate-100">
        <div className="flex items-center gap-4">
@@ -158,7 +245,10 @@ function ToggleItem({ icon: Icon, title, desc, active }: any) {
              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{desc}</p>
           </div>
        </div>
-       <div className={`w-12 h-6 rounded-full p-1 transition-all cursor-pointer ${active ? 'bg-indigo-600' : 'bg-slate-200'}`}>
+       <div 
+         onClick={onClick}
+         className={`w-12 h-6 rounded-full p-1 transition-all cursor-pointer ${active ? 'bg-indigo-600' : 'bg-slate-200'}`}
+       >
           <div className={`w-4 h-4 bg-white rounded-full transition-all ${active ? 'translate-x-6' : 'translate-x-0'}`} />
        </div>
     </div>

@@ -8,6 +8,7 @@ interface User {
   isOnline?: boolean;
   lastSeen?: string;
   workspaceId?: string;
+  notificationEmail?: string;
 }
 
 interface AuthState {

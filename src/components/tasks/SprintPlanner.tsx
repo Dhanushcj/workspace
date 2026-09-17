@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Search, Target, Calendar, Play,
   AlertCircle, User,
-  GripVertical, CalendarDays, Trash2, LayoutGrid
+  GripVertical, CalendarDays, Trash2, LayoutGrid, Settings, X
 } from 'lucide-react';
 import {
   DndContext,
@@ -26,6 +26,7 @@ import { CreateTaskModal } from './CreateTaskModal';
 import { Plus, Bot } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import AIPlannerModal from './AIPlannerModal';
+import { EditSprintModal } from './EditSprintModal';
 
 export default function SprintPlanner() {
   const { user } = useAuthStore();
@@ -37,6 +38,7 @@ export default function SprintPlanner() {
   const [isAIPlannerOpen, setIsAIPlannerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [isEditSprintModalOpen, setIsEditSprintModalOpen] = useState(false);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalInput, setGoalInput] = useState('');
   const [isDatesModalOpen, setIsDatesModalOpen] = useState(false);
@@ -333,6 +335,38 @@ export default function SprintPlanner() {
     }
   };
 
+  const handleDeleteSprint = async () => {
+    if (!activeSprintId) return;
+    if (!window.confirm(`Are you sure you want to delete the sprint "${activeSprint?.name}"?`)) return;
+    
+    try {
+      setIsUpdating(true);
+      await api.delete(`/sprints/${activeSprintId}`);
+      addToast({ type: 'SUCCESS', title: 'Sprint Deleted', message: 'Sprint has been deleted.' });
+      
+      // Reload sprints and set first active/planning sprint
+      const projectId = currentProject?.id || (currentProject as any)?._id;
+      const sprintsRes = await api.get(`/projects/${projectId}/sprints`);
+      const rawSprints = Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []);
+      const normalized = rawSprints.map((s: any) => ({
+        ...s,
+        id: s.id || s._id,
+        _id: s._id || s.id
+      }));
+      setSprints(normalized);
+      
+      const active = normalized.find((s: any) => s.status === 'ACTIVE') ||
+                     normalized.find((s: any) => s.status === 'PLANNING') ||
+                     normalized[0] || null;
+      setCurrentSprint(active);
+      await fetchTasks({ projectId });
+    } catch (err) {
+      addToast({ type: 'ERROR', title: 'Delete Failed', message: 'Could not delete the sprint.' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleMoveTask = async (taskId: string, targetSprintId: string | null) => {
     try {
       setIsUpdating(true);
@@ -376,6 +410,44 @@ export default function SprintPlanner() {
           }}
         />
       )}
+      {isModuleModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModuleModalOpen(false)} />
+          <div className="relative bg-[var(--surface)] w-full max-w-sm rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg2)]">
+              <h3 className="font-semibold text-[var(--text)]">Add New Module</h3>
+              <button onClick={() => setIsModuleModalOpen(false)} className="text-[var(--text3)] hover:text-[var(--text)] transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-[13px] font-medium text-[var(--text2)]">Module Name</label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={newModuleName}
+                  onChange={(e) => setNewModuleName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateModule();
+                  }}
+                  className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-[13px] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all"
+                  placeholder="e.g. Authentication, API..."
+                />
+              </div>
+              <button
+                onClick={handleCreateModule}
+                disabled={isUpdating || !newModuleName.trim()}
+                className="w-full py-2 bg-[var(--accent)] text-white rounded-lg text-[13px] font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center"
+              >
+                {isUpdating ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : 'Create Module'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <CreateSprintModal
         isOpen={isSprintModalOpen}
         onClose={() => setIsSprintModalOpen(false)}
@@ -388,6 +460,18 @@ export default function SprintPlanner() {
             api.get(`/projects/${projectId}/sprints`).then(sRes => {
               setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
             });
+          });
+        }}
+      />
+      <EditSprintModal
+        isOpen={isEditSprintModalOpen}
+        onClose={() => setIsEditSprintModalOpen(false)}
+        sprint={activeSprint}
+        onSuccess={(updatedSprint) => {
+          setCurrentSprint({ ...activeSprint, ...updatedSprint });
+          const projectId = currentProject?.id || (currentProject as any)?._id;
+          api.get(`/projects/${projectId}/sprints`).then(sRes => {
+            setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
           });
         }}
       />
@@ -439,6 +523,18 @@ export default function SprintPlanner() {
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
               >
                 <Calendar size={14} /> Change Dates
+              </button>
+              <button
+                onClick={() => setIsEditSprintModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
+              >
+                <Settings size={14} /> Edit Sprint
+              </button>
+              <button
+                onClick={handleDeleteSprint}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-red-200/50 text-red-500 rounded-lg text-[12px] font-medium hover:bg-red-50 hover:border-red-200 transition-all"
+              >
+                <Trash2 size={14} /> Delete
               </button>
               <button
                 onClick={handleStartSprint}
