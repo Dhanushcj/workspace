@@ -104,7 +104,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`,
         mfaEnabled: !!user.mfaEnabled,
         role,
-        workspaceId
+        workspaceId,
+        notificationEmail: user.notificationEmail
       }
     };
   }
