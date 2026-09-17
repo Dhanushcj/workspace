@@ -14,7 +14,8 @@ export async function notifyAssignment(
   userId: string,
   title: string,
   body: string,
-  url: string
+  url: string,
+  detailedHtml?: string
 ): Promise<void> {
   try {
     const user = await User.findById(userId);
@@ -44,7 +45,7 @@ export async function notifyAssignment(
         sender: { name: "Forge PMT", email: "forgeindiaconnectfic@gmail.com" },
         to: [{ email: targetEmail, name: user.name || 'User' }],
         subject: title,
-        htmlContent: `
+        htmlContent: detailedHtml || `
           <div style="font-family: sans-serif; padding: 20px;">
             <h2 style="color: #2563eb;">${title}</h2>
             <p style="font-size: 16px; color: #334155;">${body}</p>

@@ -136,11 +136,29 @@ export async function issueRoutes(fastify: FastifyInstance) {
         
         // Trigger push and email notifications
         const taskUrl = `/tasks/issues/${issue._id}`;
+        const baseUrl = process.env.VITE_NEXUS_PM_URL || 'http://localhost:3050';
+        const absoluteUrl = `${baseUrl.replace(/\/$/, '')}/w/forge-india-connect/dashboard/member?tab=Sprint%20Board`;
+        const detailedHtml = `
+          <div style="font-family: sans-serif; padding: 20px; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #2563eb; margin-top: 0;">New Task Assigned: ${title}</h2>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+              <p style="margin: 0 0 10px 0;"><strong>Status:</strong> ${body.status || 'TO_DO'}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Priority:</strong> ${body.priority || 'MEDIUM'}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Type:</strong> ${body.type || 'FEATURE'}</p>
+              ${body.storyPoints ? `<p style="margin: 0 0 10px 0;"><strong>Story Points:</strong> ${body.storyPoints}</p>` : ''}
+              <p style="margin: 0;"><strong>Description:</strong></p>
+              <p style="margin: 5px 0 0 0; color: #475569;">${body.description || 'No description provided.'}</p>
+            </div>
+            <a href="${absoluteUrl}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Task</a>
+          </div>
+        `;
+
         notifyAssignment(
           body.assigneeId,
           'New Task Assigned',
           `You have been assigned to a new task: ${title}`,
-          taskUrl
+          taskUrl,
+          detailedHtml
         );
       }
 
@@ -177,11 +195,29 @@ export async function issueRoutes(fastify: FastifyInstance) {
         
         // Trigger push and email notifications
         const taskUrl = `/tasks/issues/${issue._id}`;
+        const baseUrl = process.env.VITE_NEXUS_PM_URL || 'http://localhost:3050';
+        const absoluteUrl = `${baseUrl.replace(/\/$/, '')}/w/forge-india-connect/dashboard/member?tab=Sprint%20Board`;
+        const detailedHtml = `
+          <div style="font-family: sans-serif; padding: 20px; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #2563eb; margin-top: 0;">Task Assigned: ${existingIssue.title}</h2>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+              <p style="margin: 0 0 10px 0;"><strong>Status:</strong> ${issue.status || 'TO_DO'}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Priority:</strong> ${issue.priority || 'MEDIUM'}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Type:</strong> ${issue.type || 'FEATURE'}</p>
+              ${issue.storyPoints ? `<p style="margin: 0 0 10px 0;"><strong>Story Points:</strong> ${issue.storyPoints}</p>` : ''}
+              <p style="margin: 0;"><strong>Description:</strong></p>
+              <p style="margin: 5px 0 0 0; color: #475569;">${issue.description || 'No description provided.'}</p>
+            </div>
+            <a href="${absoluteUrl}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Task</a>
+          </div>
+        `;
+
         notifyAssignment(
           body.assigneeId,
           'Task Assigned',
           `You have been assigned to task: ${existingIssue.title}`,
-          taskUrl
+          taskUrl,
+          detailedHtml
         );
       }
 
