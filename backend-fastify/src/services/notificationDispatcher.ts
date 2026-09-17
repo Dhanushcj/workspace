@@ -2,6 +2,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { User } from '../models/User';
 import { sendWebPush } from './webPush';
 import { getApps } from 'firebase-admin/app';
+import './pushNotifications';
 
 // Ensure Firebase has been initialized before calling this
 // pushNotifications.ts handles the initialization.
