@@ -135,7 +135,7 @@ async function generatePlan(
 ): Promise<any> {
   const client = getClient();
   const reqs = pass1Result.requirements || [];
-  const BATCH_SIZE = 12; // 12 reqs per batch ensures fast generation while keeping context
+  const BATCH_SIZE = 2; // 12 reqs per batch ensures fast generation while keeping context
   
   let mergedModules: any[] = [];
   let mergedSprints: any[] = [];
@@ -314,11 +314,8 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
   mergedSprints.forEach((s, idx) => {
     s.id = `SPRINT-${idx + 1}`;
     // ensure name is descriptive
-    if (!s.name || s.name === `Sprint ${idx + 1}`) {
-      s.name = `Sprint ${idx + 1}: Core Features`;
-    } else if (!s.name.startsWith('Sprint')) {
-      s.name = `Sprint ${idx + 1}: ${s.name}`;
-    }
+    s.name = (s.name || '').replace(/^Sprint\s*\d+\s*:\s*/i, '').replace(/^Sprint\s*\d+\s*/i, '');
+    s.name = `Sprint ${idx + 1}: ${s.name || 'Core Features'}`;
   });
 
   return {

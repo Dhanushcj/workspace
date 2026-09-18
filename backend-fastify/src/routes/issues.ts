@@ -61,7 +61,7 @@ export async function issueRoutes(fastify: FastifyInstance) {
       if (status) filter.status = status;
       if (assigneeId) filter.assigneeId = assigneeId;
 
-      const issues = await Issue.find(filter).sort({ createdAt: -1 }).lean();
+      const issues = await Issue.find(filter).sort({ createdAt: 1 }).lean();
 
       // Populate assignee details efficiently (Fix N+1 query)
       const assigneeIds = [...new Set(issues.filter((i: any) => i.assigneeId).map((i: any) => i.assigneeId))];
