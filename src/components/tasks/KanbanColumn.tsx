@@ -45,6 +45,7 @@ const columnStyle: Record<string, { dot: string; badge: string; text: string }> 
   TO_DO:      { dot: 'bg-slate-400',   badge: 'bg-slate-100 text-slate-600',   text: 'text-slate-600' },
   IN_PROGRESS:{ dot: 'bg-blue-500',    badge: 'bg-blue-100 text-blue-700',     text: 'text-slate-700' },
   IN_REVIEW:  { dot: 'bg-violet-500',  badge: 'bg-violet-100 text-violet-700', text: 'text-slate-700' },
+  CODE_REVIEW:{ dot: 'bg-indigo-500',  badge: 'bg-indigo-100 text-indigo-700', text: 'text-indigo-700' },
   PR_SUBMITTED:{ dot: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700', text: 'text-slate-700' },
   TESTING:    { dot: 'bg-amber-500',   badge: 'bg-amber-100 text-amber-700',   text: 'text-slate-700' },
   DONE:       { dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700',text: 'text-slate-700' },

@@ -208,7 +208,7 @@ export const TaskDetailModal = ({
                   }`}
                 >
                   <option value="">Unassigned</option>
-                  {members.map(m => (
+                  {members.filter((m: any) => m.role !== 'Manager').map(m => (
                     <option key={m.id || (m as any)._id} value={m.id || (m as any)._id}>{m.name}</option>
                   ))}
                 </select>

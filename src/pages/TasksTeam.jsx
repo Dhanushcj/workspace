@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import TasksLayout from '../components/TasksLayout';
-import { fetchMembers, addMember } from '../api/tasksApi';
-import { Users, Mail, UserPlus, X, Shield, Calendar, Clock } from 'lucide-react';
+import { fetchMembers, addMember, updateMember, removeMember } from '../api/tasksApi';
+import { Users, Mail, UserPlus, X, Shield, Calendar, Trash2 } from 'lucide-react';
 
 const TasksTeam = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
   const [newMember, setNewMember] = useState({ name: '', email: '', password: 'password123', role: 'Member' });
 
   const auth = JSON.parse(localStorage.getItem('auth') || '{}');
@@ -39,6 +40,28 @@ const TasksTeam = () => {
       loadMembers();
     } catch (err) {
       alert('Failed to add member. Email might already exist.');
+    }
+  };
+
+  const handleUpdateMember = async (e) => {
+    e.preventDefault();
+    try {
+      await updateMember(editingMember.id, { role: editingMember.role });
+      setEditingMember(null);
+      loadMembers();
+    } catch (err) {
+      alert('Failed to update member.');
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!window.confirm('Are you sure you want to remove this member?')) return;
+    try {
+      await removeMember(editingMember.id);
+      setEditingMember(null);
+      loadMembers();
+    } catch (err) {
+      alert('Failed to remove member.');
     }
   };
 
@@ -102,7 +125,7 @@ const TasksTeam = () => {
                     <Shield size={12} /> {member.role}
                   </span>
                   
-                  <button className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 border border-slate-200 hover:border-slate-300 hover:text-slate-600 transition-colors opacity-0 group-hover:opacity-100">
+                  <button onClick={() => setEditingMember(member)} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 border border-slate-200 hover:border-slate-300 hover:text-slate-600 transition-colors opacity-0 group-hover:opacity-100">
                     Manage
                   </button>
                 </div>
@@ -155,6 +178,52 @@ const TasksTeam = () => {
               <div className="flex gap-3 pt-4 border-t border-slate-100">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                 <button type="submit" className="flex-1 py-2.5 rounded-xl bg-[#1B4FAB] text-white text-sm font-bold shadow-md hover:bg-[#1A3A8F] transition-colors">Send Invite</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {editingMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setEditingMember(null)} />
+          <div className="relative w-full max-w-sm rounded-3xl bg-white border border-slate-100 shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="font-bold text-slate-800">Manage Member</h2>
+              <button onClick={() => setEditingMember(null)} className="p-1.5 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateMember} className="p-6 space-y-5">
+              <div className="flex items-center gap-4 mb-2">
+                 <div className="w-12 h-12 rounded-full bg-[#1B4FAB] text-white flex items-center justify-center text-sm font-bold">
+                    {getInitials(editingMember.name)}
+                 </div>
+                 <div>
+                    <h3 className="text-sm font-bold text-slate-800">{editingMember.name}</h3>
+                    <p className="text-[11px] text-slate-500">{editingMember.email}</p>
+                 </div>
+              </div>
+              
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Role</label>
+                <select value={editingMember.role} onChange={e => setEditingMember({...editingMember, role: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4FAB]/20 focus:border-[#1B4FAB] bg-white">
+                  <option value="Member">Member</option>
+                  <option value="Team Lead">Team Lead</option>
+                  <option value="Manager">Manager</option>
+                </select>
+              </div>
+
+              <div className="pt-2">
+                <button type="button" onClick={handleRemoveMember} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-100 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 transition-colors">
+                  <Trash2 size={16} /> Remove from Workspace
+                </button>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setEditingMember(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-[#1B4FAB] text-white text-sm font-bold shadow-md hover:bg-[#1A3A8F] transition-colors">Save Changes</button>
               </div>
             </form>
           </div>

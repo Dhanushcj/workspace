@@ -56,7 +56,9 @@ export const TaskAssignmentView = () => {
       const usersRes = await api.get('/users');
       const rawUsers = Array.isArray(usersRes.data) ? usersRes.data : (usersRes.data?.data || []);
       
-      const membersWithLoad = rawUsers.map((u: any) => {
+      const membersWithLoad = rawUsers
+        .filter((u: any) => u.role !== 'Manager')
+        .map((u: any) => {
         const userId = u.id || u._id;
         const userTasks = normalizedTasks.filter((t: any) => (t.assigneeId === userId || t.assignee?.id === userId));
         const points = userTasks.reduce((sum: number, t: any) => sum + (t.storyPoints || 0), 0);

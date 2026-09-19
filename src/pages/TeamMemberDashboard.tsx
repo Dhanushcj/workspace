@@ -25,11 +25,20 @@ import { SubmitPRModal } from '../components/tasks/SubmitPRModal';
 import { RaiseBugModal } from '../components/tasks/RaiseBugModal';
 import { CreateTaskModal } from '../components/tasks/CreateTaskModal';
 import ProjectSelector from '../components/tasks/ProjectSelector';
+import { DevMyTasksView } from '../components/tasks/DevMyTasksView';
+import { DevTaskDetailPage } from '../components/tasks/DevTaskDetailPage';
+import { TesterTaskView } from '../components/tasks/TesterTaskView';
+
+// Lazy wrapper for TesterTaskView
+const TesterTaskViewWrapper = ({ onOpenTask }: { onOpenTask: (task: any) => void }) => (
+  <TesterTaskView onOpenTask={onOpenTask} />
+);
 
 import Sidebar from '../components/tasks/Sidebar';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
 import { Task } from '../store/workflowStore';
 import { useToastStore } from '../store/toastStore';
+
 
 export default function DeveloperDashboard() {
   const router = useRouter();
@@ -68,6 +77,8 @@ export default function DeveloperDashboard() {
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [notificationEmail, setNotificationEmail] = useState(user?.notificationEmail || '');
+  // New: task detail overlay
+  const [openDetailTask, setOpenDetailTask] = useState<Task | null>(null);
   
   useEffect(() => {
     if (user) {
@@ -504,52 +515,7 @@ export default function DeveloperDashboard() {
         )}
 
         {activeTab === 'MyTasks' && (
-          <div className="p-10 w-full space-y-10">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-800">My Tasks</h1>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">{user?.name || 'Nexus Developer'} · {currentProject?.name}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-5 gap-6">
-               <StatCard label="All tasks" val={stats.myTasks.length} active />
-               <StatCard label="In progress" val={stats.myTasks.filter(t => t.status === 'IN_PROGRESS').length} />
-               <StatCard label="Due today" val={stats.dueToday} color="text-amber-600" />
-               <StatCard label="Blocked" val={stats.myTasks.filter(t => t.status === 'BLOCKED').length} color="text-rose-600" />
-               <StatCard label="Done this sprint" val={stats.myTasks.filter(t => t.status === 'DONE').length} />
-            </div>
-
-            <div className="space-y-10">
-               {['TO_DO', 'IN_PROGRESS', 'PR_SUBMITTED', 'IN_REVIEW', 'TESTING', 'DONE', 'BLOCKED'].map(status => {
-                 const sprintId = currentSprint?.id || (currentSprint as any)?._id;
-                 const statusTasks = (tasks || []).filter(t => 
-                    t && t.assigneeId === user?.id && 
-                    t.status === status && 
-                    (sprintId ? (t.sprintId === sprintId || (t as any).sprintId === sprintId) : true)
-                 );
-                 if (statusTasks.length === 0) return null;
-                 return (
-                   <MyTaskGroup 
-                     key={status}
-                     title={status.replace(/_/g, ' ')} 
-                     tasks={statusTasks} 
-                     onPRClick={handleTaskSelectForPR} 
-                     onTaskClick={(task: any) => {
-                       setSelectedTaskForDetail(task);
-                       setSelectedTaskDisplayId(`#${String(task.id || '').slice(-4).toUpperCase()}`);
-                     }}
-                   />
-                 );
-               })}
-               {stats.myTasks.length === 0 && (
-                 <div className="p-20 border-2 border-dashed border-slate-100 rounded-[32px] text-center">
-                    <ListTodo size={48} className="mx-auto text-slate-200 mb-4" />
-                    <p className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">No tasks assigned to you yet</p>
-                 </div>
-               )}
-            </div>
-          </div>
+          <DevMyTasksView onOpenTask={(task) => setOpenDetailTask(task)} />
         )}
 
         {activeTab === 'PullRequests' && (
@@ -640,6 +606,10 @@ export default function DeveloperDashboard() {
 
         {activeTab === 'SprintBoard' && (
            <SprintBoard onTaskClick={() => {}} onCreateTask={() => {}} />
+        )}
+
+        {activeTab === 'TestQueue' && (
+          <TesterTaskViewWrapper onOpenTask={(task: any) => setOpenDetailTask(task)} />
         )}
 
         {activeTab === 'Analytics' && (
@@ -1086,6 +1056,13 @@ export default function DeveloperDashboard() {
           task={selectedTaskForDetail}
           displayId={selectedTaskDisplayId}
         />
+        {/* New DevTaskDetailPage overlay — opened from My Tasks view */}
+        {openDetailTask && (
+          <DevTaskDetailPage
+            task={openDetailTask}
+            onClose={() => setOpenDetailTask(null)}
+          />
+        )}
         </main>
       </div>
     </div>

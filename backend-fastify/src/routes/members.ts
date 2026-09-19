@@ -89,4 +89,44 @@ export async function memberRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ error: 'Failed to add workspace user.', details: err.message });
     }
   });
+  fastify.put('/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = request.params as any;
+      const body = request.body as any;
+      const role = String(body.role || '').trim();
+
+      if (!role) {
+        return reply.code(400).send({ error: 'Role is required.' });
+      }
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        { role },
+        { new: true }
+      );
+
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found.' });
+      }
+
+      return reply.code(200).send(publicUser(user));
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to update user.', details: err.message });
+    }
+  });
+
+  fastify.delete('/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = request.params as any;
+      const user = await User.findByIdAndDelete(id);
+      
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found.' });
+      }
+
+      return reply.code(200).send({ success: true, message: 'User removed.' });
+    } catch (err: any) {
+      return reply.code(500).send({ error: 'Failed to remove user.', details: err.message });
+    }
+  });
 }

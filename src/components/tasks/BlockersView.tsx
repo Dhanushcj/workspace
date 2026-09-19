@@ -55,7 +55,6 @@ export const BlockersView = () => {
     return [
       { label: 'Active', value: activeBlockers.length, color: 'text-red-500' },
       { label: 'Points at risk', value: pointsAtRisk, color: 'text-amber-500' },
-      { label: 'Avg resolution', value: '4.2h', color: 'text-emerald-500' },
       { label: 'Resolved', value: resolvedBlockers.length, color: 'text-emerald-500' },
     ];
   }, [activeBlockers, resolvedBlockers]);
@@ -90,7 +89,7 @@ export const BlockersView = () => {
       </div>
 
       {/* Stats Bar */}
-      <div className="px-8 grid grid-cols-4 gap-6">
+      <div className="px-8 grid grid-cols-3 gap-6">
         {stats.map((stat, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
             <p className="text-[13px] text-slate-400 font-medium mb-3">{stat.label}</p>

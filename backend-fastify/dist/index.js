@@ -30,15 +30,16 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// backend-fastify/src/models/User.ts
+// src/models/User.ts
 var import_mongoose4, UserSchema, User;
 var init_User = __esm({
-  "backend-fastify/src/models/User.ts"() {
+  "src/models/User.ts"() {
     "use strict";
     import_mongoose4 = require("mongoose");
     UserSchema = new import_mongoose4.Schema({
       name: { type: String, required: true },
       email: { type: String, required: true, unique: true, index: true },
+      notificationEmail: { type: String },
       passwordHash: { type: String },
       password: { type: String },
       // Fallback for web application compatibility
@@ -63,7 +64,7 @@ var init_User = __esm({
   }
 });
 
-// backend-fastify/src/services/pushNotifications.ts
+// src/services/pushNotifications.ts
 var pushNotifications_exports = {};
 __export(pushNotifications_exports, {
   sendPushNotification: () => sendPushNotification
@@ -133,7 +134,7 @@ async function sendPushNotification(recipientEmails, title, body, data) {
 }
 var import_app, import_messaging;
 var init_pushNotifications = __esm({
-  "backend-fastify/src/services/pushNotifications.ts"() {
+  "src/services/pushNotifications.ts"() {
     "use strict";
     init_User();
     import_app = require("firebase-admin/app");
@@ -165,7 +166,7 @@ var init_pushNotifications = __esm({
   }
 });
 
-// backend-fastify/src/services/webPush.ts
+// src/services/webPush.ts
 var webPush_exports = {};
 __export(webPush_exports, {
   getVapidPublicKey: () => getVapidPublicKey,
@@ -222,7 +223,7 @@ async function sendWebPush(recipientEmails, payload) {
 }
 var import_web_push, vapidPublicKey, vapidPrivateKey;
 var init_webPush = __esm({
-  "backend-fastify/src/services/webPush.ts"() {
+  "src/services/webPush.ts"() {
     "use strict";
     import_web_push = __toESM(require("web-push"));
     init_User();
@@ -248,7 +249,7 @@ var init_webPush = __esm({
   }
 });
 
-// backend-fastify/src/services/mailSockets.ts
+// src/services/mailSockets.ts
 var mailSockets_exports = {};
 __export(mailSockets_exports, {
   activeMailSockets: () => activeMailSockets,
@@ -308,7 +309,7 @@ function handleMailSocket(socket, req) {
 }
 var import_fs, import_path, activeMailSockets;
 var init_mailSockets = __esm({
-  "backend-fastify/src/services/mailSockets.ts"() {
+  "src/services/mailSockets.ts"() {
     "use strict";
     import_fs = __toESM(require("fs"));
     import_path = __toESM(require("path"));
@@ -316,10 +317,10 @@ var init_mailSockets = __esm({
   }
 });
 
-// backend-fastify/src/models/Transcript.ts
+// src/models/Transcript.ts
 var import_mongoose10, TranscriptSchema, Transcript;
 var init_Transcript = __esm({
-  "backend-fastify/src/models/Transcript.ts"() {
+  "src/models/Transcript.ts"() {
     "use strict";
     import_mongoose10 = require("mongoose");
     TranscriptSchema = new import_mongoose10.Schema({
@@ -334,7 +335,7 @@ var init_Transcript = __esm({
   }
 });
 
-// backend-fastify/src/services/transcription.ts
+// src/services/transcription.ts
 var transcription_exports = {};
 __export(transcription_exports, {
   transcribeChunk: () => transcribeChunk
@@ -374,7 +375,7 @@ async function transcribeChunk(meetingId, userId, speakerName, filePath) {
 }
 var import_fs4, import_groq_sdk, groq;
 var init_transcription = __esm({
-  "backend-fastify/src/services/transcription.ts"() {
+  "src/services/transcription.ts"() {
     "use strict";
     import_fs4 = __toESM(require("fs"));
     import_groq_sdk = __toESM(require("groq-sdk"));
@@ -386,28 +387,28 @@ var init_transcription = __esm({
   }
 });
 
-// backend-fastify/src/models/MutedUser.ts
+// src/models/MutedUser.ts
 var MutedUser_exports = {};
 __export(MutedUser_exports, {
   MutedUser: () => MutedUser
 });
-var import_mongoose25, MutedUserSchema, MutedUser;
+var import_mongoose28, MutedUserSchema, MutedUser;
 var init_MutedUser = __esm({
-  "backend-fastify/src/models/MutedUser.ts"() {
+  "src/models/MutedUser.ts"() {
     "use strict";
-    import_mongoose25 = require("mongoose");
-    MutedUserSchema = new import_mongoose25.Schema({
+    import_mongoose28 = require("mongoose");
+    MutedUserSchema = new import_mongoose28.Schema({
       userId: { type: String, required: true },
       userEmail: { type: String, required: true },
       mutedUserEmail: { type: String, required: true },
       createdAt: { type: Date, default: Date.now }
     });
     MutedUserSchema.index({ userEmail: 1, mutedUserEmail: 1 }, { unique: true });
-    MutedUser = (0, import_mongoose25.model)("MutedUser", MutedUserSchema);
+    MutedUser = (0, import_mongoose28.model)("MutedUser", MutedUserSchema);
   }
 });
 
-// backend-fastify/src/services/aiValidator.ts
+// src/services/aiValidator.ts
 var aiValidator_exports = {};
 __export(aiValidator_exports, {
   checkRequirementCoverage: () => checkRequirementCoverage,
@@ -620,27 +621,27 @@ function detectDuplicates(generatedItems, existingIssues) {
 }
 var VALID_FIBONACCI;
 var init_aiValidator = __esm({
-  "backend-fastify/src/services/aiValidator.ts"() {
+  "src/services/aiValidator.ts"() {
     "use strict";
     VALID_FIBONACCI = [1, 2, 3, 5, 8, 13];
   }
 });
 
-// backend-fastify/src/index.ts
+// src/index.ts
 var import_fastify = __toESM(require("fastify"));
 var import_cors = __toESM(require("@fastify/cors"));
 var import_websocket = __toESM(require("@fastify/websocket"));
-var import_mongoose31 = __toESM(require("mongoose"));
+var import_mongoose34 = __toESM(require("mongoose"));
 var import_dotenv2 = __toESM(require("dotenv"));
 var import_fs6 = __toESM(require("fs"));
 var import_path5 = __toESM(require("path"));
 var import_jsonwebtoken6 = __toESM(require("jsonwebtoken"));
 var import_multipart = __toESM(require("@fastify/multipart"));
 
-// backend-fastify/src/middlewares/auth.ts
+// src/middlewares/auth.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 
-// backend-fastify/src/utils/securityConfig.ts
+// src/utils/securityConfig.ts
 var import_crypto = __toESM(require("crypto"));
 var INSECURE_JWT_SECRETS = /* @__PURE__ */ new Set([
   "nexus-jwt-secret-key",
@@ -790,7 +791,7 @@ function validatePasswordStrength(password) {
   return null;
 }
 
-// backend-fastify/src/middlewares/auth.ts
+// src/middlewares/auth.ts
 var getJwtSecret = () => loadSecurityConfig().jwtSecret;
 async function authenticate(request, reply) {
   try {
@@ -821,7 +822,7 @@ async function authenticate(request, reply) {
   }
 }
 
-// backend-fastify/src/models/Meeting.ts
+// src/models/Meeting.ts
 var import_mongoose = require("mongoose");
 var MeetingSchema = new import_mongoose.Schema({
   title: { type: String, required: true },
@@ -840,14 +841,14 @@ var MeetingSchema = new import_mongoose.Schema({
 });
 var Meeting = (0, import_mongoose.model)("Meeting", MeetingSchema);
 
-// backend-fastify/src/services/summarizer.ts
+// src/services/summarizer.ts
 var import_fs2 = __toESM(require("fs"));
 var import_path2 = __toESM(require("path"));
 var import_os = __toESM(require("os"));
 var import_generative_ai = require("@google/generative-ai");
 var import_server = require("@google/generative-ai/server");
 
-// backend-fastify/src/models/Participant.ts
+// src/models/Participant.ts
 var import_mongoose2 = require("mongoose");
 var ParticipantSchema = new import_mongoose2.Schema({
   meetingId: { type: import_mongoose2.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
@@ -860,7 +861,7 @@ var ParticipantSchema = new import_mongoose2.Schema({
 });
 var Participant = (0, import_mongoose2.model)("Participant", ParticipantSchema);
 
-// backend-fastify/src/models/Mail.ts
+// src/models/Mail.ts
 var import_mongoose3 = __toESM(require("mongoose"));
 var mailSchema = new import_mongoose3.default.Schema({
   workspaceId: { type: String, required: true, default: "forge-india-connect" },
@@ -890,7 +891,7 @@ mailSchema.pre("save", function(next) {
 });
 var Mail = import_mongoose3.default.model("Mail", mailSchema);
 
-// backend-fastify/src/services/summarizer.ts
+// src/services/summarizer.ts
 init_User();
 init_pushNotifications();
 init_webPush();
@@ -1037,9 +1038,9 @@ Focus on capturing the real essence of the conversation accurately.`;
         displayName: `meeting_audio_${meetingId}`
       });
       console.log(`[Summarizer] Uploaded to Gemini: ${uploadedFile.file.uri}`);
-      const model23 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model25 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       console.log("[Summarizer] Requesting generation...");
-      const result = await model23.generateContent([
+      const result = await model25.generateContent([
         {
           fileData: {
             mimeType: uploadedFile.file.mimeType,
@@ -1104,12 +1105,12 @@ Focus on capturing the real essence of the conversation accurately.`;
   return summaryHtml;
 }
 
-// backend-fastify/src/routes/auth.ts
+// src/routes/auth.ts
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
 init_User();
 
-// backend-fastify/src/models/Tenant.ts
+// src/models/Tenant.ts
 var import_mongoose5 = require("mongoose");
 var TenantSchema = new import_mongoose5.Schema({
   name: { type: String, required: true },
@@ -1126,7 +1127,7 @@ var TenantSchema = new import_mongoose5.Schema({
 }, { collection: "tenants" });
 var Tenant = (0, import_mongoose5.model)("Tenant", TenantSchema);
 
-// backend-fastify/src/models/RefreshToken.ts
+// src/models/RefreshToken.ts
 var import_mongoose6 = require("mongoose");
 var RefreshTokenSchema = new import_mongoose6.Schema({
   userId: { type: import_mongoose6.Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -1137,10 +1138,10 @@ var RefreshTokenSchema = new import_mongoose6.Schema({
 });
 var RefreshToken = (0, import_mongoose6.model)("RefreshToken", RefreshTokenSchema);
 
-// backend-fastify/src/routes/auth.ts
+// src/routes/auth.ts
 init_webPush();
 
-// backend-fastify/src/utils/redis.ts
+// src/utils/redis.ts
 var import_ioredis = __toESM(require("ioredis"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
@@ -1224,7 +1225,7 @@ async function resetFailedAttempts(email) {
   }
 }
 
-// backend-fastify/src/utils/mfa.ts
+// src/utils/mfa.ts
 var import_speakeasy = __toESM(require("speakeasy"));
 var import_qrcode = __toESM(require("qrcode"));
 async function generateMfaSecret(email) {
@@ -1250,7 +1251,7 @@ function verifyMfaToken(secret, token) {
   });
 }
 
-// backend-fastify/src/utils/mongo.ts
+// src/utils/mongo.ts
 var import_mongoose7 = __toESM(require("mongoose"));
 var lastConnectError = null;
 function validateMongoUri(uri) {
@@ -1297,7 +1298,7 @@ function isMongoConnected() {
   return import_mongoose7.default.connection.readyState === 1;
 }
 
-// backend-fastify/src/routes/auth.ts
+// src/routes/auth.ts
 var getJwtSecret2 = () => loadSecurityConfig().jwtSecret;
 var getJwtRefreshSecret = () => loadSecurityConfig().jwtRefreshSecret;
 var isProduction = () => loadSecurityConfig().isProduction;
@@ -1371,7 +1372,8 @@ async function authRoutes(fastify2) {
         avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`,
         mfaEnabled: !!user.mfaEnabled,
         role,
-        workspaceId
+        workspaceId,
+        notificationEmail: user.notificationEmail
       }
     };
   }
@@ -1716,13 +1718,21 @@ async function authRoutes(fastify2) {
   });
   fastify2.put("/update-profile", { preHandler: authenticate }, async (request, reply) => {
     try {
-      const { avatarUrl } = request.body;
-      if (!avatarUrl) {
-        return reply.code(400).send({ error: "Avatar URL is required." });
-      }
+      const { avatarUrl, name, email, notificationEmail } = request.body;
       const user = await User.findById(request.user.id);
       if (!user) return reply.code(404).send({ error: "User not found." });
-      user.avatarUrl = avatarUrl;
+      if (avatarUrl) user.avatarUrl = avatarUrl;
+      if (name) user.name = name;
+      if (email) {
+        const existing = await User.findOne({ email: email.toLowerCase() });
+        if (existing && existing._id.toString() !== user._id.toString()) {
+          return reply.code(409).send({ error: "Email is already in use." });
+        }
+        user.email = email.toLowerCase();
+      }
+      if (notificationEmail !== void 0) {
+        user.notificationEmail = notificationEmail ? notificationEmail.toLowerCase() : "";
+      }
       await user.save();
       const tokenBundle = await issueTokens(user);
       return reply.code(200).send(tokenBundle);
@@ -1852,11 +1862,11 @@ async function authRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 var import_bcrypt3 = __toESM(require("bcrypt"));
 var import_mongoose11 = require("mongoose");
 
-// backend-fastify/src/models/Recording.ts
+// src/models/Recording.ts
 var import_mongoose8 = require("mongoose");
 var RecordingSchema = new import_mongoose8.Schema({
   meetingId: { type: import_mongoose8.Schema.Types.ObjectId, ref: "Meeting", required: true, index: true },
@@ -1869,10 +1879,10 @@ var RecordingSchema = new import_mongoose8.Schema({
 });
 var Recording = (0, import_mongoose8.model)("Recording", RecordingSchema);
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 init_User();
 
-// backend-fastify/src/models/Room.ts
+// src/models/Room.ts
 var import_mongoose9 = require("mongoose");
 var RoomSchema = new import_mongoose9.Schema({
   workspaceId: { type: String, required: true },
@@ -1884,10 +1894,10 @@ var RoomSchema = new import_mongoose9.Schema({
 });
 var Room = (0, import_mongoose9.model)("Room", RoomSchema);
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 init_Transcript();
 
-// backend-fastify/src/services/aiBot.ts
+// src/services/aiBot.ts
 var import_ws = __toESM(require("ws"));
 var import_fs3 = __toESM(require("fs"));
 var import_path3 = __toESM(require("path"));
@@ -2069,7 +2079,7 @@ function handleAudioSocket(ws) {
   });
 }
 
-// backend-fastify/src/routes/meetings.ts
+// src/routes/meetings.ts
 init_pushNotifications();
 init_webPush();
 async function meetingRoutes(fastify2) {
@@ -2805,7 +2815,7 @@ async function meetingRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/mail.ts
+// src/routes/mail.ts
 init_mailSockets();
 init_pushNotifications();
 init_webPush();
@@ -3264,12 +3274,12 @@ Context: "${context || "Professional email"}"`;
   });
 }
 
-// backend-fastify/src/routes/kural.ts
+// src/routes/kural.ts
 var import_mongoose16 = require("mongoose");
 var import_cloudinary = require("cloudinary");
 init_User();
 
-// backend-fastify/src/models/KuralConversation.ts
+// src/models/KuralConversation.ts
 var import_mongoose12 = require("mongoose");
 var KuralConversationSchema = new import_mongoose12.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -3291,7 +3301,7 @@ KuralConversationSchema.pre("save", function(next) {
 });
 var KuralConversation = (0, import_mongoose12.model)("KuralConversation", KuralConversationSchema);
 
-// backend-fastify/src/models/KuralMessage.ts
+// src/models/KuralMessage.ts
 var import_mongoose13 = require("mongoose");
 var KuralMessageSchema = new import_mongoose13.Schema({
   conversationId: { type: import_mongoose13.Schema.Types.ObjectId, ref: "KuralConversation", required: true, index: true },
@@ -3307,7 +3317,7 @@ var KuralMessageSchema = new import_mongoose13.Schema({
 KuralMessageSchema.index({ conversationId: 1, createdAt: 1 });
 var KuralMessage = (0, import_mongoose13.model)("KuralMessage", KuralMessageSchema);
 
-// backend-fastify/src/models/Story.ts
+// src/models/Story.ts
 var import_mongoose14 = require("mongoose");
 var StorySchema = new import_mongoose14.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -3337,7 +3347,7 @@ var StorySchema = new import_mongoose14.Schema({
 StorySchema.index({ workspaceId: 1, createdAt: -1 });
 var Story = (0, import_mongoose14.model)("Story", StorySchema);
 
-// backend-fastify/src/models/CallLog.ts
+// src/models/CallLog.ts
 var import_mongoose15 = __toESM(require("mongoose"));
 var CallLogSchema = new import_mongoose15.Schema(
   {
@@ -3357,7 +3367,7 @@ CallLogSchema.index({ callerEmail: 1, timestamp: -1 });
 CallLogSchema.index({ calleeEmail: 1, timestamp: -1 });
 var CallLog = import_mongoose15.default.model("CallLog", CallLogSchema);
 
-// backend-fastify/src/routes/kural.ts
+// src/routes/kural.ts
 init_pushNotifications();
 init_webPush();
 var cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "chat_uploads";
@@ -3533,7 +3543,6 @@ async function channelRoutes(fastify2) {
         participantEmails: g.participantEmails,
         lastMessageContent: g.lastMessageContent,
         lastMessageTime: g.lastMessageTime || g.updatedAt,
-        createdBy: g.createdBy,
         createdByEmail: g.createdByEmail,
         unread: 0,
         isOnline: true
@@ -4026,7 +4035,7 @@ async function kuralRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/members.ts
+// src/routes/members.ts
 var import_bcrypt4 = __toESM(require("bcrypt"));
 init_User();
 var defaultWorkspaceId2 = "forge-india-connect";
@@ -4096,9 +4105,42 @@ async function memberRoutes(fastify2) {
       return reply.code(500).send({ error: "Failed to add workspace user.", details: err.message });
     }
   });
+  fastify2.put("/:id", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const body = request.body;
+      const role = String(body.role || "").trim();
+      if (!role) {
+        return reply.code(400).send({ error: "Role is required." });
+      }
+      const user = await User.findByIdAndUpdate(
+        id,
+        { role },
+        { new: true }
+      );
+      if (!user) {
+        return reply.code(404).send({ error: "User not found." });
+      }
+      return reply.code(200).send(publicUser(user));
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update user.", details: err.message });
+    }
+  });
+  fastify2.delete("/:id", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const user = await User.findByIdAndDelete(id);
+      if (!user) {
+        return reply.code(404).send({ error: "User not found." });
+      }
+      return reply.code(200).send({ success: true, message: "User removed." });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to remove user.", details: err.message });
+    }
+  });
 }
 
-// backend-fastify/src/models/Project.ts
+// src/models/Project.ts
 var import_mongoose17 = require("mongoose");
 var ProjectSchema = new import_mongoose17.Schema({
   workspaceId: { type: String, required: true, index: true },
@@ -4106,6 +4148,14 @@ var ProjectSchema = new import_mongoose17.Schema({
   description: { type: String },
   requirements: { type: String },
   status: { type: String, default: "TO DO" },
+  gitRepo: { type: String },
+  frontendUrl: { type: String },
+  backendUrl: { type: String },
+  modules: [{ type: String }],
+  environments: [{
+    key: { type: String },
+    value: { type: String }
+  }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -4115,7 +4165,7 @@ ProjectSchema.pre("save", function(next) {
 });
 var Project = (0, import_mongoose17.model)("Project", ProjectSchema);
 
-// backend-fastify/src/models/Sprint.ts
+// src/models/Sprint.ts
 var import_mongoose18 = require("mongoose");
 var SprintSchema = new import_mongoose18.Schema({
   projectId: { type: String, required: true, index: true },
@@ -4137,7 +4187,7 @@ SprintSchema.pre("save", function(next) {
 });
 var Sprint = (0, import_mongoose18.model)("Sprint", SprintSchema);
 
-// backend-fastify/src/models/Epic.ts
+// src/models/Epic.ts
 var import_mongoose19 = require("mongoose");
 var EpicSchema = new import_mongoose19.Schema({
   projectId: { type: String, required: true, index: true },
@@ -4154,7 +4204,7 @@ EpicSchema.pre("save", function(next) {
 });
 var Epic = (0, import_mongoose19.model)("Epic", EpicSchema);
 
-// backend-fastify/src/models/Status.ts
+// src/models/Status.ts
 var import_mongoose20 = require("mongoose");
 var StatusSchema = new import_mongoose20.Schema({
   projectId: { type: String, required: true, index: true },
@@ -4171,19 +4221,154 @@ StatusSchema.pre("save", function(next) {
 });
 var Status = (0, import_mongoose20.model)("Status", StatusSchema);
 
-// backend-fastify/src/models/ProjectMember.ts
+// src/models/Issue.ts
 var import_mongoose21 = require("mongoose");
-var ProjectMemberSchema = new import_mongoose21.Schema({
+var subtaskSchema = new import_mongoose21.Schema({
+  id: { type: String, default: () => new import_mongoose21.Types.ObjectId().toHexString() },
+  title: { type: String, required: true },
+  completed: { type: Boolean, default: false }
+}, { _id: false });
+var requirementSchema = new import_mongoose21.Schema({
+  id: { type: String, default: () => new import_mongoose21.Types.ObjectId().toHexString() },
+  text: { type: String, required: true },
+  completed: { type: Boolean, default: false }
+}, { _id: false });
+var criterionSchema = new import_mongoose21.Schema({
+  id: { type: String, default: () => new import_mongoose21.Types.ObjectId().toHexString() },
+  text: { type: String, required: true },
+  completed: { type: Boolean, default: false }
+}, { _id: false });
+var activityLogSchema = new import_mongoose21.Schema({
+  action: { type: String, required: true },
+  userId: { type: String, required: true },
+  userName: { type: String, default: "Unknown" },
+  timestamp: { type: Date, default: Date.now },
+  meta: { type: String }
+}, { _id: false });
+var IssueSchema = new import_mongoose21.Schema({
+  workspaceId: { type: String, required: true, index: true },
+  projectId: { type: String, required: true, index: true },
+  sprintId: { type: String, index: true },
+  epicId: { type: String },
+  parentId: { type: String, index: true },
+  displayId: { type: String, index: true },
+  title: { type: String, required: true },
+  description: { type: String },
+  type: { type: String, default: "FEATURE" },
+  status: { type: String, default: "TO_DO" },
+  priority: { type: String, default: "MEDIUM" },
+  assigneeId: { type: String },
+  creatorId: { type: String, required: true },
+  testerId: { type: String },
+  storyPoints: { type: Number },
+  estimate: { type: Number },
+  estimatedHours: { type: Number },
+  dueDate: { type: Date },
+  startDate: { type: Date },
+  startedAt: { type: Date },
+  completedAt: { type: Date },
+  moduleId: { type: String },
+  moduleName: { type: String },
+  featureId: { type: String },
+  featureName: { type: String },
+  subtasks: { type: [subtaskSchema], default: [] },
+  requirements: { type: [requirementSchema], default: [] },
+  acceptanceCriteria: { type: [criterionSchema], default: [] },
+  activityLog: { type: [activityLogSchema], default: [] },
+  reviewComment: { type: String },
+  testComment: { type: String },
+  dependencies: { type: [String], default: [] },
+  blockerInfo: {
+    reason: { type: String },
+    raisedAt: { type: String }
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+IssueSchema.index({ projectId: 1, status: 1 });
+IssueSchema.index({ projectId: 1, sprintId: 1 });
+IssueSchema.index({ assigneeId: 1, status: 1 });
+IssueSchema.index({ workspaceId: 1, displayId: 1 });
+IssueSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Issue = (0, import_mongoose21.model)("Issue", IssueSchema);
+
+// src/models/ProjectMember.ts
+var import_mongoose22 = require("mongoose");
+var ProjectMemberSchema = new import_mongoose22.Schema({
   projectId: { type: String, required: true, index: true },
   userId: { type: String, required: true, index: true },
   assignedBy: { type: String, required: true },
   assignedAt: { type: Date, default: Date.now }
 });
 ProjectMemberSchema.index({ projectId: 1, userId: 1 }, { unique: true });
-var ProjectMember = (0, import_mongoose21.model)("ProjectMember", ProjectMemberSchema);
+var ProjectMember = (0, import_mongoose22.model)("ProjectMember", ProjectMemberSchema);
 
-// backend-fastify/src/routes/projects.ts
+// src/routes/projects.ts
 init_User();
+
+// src/services/notificationDispatcher.ts
+init_User();
+init_webPush();
+init_pushNotifications();
+async function notifyAssignment(userId, title, body, url, detailedHtml) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return;
+    if (user.webPushSubscriptions && user.webPushSubscriptions.length > 0) {
+      await sendWebPush([user.email], { title, body, url });
+    }
+    const targetEmail = user.notificationEmail || user.email;
+    if (targetEmail) {
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      if (!brevoApiKey) {
+        console.error("[NotificationDispatcher] Missing BREVO_API_KEY in environment variables.");
+        return;
+      }
+      const baseUrl = process.env.VITE_NEXUS_PM_URL || "http://localhost:3050";
+      const absoluteUrl = url.startsWith("http") ? url : `${baseUrl.replace(/\/$/, "")}/w/forge-india-connect/dashboard/member?tab=Sprint%20Board`;
+      const payload = {
+        sender: { name: "Forge PMT", email: "forgeindiaconnectfic@gmail.com" },
+        to: [{ email: targetEmail, name: user.name || "User" }],
+        subject: title,
+        htmlContent: detailedHtml || `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h2 style="color: #2563eb;">${title}</h2>
+            <p style="font-size: 16px; color: #334155;">${body}</p>
+            <div style="margin-top: 30px;">
+              <a href="${absoluteUrl}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Details</a>
+            </div>
+          </div>
+        `
+      };
+      try {
+        const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "api-key": brevoApiKey,
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          console.log(`[NotificationDispatcher] Sent Brevo email to ${targetEmail}`);
+        } else {
+          const errData = await response.text();
+          console.error("[NotificationDispatcher] Failed to send Brevo email:", errData);
+        }
+      } catch (err) {
+        console.error("[NotificationDispatcher] Network error sending Brevo email:", err);
+      }
+    }
+  } catch (error) {
+    console.error("[NotificationDispatcher] Failed to dispatch notifications:", error);
+  }
+}
+
+// src/routes/projects.ts
 var defaultWorkspaceId3 = "forge-india-connect";
 async function projectRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -4191,9 +4376,9 @@ async function projectRoutes(fastify2) {
     try {
       const { workspaceId } = request.query;
       const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId3;
-      const role = request.user?.role || "DEVELOPER";
+      const role = (request.user?.role || "DEVELOPER").toUpperCase().replace(/ /g, "_");
       let projectIds = null;
-      if (role !== "TEAM_LEAD" && role !== "MANAGER") {
+      if (role !== "TEAM_LEAD" && role !== "MANAGER" && role !== "ADMIN") {
         const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
         projectIds = memberships.map((m) => m.projectId);
       }
@@ -4229,14 +4414,67 @@ async function projectRoutes(fastify2) {
         }
         projects.push(defaultProject);
       }
-      const populatedProjects = await Promise.all(projects.map(async (project) => {
-        const sprints = await Sprint.find({ projectId: project._id }).sort({ createdAt: -1 }).lean();
-        const memberCount = await ProjectMember.countDocuments({ projectId: project._id });
+      const allProjectIds = projects.map((p) => p._id);
+      const allSprints = await Sprint.find({ projectId: { $in: allProjectIds } }).sort({ createdAt: -1 }).lean();
+      const allMembers = await ProjectMember.find({ projectId: { $in: allProjectIds } }).lean();
+      const issueStats = await Issue.aggregate([
+        { $match: { projectId: { $in: allProjectIds.map((id) => String(id)) } } },
+        {
+          $group: {
+            _id: "$projectId",
+            total: { $sum: 1 },
+            done: { $sum: { $cond: [{ $eq: ["$status", "DONE"] }, 1, 0] } },
+            prs: { $sum: { $cond: [{ $in: ["$status", ["IN_REVIEW", "PR_SUBMITTED"]] }, 1, 0] } },
+            blocked: { $sum: { $cond: [{ $eq: ["$status", "BLOCKED"] }, 1, 0] } }
+          }
+        }
+      ]);
+      const issueStatsMap = issueStats.reduce((acc, stat) => {
+        acc[stat._id] = stat;
+        return acc;
+      }, {});
+      const uniqueUserIds = [...new Set(allMembers.map((m) => m.userId))];
+      const users = await User.find({ _id: { $in: uniqueUserIds } }).select("name email avatarUrl role").lean();
+      const userMap = users.reduce((acc, user) => {
+        acc[user._id.toString()] = user;
+        return acc;
+      }, {});
+      const sprintsMap = allSprints.reduce((acc, sprint) => {
+        if (!acc[sprint.projectId.toString()]) acc[sprint.projectId.toString()] = [];
+        acc[sprint.projectId.toString()].push(sprint);
+        return acc;
+      }, {});
+      const memberMap = allMembers.reduce((acc, member) => {
+        if (!acc[member.projectId.toString()]) acc[member.projectId.toString()] = [];
+        const userDetails = userMap[member.userId.toString()];
+        if (userDetails) {
+          acc[member.projectId.toString()].push({
+            userId: member.userId,
+            name: userDetails.name,
+            email: userDetails.email,
+            avatarUrl: userDetails.avatarUrl,
+            role: userDetails.role
+          });
+        }
+        return acc;
+      }, {});
+      const populatedProjects = projects.map((project) => {
         const pObj = project.toObject ? project.toObject() : project;
-        pObj.sprints = sprints;
-        pObj.memberCount = memberCount;
+        pObj.sprints = sprintsMap[project._id.toString()] || [];
+        pObj.members = memberMap[project._id.toString()] || [];
+        pObj.memberCount = pObj.members.length;
+        const stats = issueStatsMap[project._id.toString()];
+        if (stats && stats.total > 0) {
+          pObj.completion = Math.round(stats.done / stats.total * 100);
+          pObj.prCount = stats.prs;
+          pObj.blockerCount = stats.blocked;
+        } else {
+          pObj.completion = 0;
+          pObj.prCount = 0;
+          pObj.blockerCount = 0;
+        }
         return pObj;
-      }));
+      });
       return reply.code(200).send(populatedProjects);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to fetch projects.", details: err.message });
@@ -4257,12 +4495,43 @@ async function projectRoutes(fastify2) {
         name: "Backlog (Unplanned)",
         status: "PLANNING"
       });
-      if (body.members && Array.isArray(body.members)) {
-        const memberDocs = body.members.map((userId) => ({
+      const statuses = [
+        { name: "To Do", key: "TO_DO", color: "#94a3b8", order: 1 },
+        { name: "In Progress", key: "IN_PROGRESS", color: "#3b82f6", order: 2 },
+        { name: "In Review", key: "PR_SUBMITTED", color: "#eab308", order: 3 },
+        { name: "Testing", key: "TESTING", color: "#a855f7", order: 4 },
+        { name: "Done", key: "DONE", color: "#22c55e", order: 5 },
+        { name: "Blocked", key: "BLOCKED", color: "#ef4444", order: 6 }
+      ];
+      for (const status of statuses) {
+        await Status.create({
           projectId: project.id,
-          userId,
-          assignedBy: request.user?.id || "system"
-        }));
+          ...status
+        });
+      }
+      const memberDocs = [];
+      const assignedIds = /* @__PURE__ */ new Set();
+      if (request.user?.id) {
+        memberDocs.push({
+          projectId: project.id,
+          userId: request.user.id,
+          assignedBy: request.user.id
+        });
+        assignedIds.add(request.user.id);
+      }
+      if (body.members && Array.isArray(body.members)) {
+        for (const userId of body.members) {
+          if (!assignedIds.has(userId)) {
+            memberDocs.push({
+              projectId: project.id,
+              userId,
+              assignedBy: request.user?.id || "system"
+            });
+            assignedIds.add(userId);
+          }
+        }
+      }
+      if (memberDocs.length > 0) {
         await ProjectMember.insertMany(memberDocs);
       }
       return reply.code(201).send(project);
@@ -4285,6 +4554,24 @@ async function projectRoutes(fastify2) {
       return reply.code(200).send(project);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to update project", details: err.message });
+    }
+  });
+  fastify2.delete("/:projectId", async (request, reply) => {
+    try {
+      const { projectId } = request.params;
+      const project = await Project.findByIdAndDelete(projectId);
+      if (!project) {
+        return reply.code(404).send({ error: "Project not found" });
+      }
+      await Promise.all([
+        Sprint.deleteMany({ projectId }),
+        Status.deleteMany({ projectId }),
+        ProjectMember.deleteMany({ projectId }),
+        Epic.deleteMany({ projectId })
+      ]);
+      return reply.code(200).send({ message: "Project deleted successfully" });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to delete project", details: err.message });
     }
   });
   fastify2.get("/:projectId/sprints", async (request, reply) => {
@@ -4375,8 +4662,10 @@ async function projectRoutes(fastify2) {
   });
   fastify2.post("/:projectId/members", async (request, reply) => {
     try {
-      if (request.user?.role !== "TEAM_LEAD") {
-        return reply.code(403).send({ error: "Only Team Leads can assign members" });
+      const userRole = (request.user?.role || "").toUpperCase().replace(/\s+/g, "_");
+      const allowedRoles = ["TEAM_LEAD", "MANAGER", "ADMIN", "COMPANY_ADMIN"];
+      if (!allowedRoles.includes(userRole)) {
+        return reply.code(403).send({ error: "Only Team Leads or Admins can assign members" });
       }
       const { projectId } = request.params;
       const { userIds } = request.body;
@@ -4390,6 +4679,18 @@ async function projectRoutes(fastify2) {
       }));
       if (newAssignments.length > 0) {
         await ProjectMember.insertMany(newAssignments);
+        const project = await Project.findById(projectId).lean();
+        if (project) {
+          const projectUrl = `/projects/${projectId}`;
+          for (const assignment of newAssignments) {
+            notifyAssignment(
+              assignment.userId,
+              "Added to Project",
+              `You have been added to the project: ${project.name}`,
+              projectUrl
+            );
+          }
+        }
       }
       const toRemove = Array.from(existingIds).filter((id) => !userIds.includes(id));
       if (toRemove.length > 0) {
@@ -4408,53 +4709,104 @@ async function projectRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/models/Issue.ts
-var import_mongoose22 = require("mongoose");
-var IssueSchema = new import_mongoose22.Schema({
-  workspaceId: { type: String, required: true, index: true },
-  projectId: { type: String, required: true, index: true },
-  sprintId: { type: String, index: true },
-  epicId: { type: String },
-  title: { type: String, required: true },
-  description: { type: String },
-  type: { type: String, default: "FEATURE" },
-  status: { type: String, default: "TO_DO" },
-  priority: { type: String, default: "MEDIUM" },
-  assigneeId: { type: String },
-  creatorId: { type: String, required: true },
-  storyPoints: { type: Number },
-  estimate: { type: Number },
-  blockerInfo: {
-    reason: { type: String },
-    raisedAt: { type: String }
-  },
+// src/routes/issues.ts
+var import_mongoose25 = require("mongoose");
+
+// src/models/Comment.ts
+var import_mongoose23 = require("mongoose");
+var CommentSchema = new import_mongoose23.Schema({
+  issueId: { type: String, required: true, index: true },
+  userId: { type: String, required: true },
+  userName: { type: String, default: "Unknown" },
+  content: { type: String, required: true },
+  parentId: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
-IssueSchema.index({ projectId: 1, status: 1 });
-IssueSchema.index({ projectId: 1, sprintId: 1 });
-IssueSchema.pre("save", function(next) {
+CommentSchema.index({ issueId: 1, createdAt: 1 });
+CommentSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var Issue = (0, import_mongoose22.model)("Issue", IssueSchema);
+var Comment = (0, import_mongoose23.model)("Comment", CommentSchema);
 
-// backend-fastify/src/routes/issues.ts
+// src/routes/issues.ts
 init_User();
+
+// src/models/Notification.ts
+var import_mongoose24 = require("mongoose");
+var NotificationSchema = new import_mongoose24.Schema({
+  userId: { type: String, required: true, index: true },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  type: { type: String, default: "INFO", enum: ["INFO", "SUCCESS", "WARNING", "ERROR"] },
+  isRead: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+NotificationSchema.index({ userId: 1, isRead: 1 });
+NotificationSchema.pre("save", function(next) {
+  this.updatedAt = /* @__PURE__ */ new Date();
+  next();
+});
+var Notification = (0, import_mongoose24.model)("Notification", NotificationSchema);
+
+// src/routes/issues.ts
 var defaultWorkspaceId4 = "forge-india-connect";
+var _displayCounters = {};
+async function getNextDisplayId(projectId) {
+  if (!_displayCounters[projectId]) {
+    const last = await Issue.findOne({ projectId, displayId: /^TASK-\d+$/ }).sort({ displayId: -1 }).lean();
+    if (last?.displayId) {
+      const num = parseInt(last.displayId.replace("TASK-", ""), 10);
+      _displayCounters[projectId] = isNaN(num) ? 0 : num;
+    } else {
+      _displayCounters[projectId] = 0;
+    }
+  }
+  _displayCounters[projectId] += 1;
+  return `TASK-${String(_displayCounters[projectId]).padStart(3, "0")}`;
+}
+function isLeadOrManager(role) {
+  if (!role) return false;
+  const r = role.toUpperCase().replace(/ /g, "_");
+  return ["TEAM_LEAD", "MANAGER", "ADMIN", "SUPER-ADMIN", "SUPER_ADMIN", "COMPANY-ADMIN", "COMPANY_ADMIN"].includes(r);
+}
+function isTester(role) {
+  return (role || "").toUpperCase() === "TESTER";
+}
+async function checkIssueAccess(request, issueProjectId) {
+  const role = request.user?.role || "DEVELOPER";
+  if (isLeadOrManager(role)) return true;
+  const member = await ProjectMember.findOne({ projectId: issueProjectId, userId: request.user?.id }).lean();
+  return !!member;
+}
+async function populateAssignees(issues) {
+  const ids = [...new Set(
+    issues.flatMap((i) => [i.assigneeId, i.testerId].filter(Boolean))
+  )];
+  const users = await User.find({ _id: { $in: ids } }).lean();
+  const map = {};
+  users.forEach((u) => {
+    map[u._id.toString()] = { id: u._id, name: u.name, email: u.email, avatar: u.avatarUrl };
+  });
+  return issues.map((issue) => {
+    issue.id = issue._id;
+    if (issue.assigneeId && map[issue.assigneeId.toString()]) {
+      issue.assignee = map[issue.assigneeId.toString()];
+    }
+    if (issue.testerId && map[issue.testerId.toString()]) {
+      issue.tester = map[issue.testerId.toString()];
+    }
+    return issue;
+  });
+}
+function appendActivity(issue, action, userId, userName, meta) {
+  if (!Array.isArray(issue.activityLog)) issue.activityLog = [];
+  issue.activityLog.push({ action, userId, userName, timestamp: /* @__PURE__ */ new Date(), meta });
+}
 async function issueRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
-  const isLeadOrManager = (role) => {
-    if (!role) return false;
-    const r = role.toUpperCase();
-    return ["TEAM_LEAD", "TEAM LEAD", "MANAGER", "ADMIN", "SUPER-ADMIN", "COMPANY-ADMIN"].includes(r);
-  };
-  const checkIssueAccess = async (request, issueProjectId) => {
-    const role = request.user?.role || "DEVELOPER";
-    if (isLeadOrManager(role)) return true;
-    const member = await ProjectMember.findOne({ projectId: issueProjectId, userId: request.user?.id }).lean();
-    return !!member;
-  };
   fastify2.get("/", async (request, reply) => {
     try {
       const { projectId, sprintId, workspaceId, type, status, assigneeId } = request.query;
@@ -4466,6 +4818,9 @@ async function issueRoutes(fastify2) {
         allowedProjectIds = memberships.map((m) => m.projectId);
       }
       const filter = { workspaceId: activeWorkspaceId };
+      if (!isLeadOrManager(role)) {
+        filter.assigneeId = request.user?.id;
+      }
       if (allowedProjectIds) {
         if (projectId) {
           if (!allowedProjectIds.includes(projectId)) {
@@ -4482,45 +4837,92 @@ async function issueRoutes(fastify2) {
       if (type) filter.type = type;
       if (status) filter.status = status;
       if (assigneeId) filter.assigneeId = assigneeId;
-      const issues = await Issue.find(filter).sort({ createdAt: -1 }).lean();
-      const populatedIssues = await Promise.all(issues.map(async (issue) => {
-        if (issue.assigneeId) {
-          const user = await User.findById(issue.assigneeId).lean();
-          if (user) {
-            issue.assignee = {
-              id: user._id,
-              name: user.name,
-              email: user.email,
-              avatar: user.avatarUrl
-            };
-          }
-        }
-        issue.id = issue._id;
-        return issue;
-      }));
-      return reply.code(200).send(populatedIssues);
+      const issues = await Issue.find(filter).sort({ createdAt: 1 }).lean();
+      const populated = await populateAssignees(issues);
+      return reply.code(200).send(populated);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to fetch issues.", details: err.message });
+    }
+  });
+  fastify2.get("/all", async (request, reply) => {
+    try {
+      const role = request.user?.role || "DEVELOPER";
+      if (!isLeadOrManager(role)) {
+        return reply.code(403).send({ error: "Access denied. Requires Team Lead or Manager role." });
+      }
+      const { projectId, sprintId, status, workspaceId } = request.query;
+      const activeWorkspaceId = workspaceId || request.user?.workspaceId || defaultWorkspaceId4;
+      const filter = { workspaceId: activeWorkspaceId };
+      if (projectId) filter.projectId = projectId;
+      if (sprintId) filter.sprintId = sprintId;
+      if (status) filter.status = status;
+      const issues = await Issue.find(filter).sort({ createdAt: -1 }).lean();
+      const populated = await populateAssignees(issues);
+      return reply.code(200).send(populated);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch all issues.", details: err.message });
+    }
+  });
+  fastify2.get("/:id", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const issue = await Issue.findById(id).lean();
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (!await checkIssueAccess(request, issue.projectId)) {
+        return reply.code(403).send({ error: "Access denied to this project" });
+      }
+      const [populated] = await populateAssignees([issue]);
+      return reply.code(200).send(populated);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch issue.", details: err.message });
     }
   });
   fastify2.post("/", async (request, reply) => {
     try {
       const body = request.body;
       const title = String(body.title || "").trim();
-      if (!title) {
-        return reply.code(400).send({ error: "Issue title is required." });
-      }
-      if (!body.projectId) {
-        return reply.code(400).send({ error: "Project ID is required." });
-      }
+      if (!title) return reply.code(400).send({ error: "Issue title is required." });
+      if (!body.projectId) return reply.code(400).send({ error: "Project ID is required." });
       if (!await checkIssueAccess(request, body.projectId)) {
         return reply.code(403).send({ error: "Access denied to this project" });
       }
-      const workspaceId = String(
-        body.workspaceId || request.user?.workspaceId || defaultWorkspaceId4
-      ).trim();
+      const workspaceId = String(body.workspaceId || request.user?.workspaceId || defaultWorkspaceId4).trim();
+      const displayId = await getNextDisplayId(body.projectId);
+      const creatorUser = await User.findById(request.user?.id).lean();
+      const creatorName = creatorUser?.name || request.user?.email || "Team Lead";
+      const subtasks = Array.isArray(body.subtasks) ? body.subtasks.map((s) => ({
+        id: new import_mongoose25.Types.ObjectId().toHexString(),
+        title: typeof s === "string" ? s : s.title,
+        completed: false
+      })) : [];
+      const requirements = Array.isArray(body.requirements) ? body.requirements.map((r) => ({
+        id: new import_mongoose25.Types.ObjectId().toHexString(),
+        text: typeof r === "string" ? r : r.text,
+        completed: false
+      })) : [];
+      const acceptanceCriteria = Array.isArray(body.acceptanceCriteria) ? body.acceptanceCriteria.map((c) => ({
+        id: new import_mongoose25.Types.ObjectId().toHexString(),
+        text: typeof c === "string" ? c : c.text,
+        completed: false
+      })) : [];
+      const activityLog = [{
+        action: "Task Created",
+        userId: request.user?.id || "system",
+        userName: creatorName,
+        timestamp: /* @__PURE__ */ new Date()
+      }];
+      if (body.assigneeId) {
+        const assigneeUser = await User.findById(body.assigneeId).lean();
+        activityLog.push({
+          action: `Assigned to ${assigneeUser?.name || "Developer"}`,
+          userId: request.user?.id || "system",
+          userName: creatorName,
+          timestamp: /* @__PURE__ */ new Date()
+        });
+      }
       const issue = await Issue.create({
         workspaceId,
+        displayId,
         projectId: body.projectId,
         sprintId: body.sprintId,
         epicId: body.epicId,
@@ -4530,10 +4932,40 @@ async function issueRoutes(fastify2) {
         priority: body.priority || "MEDIUM",
         type: body.type || "FEATURE",
         assigneeId: body.assigneeId,
+        testerId: body.testerId,
         creatorId: request.user?.id || "system",
-        storyPoints: body.storyPoints
+        storyPoints: body.storyPoints,
+        estimatedHours: body.estimatedHours,
+        estimate: body.estimate,
+        dueDate: body.dueDate ? new Date(body.dueDate) : void 0,
+        startDate: body.startDate ? new Date(body.startDate) : void 0,
+        moduleName: body.moduleName,
+        moduleId: body.moduleId,
+        featureName: body.featureName,
+        featureId: body.featureId,
+        dependencies: body.dependencies || [],
+        subtasks,
+        requirements,
+        acceptanceCriteria,
+        activityLog
       });
-      return reply.code(201).send(issue);
+      if (body.assigneeId && body.assigneeId !== request.user?.id) {
+        await Notification.create({
+          userId: body.assigneeId,
+          title: "New Task Assigned",
+          message: `You have been assigned to: ${title} (${displayId})`,
+          type: "INFO"
+        });
+        const baseUrl = process.env.VITE_NEXUS_PM_URL || "http://localhost:3050";
+        notifyAssignment(
+          body.assigneeId,
+          "New Task Assigned",
+          `You have been assigned to: ${title} (${displayId})`,
+          `/tasks/${issue._id}`,
+          `<div style="font-family:sans-serif;padding:20px"><h2>New Task: ${title}</h2><p>Priority: ${body.priority || "MEDIUM"}</p><a href="${baseUrl}/w/forge-india-connect/dashboard/member?tab=MyTasks">View Task</a></div>`
+        );
+      }
+      return reply.code(201).send({ ...issue.toObject(), id: issue._id });
     } catch (err) {
       return reply.code(500).send({ error: "Failed to create issue.", details: err.message });
     }
@@ -4547,11 +4979,47 @@ async function issueRoutes(fastify2) {
       if (!await checkIssueAccess(request, existingIssue.projectId)) {
         return reply.code(403).send({ error: "Access denied to this project" });
       }
-      const issue = await Issue.findByIdAndUpdate(id, body, { new: true });
-      if (!issue) {
-        return reply.code(404).send({ error: "Issue not found." });
+      const allowed = [
+        "title",
+        "description",
+        "status",
+        "priority",
+        "type",
+        "assigneeId",
+        "testerId",
+        "sprintId",
+        "epicId",
+        "storyPoints",
+        "estimatedHours",
+        "estimate",
+        "dueDate",
+        "startDate",
+        "moduleName",
+        "moduleId",
+        "featureName",
+        "featureId",
+        "reviewComment",
+        "testComment",
+        "dependencies",
+        "blockerInfo"
+      ];
+      const updateFields = { updatedAt: /* @__PURE__ */ new Date() };
+      for (const key of allowed) {
+        if (body[key] !== void 0) {
+          updateFields[key] = (key === "dueDate" || key === "startDate") && body[key] ? new Date(body[key]) : body[key];
+        }
       }
-      return reply.code(200).send(issue);
+      const issue = await Issue.findByIdAndUpdate(id, updateFields, { new: true });
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (body.assigneeId && body.assigneeId !== existingIssue.assigneeId) {
+        await Notification.create({
+          userId: body.assigneeId,
+          title: "Task Assigned",
+          message: `You have been assigned to task: ${existingIssue.title}`,
+          type: "INFO"
+        });
+      }
+      return reply.code(200).send({ ...issue.toObject(), id: issue._id });
     } catch (err) {
       return reply.code(500).send({ error: "Failed to update issue.", details: err.message });
     }
@@ -4564,13 +5032,315 @@ async function issueRoutes(fastify2) {
       if (!await checkIssueAccess(request, existingIssue.projectId)) {
         return reply.code(403).send({ error: "Access denied to this project" });
       }
-      const issue = await Issue.findByIdAndDelete(id);
-      if (!issue) {
-        return reply.code(404).send({ error: "Issue not found." });
-      }
+      await Issue.findByIdAndDelete(id);
+      await Comment.deleteMany({ issueId: id });
       return reply.code(200).send({ message: "Issue deleted successfully." });
     } catch (err) {
       return reply.code(500).send({ error: "Failed to delete issue.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/start", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (issue.status !== "TO_DO") {
+        return reply.code(400).send({ error: `Cannot start a task with status "${issue.status}". Task must be in TO_DO.` });
+      }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || request.user?.email || "Developer";
+      appendActivity(issue, "Task Started", request.user?.id, userName);
+      issue.status = "IN_PROGRESS";
+      issue.startedAt = /* @__PURE__ */ new Date();
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      await Notification.create({
+        userId: issue.creatorId,
+        title: "Task Started",
+        message: `${userName} started task: ${issue.title}`,
+        type: "INFO"
+      });
+      return reply.code(200).send({ ...issue.toObject(), id: issue._id });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to start task.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/submit-review", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (issue.status !== "IN_PROGRESS") {
+        return reply.code(400).send({ error: `Cannot submit for review from status "${issue.status}". Task must be In Progress.` });
+      }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || request.user?.email || "Developer";
+      appendActivity(issue, "Submitted for Code Review", request.user?.id, userName);
+      issue.status = "CODE_REVIEW";
+      issue.reviewComment = void 0;
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      await Notification.create({
+        userId: issue.creatorId,
+        title: "Task Ready for Review",
+        message: `${userName} submitted "${issue.title}" for code review`,
+        type: "INFO"
+      });
+      return reply.code(200).send({ ...issue.toObject(), id: issue._id });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to submit for review.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/approve", async (request, reply) => {
+    try {
+      const role = request.user?.role || "";
+      if (!isLeadOrManager(role)) {
+        return reply.code(403).send({ error: "Only Team Leads or Managers can approve tasks." });
+      }
+      const { id } = request.params;
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (issue.status !== "CODE_REVIEW") {
+        return reply.code(400).send({ error: `Cannot approve from status "${issue.status}". Task must be in Code Review.` });
+      }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || request.user?.email || "Team Lead";
+      appendActivity(issue, "Code Review Approved", request.user?.id, userName);
+      issue.status = "TESTING";
+      issue.reviewComment = void 0;
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      if (issue.assigneeId) {
+        await Notification.create({
+          userId: issue.assigneeId,
+          title: "Code Review Approved",
+          message: `Your task "${issue.title}" has been approved and moved to Testing`,
+          type: "INFO"
+        });
+      }
+      if (issue.testerId) {
+        await Notification.create({
+          userId: issue.testerId,
+          title: "New Testing Task",
+          message: `Task "${issue.title}" is ready for your testing`,
+          type: "INFO"
+        });
+      }
+      return reply.code(200).send({ ...issue.toObject(), id: issue._id });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to approve task.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/request-changes", async (request, reply) => {
+    try {
+      const role = request.user?.role || "";
+      if (!isLeadOrManager(role)) {
+        return reply.code(403).send({ error: "Only Team Leads or Managers can request changes." });
+      }
+      const { id } = request.params;
+      const { comment } = request.body;
+      if (!comment || !String(comment).trim()) {
+        return reply.code(400).send({ error: "A comment is required when requesting changes." });
+      }
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (issue.status !== "CODE_REVIEW") {
+        return reply.code(400).send({ error: `Cannot request changes from status "${issue.status}".` });
+      }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || request.user?.email || "Team Lead";
+      appendActivity(issue, "Changes Requested", request.user?.id, userName, comment);
+      issue.status = "IN_PROGRESS";
+      issue.reviewComment = comment;
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      await Comment.create({
+        issueId: id,
+        userId: request.user?.id,
+        userName,
+        content: `**Changes Requested:** ${comment}`
+      });
+      if (issue.assigneeId) {
+        await Notification.create({
+          userId: issue.assigneeId,
+          title: "Changes Requested",
+          message: `${userName} requested changes on "${issue.title}": ${comment}`,
+          type: "WARNING"
+        });
+      }
+      return reply.code(200).send({ ...issue.toObject(), id: issue._id });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to request changes.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/test-pass", async (request, reply) => {
+    try {
+      const role = request.user?.role || "";
+      if (!isLeadOrManager(role) && !isTester(role)) {
+        return reply.code(403).send({ error: "Only Testers or Team Leads can mark tasks as passed." });
+      }
+      const { id } = request.params;
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (issue.status !== "TESTING") {
+        return reply.code(400).send({ error: `Cannot pass test from status "${issue.status}". Task must be in Testing.` });
+      }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || request.user?.email || "Tester";
+      appendActivity(issue, "Testing Passed", request.user?.id, userName);
+      issue.status = "DONE";
+      issue.testComment = void 0;
+      issue.completedAt = /* @__PURE__ */ new Date();
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      if (issue.assigneeId) {
+        await Notification.create({
+          userId: issue.assigneeId,
+          title: "Task Completed!",
+          message: `Your task "${issue.title}" has passed testing and is now Completed! \u{1F389}`,
+          type: "SUCCESS"
+        });
+      }
+      return reply.code(200).send({ ...issue.toObject(), id: issue._id });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to pass test.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/test-fail", async (request, reply) => {
+    try {
+      const role = request.user?.role || "";
+      if (!isLeadOrManager(role) && !isTester(role)) {
+        return reply.code(403).send({ error: "Only Testers or Team Leads can fail tests." });
+      }
+      const { id } = request.params;
+      const { comment } = request.body;
+      if (!comment || !String(comment).trim()) {
+        return reply.code(400).send({ error: "A failure comment is required." });
+      }
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      if (issue.status !== "TESTING") {
+        return reply.code(400).send({ error: `Cannot fail test from status "${issue.status}".` });
+      }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || request.user?.email || "Tester";
+      appendActivity(issue, "Testing Failed", request.user?.id, userName, comment);
+      issue.status = "IN_PROGRESS";
+      issue.testComment = comment;
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      await Comment.create({
+        issueId: id,
+        userId: request.user?.id,
+        userName,
+        content: `**Testing Failed:** ${comment}`
+      });
+      if (issue.assigneeId) {
+        await Notification.create({
+          userId: issue.assigneeId,
+          title: "Testing Failed",
+          message: `"${issue.title}" failed testing: ${comment}`,
+          type: "ERROR"
+        });
+      }
+      return reply.code(200).send({ ...issue.toObject(), id: issue._id });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to record test failure.", details: err.message });
+    }
+  });
+  fastify2.patch("/:id/subtasks", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { subtasks } = request.body;
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      issue.subtasks = subtasks;
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      const completed = subtasks.filter((s) => s.completed).length;
+      return reply.code(200).send({ subtasks: issue.subtasks, progress: { completed, total: subtasks.length } });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update subtasks.", details: err.message });
+    }
+  });
+  fastify2.patch("/:id/requirements", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { requirements } = request.body;
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      issue.requirements = requirements;
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      return reply.code(200).send({ requirements: issue.requirements });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update requirements.", details: err.message });
+    }
+  });
+  fastify2.patch("/:id/acceptance-criteria", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { acceptanceCriteria } = request.body;
+      const issue = await Issue.findById(id);
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      issue.acceptanceCriteria = acceptanceCriteria;
+      issue.updatedAt = /* @__PURE__ */ new Date();
+      await issue.save();
+      return reply.code(200).send({ acceptanceCriteria: issue.acceptanceCriteria });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to update acceptance criteria.", details: err.message });
+    }
+  });
+  fastify2.get("/:id/activity", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const issue = await Issue.findById(id).lean();
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
+      return reply.code(200).send(issue.activityLog || []);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch activity.", details: err.message });
+    }
+  });
+  fastify2.get("/:id/comments", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const comments = await Comment.find({ issueId: id }).sort({ createdAt: 1 }).lean();
+      return reply.code(200).send(comments.map((c) => ({ ...c, id: c._id })));
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch comments.", details: err.message });
+    }
+  });
+  fastify2.post("/:id/comments", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { content, parentId } = request.body;
+      if (!content || !String(content).trim()) {
+        return reply.code(400).send({ error: "Comment content is required." });
+      }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || request.user?.email || "User";
+      const comment = await Comment.create({
+        issueId: id,
+        userId: request.user?.id,
+        userName,
+        content: String(content).trim(),
+        parentId
+      });
+      await Issue.findByIdAndUpdate(id, {
+        $push: {
+          activityLog: {
+            action: "Comment Added",
+            userId: request.user?.id,
+            userName,
+            timestamp: /* @__PURE__ */ new Date(),
+            meta: String(content).substring(0, 80)
+          }
+        },
+        updatedAt: /* @__PURE__ */ new Date()
+      });
+      return reply.code(201).send({ ...comment.toObject(), id: comment._id });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to add comment.", details: err.message });
     }
   });
   fastify2.post("/:id/blocker", async (request, reply) => {
@@ -4582,16 +5352,26 @@ async function issueRoutes(fastify2) {
       if (!await checkIssueAccess(request, existingIssue.projectId)) {
         return reply.code(403).send({ error: "Access denied to this project" });
       }
+      const user = await User.findById(request.user?.id).lean();
+      const userName = user?.name || "Developer";
       const issue = await Issue.findByIdAndUpdate(id, {
         status: "BLOCKED",
         blockerInfo: {
           reason: description,
           raisedAt: (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-        }
+        },
+        $push: {
+          activityLog: {
+            action: "Task Blocked",
+            userId: request.user?.id,
+            userName,
+            timestamp: /* @__PURE__ */ new Date(),
+            meta: description
+          }
+        },
+        updatedAt: /* @__PURE__ */ new Date()
       }, { new: true });
-      if (!issue) {
-        return reply.code(404).send({ error: "Issue not found." });
-      }
+      if (!issue) return reply.code(404).send({ error: "Issue not found." });
       return reply.code(200).send(issue);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to raise blocker.", details: err.message });
@@ -4606,7 +5386,7 @@ async function issueRoutes(fastify2) {
       if (!await checkIssueAccess(request, existingIssue.projectId)) {
         return reply.code(403).send({ error: "Access denied to this project" });
       }
-      const issue = await Issue.findByIdAndUpdate(id, { estimate }, { new: true });
+      const issue = await Issue.findByIdAndUpdate(id, { estimate, updatedAt: /* @__PURE__ */ new Date() }, { new: true });
       return reply.code(200).send(issue);
     } catch (err) {
       return reply.code(500).send({ error: "Failed to update estimate.", details: err.message });
@@ -4616,8 +5396,8 @@ async function issueRoutes(fastify2) {
     try {
       const { ids, ...updates } = request.body;
       if (!ids || !Array.isArray(ids)) return reply.code(400).send({ error: "Missing ids array" });
-      const role = request.user?.role || "DEVELOPER";
-      if (role !== "TEAM_LEAD" && role !== "MANAGER") {
+      const role = (request.user?.role || "DEVELOPER").toUpperCase().replace(/ /g, "_");
+      if (!isLeadOrManager(role)) {
         const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
         const allowedProjectIds = memberships.map((m) => m.projectId);
         const issuesToUpdate = await Issue.find({ _id: { $in: ids } }).lean();
@@ -4627,24 +5407,42 @@ async function issueRoutes(fastify2) {
           }
         }
       }
-      await Issue.updateMany({ _id: { $in: ids } }, { $set: updates });
+      await Issue.updateMany({ _id: { $in: ids } }, { $set: { ...updates, updatedAt: /* @__PURE__ */ new Date() } });
       return reply.code(200).send({ message: "Issues updated successfully" });
     } catch (err) {
       return reply.code(500).send({ error: "Failed to bulk update issues", details: err.message });
     }
   });
-  fastify2.get("/:id/comments", async (request, reply) => {
-    return reply.code(200).send([]);
+  fastify2.post("/bulk-delete", async (request, reply) => {
+    try {
+      const { ids } = request.body;
+      if (!ids || !Array.isArray(ids)) return reply.code(400).send({ error: "Missing ids array" });
+      const role = (request.user?.role || "DEVELOPER").toUpperCase().replace(/ /g, "_");
+      if (!isLeadOrManager(role)) {
+        const memberships = await ProjectMember.find({ userId: request.user?.id }).lean();
+        const allowedProjectIds = memberships.map((m) => m.projectId);
+        const issuesToDelete = await Issue.find({ _id: { $in: ids } }).lean();
+        for (const issue of issuesToDelete) {
+          if (!allowedProjectIds.includes(issue.projectId)) {
+            return reply.code(403).send({ error: "Access denied to some of the issues" });
+          }
+        }
+      }
+      await Issue.deleteMany({ _id: { $in: ids } });
+      return reply.code(200).send({ message: "Issues deleted successfully" });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to bulk delete issues", details: err.message });
+    }
   });
-  fastify2.get("/:id/links", async (request, reply) => {
+  fastify2.get("/:id/links", async (_request, reply) => {
     return reply.code(200).send({ linksTo: [], linksFrom: [] });
   });
-  fastify2.get("/:id/time", async (request, reply) => {
+  fastify2.get("/:id/time", async (_request, reply) => {
     return reply.code(200).send([]);
   });
 }
 
-// backend-fastify/src/routes/sprints.ts
+// src/routes/sprints.ts
 var sprintRoutes = async (fastify2) => {
   fastify2.addHook("onRequest", authenticate);
   fastify2.get("/:sprintId", async (request, reply) => {
@@ -4693,11 +5491,23 @@ var sprintRoutes = async (fastify2) => {
       return reply.code(500).send({ error: "Failed to update sprint status" });
     }
   });
+  fastify2.delete("/:sprintId", async (request, reply) => {
+    try {
+      const { sprintId } = request.params;
+      const sprint = await Sprint.findByIdAndDelete(sprintId);
+      if (!sprint) {
+        return reply.code(404).send({ error: "Sprint not found" });
+      }
+      return reply.code(200).send({ success: true });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to delete sprint" });
+    }
+  });
 };
 
-// backend-fastify/src/models/Task.ts
-var import_mongoose23 = require("mongoose");
-var TaskSchema = new import_mongoose23.Schema({
+// src/models/Task.ts
+var import_mongoose26 = require("mongoose");
+var TaskSchema = new import_mongoose26.Schema({
   workspaceId: { type: String, required: true, index: true },
   title: { type: String, required: true },
   description: { type: String },
@@ -4725,9 +5535,9 @@ TaskSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var Task = (0, import_mongoose23.model)("Task", TaskSchema);
+var Task = (0, import_mongoose26.model)("Task", TaskSchema);
 
-// backend-fastify/src/routes/tasks.ts
+// src/routes/tasks.ts
 var defaultWorkspaceId5 = "forge-india-connect";
 async function taskRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -4804,9 +5614,9 @@ async function taskRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/models/Document.ts
-var import_mongoose24 = require("mongoose");
-var DocumentSchema = new import_mongoose24.Schema({
+// src/models/Document.ts
+var import_mongoose27 = require("mongoose");
+var DocumentSchema = new import_mongoose27.Schema({
   workspaceId: { type: String, required: true, index: true },
   title: { type: String, required: true },
   type: {
@@ -4818,7 +5628,7 @@ var DocumentSchema = new import_mongoose24.Schema({
   ownerName: { type: String },
   sizeBytes: { type: Number, default: 0 },
   url: { type: String },
-  content: { type: import_mongoose24.Schema.Types.Mixed },
+  content: { type: import_mongoose27.Schema.Types.Mixed },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -4827,9 +5637,9 @@ DocumentSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var WorkspaceDocument = (0, import_mongoose24.model)("WorkspaceDocument", DocumentSchema);
+var WorkspaceDocument = (0, import_mongoose27.model)("WorkspaceDocument", DocumentSchema);
 
-// backend-fastify/src/routes/docs.ts
+// src/routes/docs.ts
 var defaultWorkspaceId6 = "forge-india-connect";
 async function docsRoutes(fastify2) {
   fastify2.addHook("preValidation", authenticate);
@@ -4937,7 +5747,7 @@ async function docsRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/show.ts
+// src/routes/show.ts
 var fs5 = __toESM(require("fs"));
 var path4 = __toESM(require("path"));
 var cachedExamples = "";
@@ -5021,7 +5831,7 @@ Generate 5 to 7 slides with rich, professional content following the flow in the
   });
 }
 
-// backend-fastify/src/routes/superadmin.ts
+// src/routes/superadmin.ts
 async function superadminRoutes(fastify2) {
   fastify2.addHook("preHandler", authenticate);
   fastify2.addHook("preHandler", async (request, reply) => {
@@ -5039,8 +5849,8 @@ async function superadminRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/status.ts
-var import_mongoose26 = require("mongoose");
+// src/routes/status.ts
+var import_mongoose29 = require("mongoose");
 function normalizeEmail2(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -5109,7 +5919,7 @@ async function statusRoutes(fastify2) {
     try {
       const { id } = request.params;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose29.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const existingStatus = await Story.findById(id);
@@ -5129,7 +5939,7 @@ async function statusRoutes(fastify2) {
       const { id } = request.params;
       const { emoji } = request.body;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose29.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findByIdAndUpdate(
@@ -5148,7 +5958,7 @@ async function statusRoutes(fastify2) {
       const { id } = request.params;
       const { text } = request.body;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose29.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findById(id);
@@ -5227,7 +6037,7 @@ async function statusRoutes(fastify2) {
     try {
       const { id } = request.params;
       const currentEmail = normalizeEmail2(request.user?.email || "");
-      if (!import_mongoose26.Types.ObjectId.isValid(id)) {
+      if (!import_mongoose29.Types.ObjectId.isValid(id)) {
         return reply.code(400).send({ error: "Invalid status id." });
       }
       const status = await Story.findById(id);
@@ -5243,12 +6053,12 @@ async function statusRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/routes/threads.ts
+// src/routes/threads.ts
 var import_cloudinary2 = require("cloudinary");
 
-// backend-fastify/src/models/ThreadPost.ts
-var import_mongoose27 = require("mongoose");
-var ThreadPostSchema = new import_mongoose27.Schema({
+// src/models/ThreadPost.ts
+var import_mongoose30 = require("mongoose");
+var ThreadPostSchema = new import_mongoose30.Schema({
   workspaceId: { type: String, required: true, index: true },
   authorEmail: { type: String, required: true },
   authorName: { type: String, required: true },
@@ -5264,11 +6074,11 @@ var ThreadPostSchema = new import_mongoose27.Schema({
   isPinned: { type: Boolean, default: false },
   isReported: { type: Boolean, default: false }
 }, { timestamps: true });
-var ThreadPost = (0, import_mongoose27.model)("ThreadPost", ThreadPostSchema);
+var ThreadPost = (0, import_mongoose30.model)("ThreadPost", ThreadPostSchema);
 
-// backend-fastify/src/models/ThreadComment.ts
-var import_mongoose28 = require("mongoose");
-var ThreadCommentSchema = new import_mongoose28.Schema({
+// src/models/ThreadComment.ts
+var import_mongoose31 = require("mongoose");
+var ThreadCommentSchema = new import_mongoose31.Schema({
   postId: { type: String, required: true, index: true },
   parentCommentId: { type: String, index: true },
   authorEmail: { type: String, required: true },
@@ -5276,12 +6086,12 @@ var ThreadCommentSchema = new import_mongoose28.Schema({
   content: { type: String, required: true },
   likes: [{ type: String }]
 }, { timestamps: true });
-var ThreadComment = (0, import_mongoose28.model)("ThreadComment", ThreadCommentSchema);
+var ThreadComment = (0, import_mongoose31.model)("ThreadComment", ThreadCommentSchema);
 
-// backend-fastify/src/routes/threads.ts
+// src/routes/threads.ts
 init_User();
 
-// backend-fastify/src/services/threadSockets.ts
+// src/services/threadSockets.ts
 var import_fs5 = __toESM(require("fs"));
 var import_path4 = __toESM(require("path"));
 var activeThreadSockets = /* @__PURE__ */ new Map();
@@ -5336,7 +6146,7 @@ function broadcastToWorkspace(workspaceId, eventType, payload) {
   });
 }
 
-// backend-fastify/src/routes/threads.ts
+// src/routes/threads.ts
 var cloudinaryFolder2 = process.env.CLOUDINARY_FOLDER || "chat_uploads";
 var cloudinaryCloudName2 = process.env.CLOUDINARY_CLOUD_NAME || "";
 var cloudinaryApiKey2 = process.env.CLOUDINARY_API_KEY || "";
@@ -5686,16 +6496,16 @@ async function threadsRoutes(fastify2) {
   });
 }
 
-// backend-fastify/src/models/AIProjectPlan.ts
-var import_mongoose29 = __toESM(require("mongoose"));
-var RequirementSchema = new import_mongoose29.default.Schema({
+// src/models/AIProjectPlan.ts
+var import_mongoose32 = __toESM(require("mongoose"));
+var RequirementSchema = new import_mongoose32.default.Schema({
   id: String,
   title: String,
   description: String,
   priority: { type: String, enum: ["HIGH", "MEDIUM", "LOW"], default: "MEDIUM" },
   type: { type: String, enum: ["FUNCTIONAL", "NON_FUNCTIONAL", "SECURITY", "TECHNICAL"], default: "FUNCTIONAL" }
 }, { _id: false });
-var TaskSchema2 = new import_mongoose29.default.Schema({
+var TaskSchema2 = new import_mongoose32.default.Schema({
   id: String,
   title: String,
   description: String,
@@ -5708,7 +6518,7 @@ var TaskSchema2 = new import_mongoose29.default.Schema({
   assigneeReason: String,
   selected: { type: Boolean, default: true }
 }, { _id: false });
-var StorySchema2 = new import_mongoose29.default.Schema({
+var StorySchema2 = new import_mongoose32.default.Schema({
   id: String,
   title: String,
   userStory: String,
@@ -5723,7 +6533,7 @@ var StorySchema2 = new import_mongoose29.default.Schema({
   tasks: [TaskSchema2],
   selected: { type: Boolean, default: true }
 }, { _id: false });
-var ModuleSchema = new import_mongoose29.default.Schema({
+var ModuleSchema = new import_mongoose32.default.Schema({
   id: String,
   name: String,
   description: String,
@@ -5732,28 +6542,28 @@ var ModuleSchema = new import_mongoose29.default.Schema({
   stories: [StorySchema2],
   selected: { type: Boolean, default: true }
 }, { _id: false });
-var SprintSchema2 = new import_mongoose29.default.Schema({
+var SprintSchema2 = new import_mongoose32.default.Schema({
   id: String,
   name: String,
   goal: String,
   storyIds: [String],
   totalStoryPoints: Number
 }, { _id: false });
-var ValidationSchema = new import_mongoose29.default.Schema({
+var ValidationSchema = new import_mongoose32.default.Schema({
   requirementCoverage: { type: Number, default: 0 },
   unrelatedItems: [String],
-  duplicates: [import_mongoose29.default.Schema.Types.Mixed],
+  duplicates: [import_mongoose32.default.Schema.Types.Mixed],
   invalidStoryPoints: [String],
   oversizedStories: [String]
 }, { _id: false });
-var ProjectAnalysisSchema = new import_mongoose29.default.Schema({
+var ProjectAnalysisSchema = new import_mongoose32.default.Schema({
   objective: String,
   actors: [String],
   assumptions: [String],
   clarifications: [String],
   requirements: [RequirementSchema]
 }, { _id: false });
-var AIProjectPlanSchema = new import_mongoose29.default.Schema({
+var AIProjectPlanSchema = new import_mongoose32.default.Schema({
   // Use String (not ObjectId) to match Sprint/Issue/Epic models — avoids CastError when querying with string projectIds
   projectId: { type: String, required: true, index: true },
   status: { type: String, enum: ["DRAFT", "APPROVED"], default: "DRAFT" },
@@ -5777,33 +6587,37 @@ AIProjectPlanSchema.pre("save", function(next) {
   this.updatedAt = /* @__PURE__ */ new Date();
   next();
 });
-var AIProjectPlan = import_mongoose29.default.model("AIProjectPlan", AIProjectPlanSchema);
+var AIProjectPlan = import_mongoose32.default.model("AIProjectPlan", AIProjectPlanSchema);
 
-// backend-fastify/src/services/aiService.ts
-var import_generative_ai2 = require("@google/generative-ai");
+// src/services/aiService.ts
+var import_groq_sdk3 = __toESM(require("groq-sdk"));
 var import_process = __toESM(require("process"));
-var import_jsonrepair = require("jsonrepair");
 init_aiValidator();
-function getModel() {
-  const apiKey = import_process.default.env.GEMINI_API_KEY || "";
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured in backend environment variables.");
-  const genAI2 = new import_generative_ai2.GoogleGenerativeAI(apiKey);
-  return genAI2.getGenerativeModel({
-    model: "gemini-1.5-flash",
+function getClient() {
+  const apiKey = import_process.default.env.GROQ_API_KEY || "";
+  if (!apiKey) throw new Error("GROQ_API_KEY is not configured in backend environment variables.");
+  return new import_groq_sdk3.default({ apiKey });
+}
+async function callAI(client, prompt, retries = 3, modelName = "gemini-3.1-flash-lite", maxTokens = 8192) {
+  console.log("[3] AI request started...");
+  const { GoogleGenerativeAI: GoogleGenerativeAI2 } = require("@google/generative-ai");
+  const apiKey = import_process.default.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+  const genAI2 = new GoogleGenerativeAI2(apiKey);
+  const model25 = genAI2.getGenerativeModel({
+    model: "gemini-3.1-flash-lite",
     generationConfig: {
       temperature: 0.3,
-      // Lower temp for structured output
-      maxOutputTokens: 8192,
+      maxOutputTokens: maxTokens,
       responseMimeType: "application/json"
     }
   });
-}
-async function callAI(model23, prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
-      const result = await model23.generateContent(prompt);
-      let text = result.response.text();
-      text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+      const result = await model25.generateContent(prompt);
+      console.log("[4] AI response received");
+      let text = result.response.text() || "{}";
+      text = text.replace(/^\\s*\`\`\`(?:json)?\\s*/i, "").replace(/\\s*\`\`\`\\s*$/i, "").trim();
       const startIdx = text.indexOf("{");
       const endIdx = text.lastIndexOf("}");
       if (startIdx === -1) {
@@ -5811,26 +6625,27 @@ async function callAI(model23, prompt, retries = 3) {
       }
       const jsonText = endIdx > startIdx ? text.substring(startIdx, endIdx + 1) : text.substring(startIdx);
       try {
-        const repairedJsonText = (0, import_jsonrepair.jsonrepair)(jsonText);
+        const repairedJsonText = require("jsonrepair").jsonrepair(jsonText);
         return JSON.parse(repairedJsonText);
       } catch (repairErr) {
         throw new Error("JSON Repair failed: " + repairErr.message);
       }
     } catch (error) {
       if (i === retries - 1) throw error;
-      console.warn(`[AI Retry] Attempt ${i + 1} failed, retrying in 3s... Error: ${error.message}`);
-      await new Promise((resolve) => setTimeout(resolve, 3e3));
+      const waitMs = error.message?.includes("429") ? 15e3 : 3e3;
+      console.warn("[AI Retry] Attempt " + (i + 1) + " failed, retrying in " + waitMs / 1e3 + "s... Error: " + error.message);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
     }
   }
 }
 async function extractRequirements(rawRequirements) {
-  const model23 = getModel();
-  const prompt = `You are an expert Business Analyst and Requirements Engineer.
+  const client = getClient();
+  const prompt = `You are an expert Business Analyst for a software development agency.
 
-Your ONLY job in this step is to extract and structure the requirements from the raw text provided.
+Your ONLY job is to read the customer's project requirements and extract the list of features and user roles.
 Do NOT generate tasks, modules, stories, or sprint plans in this step.
 
-RAW PROJECT REQUIREMENTS:
+CUSTOMER PROJECT REQUIREMENTS:
 """
 ${rawRequirements}
 """
@@ -5838,13 +6653,13 @@ ${rawRequirements}
 Extract the following and return as strict JSON (no markdown, no code blocks, start with {):
 
 {
-  "objective": "One sentence describing the project purpose",
+  "objective": "One sentence describing what the customer wants to build",
   "actors": ["Role1", "Role2"],
   "requirements": [
     {
       "id": "FR-001",
-      "title": "Short title of the requirement",
-      "description": "One to two sentence description",
+      "title": "Short feature title (e.g. Student Login, Attendance Management)",
+      "description": "One to two sentence description of the feature from the customer perspective",
       "priority": "HIGH",
       "type": "FUNCTIONAL"
     }
@@ -5857,118 +6672,136 @@ Extract the following and return as strict JSON (no markdown, no code blocks, st
     }
   ],
   "assumptions": ["Assumption 1"],
-  "clarifications": ["What is unclear or needs decision from the client?"],
+  "clarifications": ["What is unclear or needs a client decision?"],
   "securityRequirements": ["Role-based access control is required"]
 }
 
 RULES:
-1. Every distinct feature, role, screen, or operation must become a separate requirement with a unique ID starting at FR-001.
+1. Every distinct customer feature, role, screen, or operation must become a separate requirement.
 2. IDs must be sequential: FR-001, FR-002, FR-003, etc.
-3. Do NOT invent requirements that are not in the text. If the text says "student login" make FR-001 = "Student Authentication". Do not add "payment gateway" unless the text mentions payments.
-4. type must be one of: FUNCTIONAL, NON_FUNCTIONAL, SECURITY, TECHNICAL
-5. priority must be one of: HIGH, MEDIUM, LOW
-6. Extract ALL requirements \u2014 do not summarize multiple features into one if they are distinct.
-7. Return ONLY the JSON object. No explanations. No markdown.`;
-  return callAI(model23, prompt);
+3. Titles must describe CUSTOMER FEATURES \u2014 e.g. "Student Login", "View Timetable", "Manage Fees". NOT internal implementation like "Database Schema", "API Layer", "JSON Parser".
+4. Do NOT invent requirements not in the text.
+5. type must be one of: FUNCTIONAL, NON_FUNCTIONAL, SECURITY, TECHNICAL
+6. priority must be one of: HIGH, MEDIUM, LOW
+7. Extract ALL requirements \u2014 do not merge distinct features.
+8. Return ONLY the JSON object. No explanations. No markdown.`;
+  return callAI(client, prompt);
 }
 async function generatePlan(pass1Result, sprintCapacity, existingIssueTitles) {
-  const model23 = getModel();
-  const requirementsJson = JSON.stringify(pass1Result.requirements, null, 2);
+  const client = getClient();
+  const reqs = pass1Result.requirements || [];
+  const BATCH_SIZE = 2;
+  let mergedModules = [];
+  let mergedSprints = [];
+  let projectSummary = "";
+  let allAssumptions = [];
+  let allClarifications = [];
   const existingIssuesStr = existingIssueTitles.length > 0 ? `
-EXISTING TASKS (already in the project \u2014 DO NOT duplicate these):
-${existingIssueTitles.map((t, i) => `- ${t}`).join("\n")}` : "\nNo existing tasks found. Generate fresh plan.";
-  const prompt = `You are an expert Agile Product Manager, Software Architect, and Scrum Master.
+EXISTING TASKS (already created \u2014 DO NOT duplicate these):
+${existingIssueTitles.map((t) => `- ${t}`).join("\n")}` : "\nNo existing tasks. Generate a fresh plan.";
+  console.log(`[AI PASS 2] Generating Agile plan from ${reqs.length} requirements in batches of ${BATCH_SIZE}...`);
+  for (let i = 0; i < reqs.length; i += BATCH_SIZE) {
+    const batchReqs = reqs.slice(i, i + BATCH_SIZE);
+    console.log(`[AI PASS 2] Processing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(reqs.length / BATCH_SIZE)} (${batchReqs.length} requirements)...`);
+    const requirementsJson = JSON.stringify(batchReqs, null, 2);
+    const prompt = `You are a senior Agile Product Manager planning a software project for a customer.
 
-You have been given a structured list of project requirements extracted by a Business Analyst.
-Your job is to generate a complete, traceable Agile implementation plan.
+You have a list of CUSTOMER REQUIREMENTS. Your job is to generate the development plan the team will use to BUILD THIS CUSTOMER'S PRODUCT.
 
-PROJECT OBJECTIVE: ${pass1Result.objective}
-ACTORS / ROLES: ${(pass1Result.actors || []).join(", ")}
+\u26A0\uFE0F CRITICAL RULE \u2014 GRANULAR JUNIOR DEVELOPER TASKS:
+1. NEVER generate broad tasks like "Create Landing Page", "Build Dashboard", or "Implement Authentication".
+2. Break broad requirements into SMALL, SPECIFIC, ACTIONABLE implementation tasks (e.g. 5-10 tasks per story).
+3. Prefix Module names with their sequence (e.g. "1. Authentication", "2. Dashboard").
+4. Prefix Task titles with their numerical sequence based on their module (e.g., "1.1 Create User table", "1.2 Build Login UI with Email and Password fields").
+5. TASK TITLES MUST BE EXTREMELY DETAILED. For example, instead of "Create member dashboard", use "1.3 Create Member Dashboard layout with Sidebar (Home, Profile, Settings) and top navbar".
+6. The description for each task MUST be highly detailed and explain the flow and implementation steps clearly using markdown. Use bullet points and bold text where necessary to make the workflow clear.
+7. Order them by actual implementation dependencies (Database -> API -> Layout -> Components) so they can be completed in perfect order.
+8. Every task MUST contain: sequence, title (describing ONE clear action with a verb), highly detailed markdown description, why it is needed, expected result, and dependency.
+9. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database).
 
-EXTRACTED REQUIREMENTS:
+CUSTOMER PROJECT OBJECTIVE: ${pass1Result.objective}
+USER ROLES: ${(pass1Result.actors || []).join(", ")}
+
+CUSTOMER REQUIREMENTS (Batch ${Math.floor(i / BATCH_SIZE) + 1}):
 ${requirementsJson}
 
 SPRINT CONFIGURATION:
-- Sprint Capacity: ${sprintCapacity} story points per sprint
-- Use Fibonacci story points ONLY: 1, 2, 3, 5, 8, 13
+- Sprint Capacity: ${sprintCapacity} story points
+- Fibonacci story points ONLY: 1, 2, 3, 5, 8, 13
 ${existingIssuesStr}
 
-INSTRUCTIONS:
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+STEP 1 \u2014 MODULES (Customer Features)
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+Group requirements into logical CUSTOMER-FACING modules and order them by implementation sequence.
 
-STEP 1 \u2014 MODULE GROUPING:
-Group related requirements into logical modules (epics).
-Example: FR-001 (Student Login) + FR-002 (Faculty Login) + FR-003 (Admin Login) \u2192 Module: "Authentication & Role Management"
-Do NOT create a separate module for every single requirement.
-Do NOT create modules that have no corresponding requirement.
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+STEP 2 \u2014 USER STORIES
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+For each requirement, write one user story. "As a [role], I want [feature], so that [value]."
 
-STEP 2 \u2014 USER STORIES:
-For each requirement, write a user story in proper Agile format:
-"As a [role], I want [feature], so that [business value]."
-Provide 3-5 acceptance criteria (testable, specific).
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+STEP 3 \u2014 TASKS (Customer Feature Tasks)
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+For each story, generate as many small, granular tasks as needed to fully build the feature.
+Task titles must start with a verb (Create, Add, Display, Validate, Connect).
 
-STEP 3 \u2014 TASKS:
-For each story, generate 2-3 concrete, high-level implementation tasks (e.g., Frontend, Backend, Testing).
-Keep descriptions CONCISE (1 sentence max) to avoid exceeding output limits.
-BAD tasks: "Start development", "Write code", "Complete feature", "Test application"
-GOOD tasks: "Design attendance UI component", "Create POST /api/attendance endpoint", "Write unit tests for attendance service"
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+STEP 4 \u2014 STORY POINT ESTIMATION
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+Use ONLY Fibonacci values: 1, 2, 3, 5, 8, 13
 
-STEP 4 \u2014 STORY POINT ESTIMATION (FIBONACCI ONLY: 1, 2, 3, 5, 8, 13):
-1 = Trivial change (CSS tweak, label change)
-2 = Small simple feature (read-only list page)
-3 = Small feature with limited complexity (simple form with validation)
-5 = Moderate feature involving multiple components (CRUD with auth)
-8 = Large feature with multiple layers (real-time, integrations)
-13 = Very large/uncertain (MARK needsSplit: true and suggest splits)
-Provide estimateReason explaining WHY you chose that point value.
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+STEP 5 \u2014 SPRINT PLANNING
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+Group stories into sprints:
+- Max ${sprintCapacity} story points per sprint.
+- DO NOT STOP GENERATING when you reach ${sprintCapacity} points! If you exceed the capacity, automatically create Sprint 2, Sprint 3, etc. until ALL stories for the complete project are planned.
+- Give each sprint a descriptive name representing what is being built in that sprint (e.g., "Sprint 1: Database & Auth Setup", "Sprint 2: Student Dashboard MVP").
 
-STEP 5 \u2014 DEPENDENCIES:
-Identify which stories depend on other stories.
-Example: Attendance story depends on Course Management and Student Management.
-
-STEP 6 \u2014 SPRINT PLANNING:
-Group stories into sprints respecting:
-- Sprint capacity of ${sprintCapacity} points
-- Dependency order (authentication before features that need auth)
-- Logical progression
-
-Return ONLY this exact JSON structure (no markdown, start with {):
+Return ONLY this exact JSON (no markdown, no explanation, start with {):
 
 {
-  "projectSummary": "Brief one-paragraph project summary",
+  "projectSummary": "One paragraph describing what the customer is building",
   "modules": [
     {
       "id": "MOD-001",
-      "name": "Module Name",
-      "description": "What this module covers",
-      "requirementIds": ["FR-001", "FR-002"],
+      "sequence": 1,
+      "name": "Authentication",
+      "description": "User login, role management, and access control",
+      "requirementIds": ["FR-001"],
       "priority": "HIGH",
       "stories": [
         {
           "id": "ST-001",
-          "title": "Story title",
-          "userStory": "As a [role], I want [feature], so that [value].",
-          "description": "Detailed description",
+          "sequence": 1,
+          "title": "1.1 User Login",
+          "userStory": "As a user, I want to log in with my credentials, so that I can access my role dashboard.",
+          "description": "Login screen with email/password",
           "requirementIds": ["FR-001"],
           "storyPoints": 5,
-          "estimateReason": "Requires frontend form, backend API, DB schema, role-based auth, and testing \u2014 5 points.",
+          "estimateReason": "Involves login form, validation \u2014 5 points.",
           "needsSplit": false,
           "priority": "HIGH",
-          "acceptanceCriteria": [
-            "User can submit form with valid data",
-            "System validates required fields",
-            "Error message shown for invalid input",
-            "Successful submission redirects to dashboard"
-          ],
+          "acceptanceCriteria": ["User can enter email"],
           "dependencies": [],
           "tasks": [
             {
               "id": "TASK-001",
-              "title": "Create login form UI component",
-              "description": "Build the login page with email/password fields and validation states",
-              "category": "FRONTEND",
+              "sequence": 1,
+              "title": "1.1.1 Create Login Database Structure",
+              "description": "**Goal:** Create the core User table.
+
+**Steps:**
+- Add 'id', 'email', and 'password' fields.
+- Setup indexes.",
+              "why": "The system needs user information before users can log in.",
+              "expectedResult": "User login information can be stored.",
+              "dependency": "None",
+              "category": "BACKEND",
               "requirementIds": ["FR-001"],
               "storyPoints": 2,
-              "estimateReason": "Standard form component with validation \u2014 2 points.",
+              "estimateReason": "Standard table structure \u2014 2 points.",
               "priority": "HIGH"
             }
           ]
@@ -5978,31 +6811,63 @@ Return ONLY this exact JSON structure (no markdown, start with {):
   ],
   "sprints": [
     {
-      "id": "sprint-1",
-      "name": "Sprint 1",
-      "goal": "Establish authentication and core user management",
+      "id": "SPRINT-1",
+      "name": "Sprint 1: Database & Auth Setup",
+      "goal": "Basic user authentication and database setup",
       "storyIds": ["ST-001"],
       "totalStoryPoints": 5
     }
   ],
   "assumptions": ["Assumption 1"],
-  "clarifications": ["Unclear point requiring client decision"]
+  "clarifications": ["Unclear point needing client decision"]
 }
 
-CRITICAL RULES:
-- Every module, story, and task MUST have at least one requirementId from the list above.
-- Only use requirement IDs that exist in the provided requirements list: ${(pass1Result.requirements || []).map((r) => r.id).join(", ")}
-- Story points MUST be one of: 1, 2, 3, 5, 8, 13. No other values allowed.
-- Tasks must be concrete engineering actions. No vague tasks.
-- Do NOT generate modules/features not covered by the requirements.
-- Do NOT duplicate existing tasks: ${existingIssueTitles.slice(0, 20).join("; ")}
-- Keep descriptions concise. Do NOT generate massive text blocks.
-- Sprints must not exceed ${sprintCapacity} story points.
-- Return ONLY the JSON object. No explanations. No markdown. Start with {.`;
-  return callAI(model23, prompt);
+\u26A0\uFE0F FINAL CRITICAL RULES:
+- Every module, story, and task MUST trace to a requirement ID from: ${batchReqs.map((r) => r.id).join(", ")}
+- Return ONLY the JSON. No markdown. Start with {.
+`;
+    try {
+      const result = await callAI(client, prompt);
+      if (!projectSummary && result.projectSummary) {
+        projectSummary = result.projectSummary;
+      }
+      if (result.assumptions) allAssumptions = [...allAssumptions, ...result.assumptions];
+      if (result.clarifications) allClarifications = [...allClarifications, ...result.clarifications];
+      for (const mod of result.modules || []) {
+        const existing = mergedModules.find((m) => m.name === mod.name);
+        if (existing) {
+          existing.stories = [...existing.stories || [], ...mod.stories || []];
+          existing.requirementIds = [.../* @__PURE__ */ new Set([...existing.requirementIds || [], ...mod.requirementIds || []])];
+        } else {
+          mergedModules.push(mod);
+        }
+      }
+      if (result.sprints) {
+        mergedSprints = [...mergedSprints, ...result.sprints];
+      }
+    } catch (err) {
+      console.error(`[AI PASS 2] Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err.message}`);
+    }
+  }
+  mergedModules.forEach((m, idx) => {
+    m.id = `MOD-${String(idx + 1).padStart(3, "0")}`;
+    m.sequence = idx + 1;
+  });
+  mergedSprints.forEach((s, idx) => {
+    s.id = `SPRINT-${idx + 1}`;
+    s.name = (s.name || "").replace(/^Sprint\s*\d+\s*:\s*/i, "").replace(/^Sprint\s*\d+\s*/i, "");
+    s.name = `Sprint ${idx + 1}: ${s.name || "Core Features"}`;
+  });
+  return {
+    projectSummary,
+    modules: mergedModules,
+    sprints: mergedSprints,
+    assumptions: [...new Set(allAssumptions)],
+    clarifications: [...new Set(allClarifications)]
+  };
 }
 async function validateAndFillGaps(plan, requirements, sprintCapacity) {
-  const model23 = getModel();
+  const client = getClient();
   const coverage = checkRequirementCoverage(requirements, plan.modules || []);
   if (coverage.missing.length === 0 && coverage.unrelatedModules.length === 0) {
     plan.validation = {
@@ -6015,43 +6880,96 @@ async function validateAndFillGaps(plan, requirements, sprintCapacity) {
     return plan;
   }
   const missingReqs = requirements.filter((r) => coverage.missing.includes(r.id));
-  const prompt = `You are a senior Agile coach validating a project plan.
+  const prompt = `You are a senior Agile coach reviewing a customer software project plan.
 
-The following requirements have NO implementation plan (no module, story, or task references them).
-Generate ONLY the missing modules/stories/tasks for these requirements.
-Append them to the existing plan.
+The following customer requirements have NO tasks planned yet. Generate ONLY the missing modules and tasks for them.
 
-MISSING REQUIREMENTS:
+\u26A0\uFE0F CRITICAL: You are filling gaps in a CUSTOMER PROJECT plan for a JUNIOR DEVELOPER.
+- NEVER generate broad tasks like "Create Page" or "Implement Feature". Break every feature into SMALL, SPECIFIC, ACTIONABLE tasks.
+- UI tasks MUST specify the exact component (e.g., "Add Email input", "Create the Hero Section", "Add navigation links to the topbar").
+- DB tasks MUST be specific (e.g., "Create User table", "Add name, email, role, status fields").
+- Form tasks MUST be specific (e.g., "Add Email input", "Add Password input", "Add required-field validation").
+- Every task MUST contain: sequence, title (with an action verb), simple description, why it is needed, expected result, and dependency.
+- A single task should represent ONE clear action only.
+- Do NOT invent features not mentioned in the requirements.
+
+MISSING REQUIREMENTS (generate tasks for these):
 ${JSON.stringify(missingReqs, null, 2)}
 
-UNRELATED MODULES DETECTED (may not be required):
+UNRELATED MODULES (may not be needed \u2014 flag for removal if not in requirements):
 ${coverage.unrelatedModules.join(", ") || "None"}
 
-EXISTING PLAN SUMMARY (do not repeat these):
+EXISTING MODULES (do not repeat):
 ${(plan.modules || []).map((m) => m.name).join(", ")}
 
 SPRINT CAPACITY: ${sprintCapacity} points
 
-Return ONLY JSON with this structure (start with {):
+Return ONLY JSON (start with {):
 {
   "additionalModules": [
     {
       "id": "MOD-NEW-001",
-      "name": "Module Name",
+      "sequence": 99,
+      "name": "Customer Module Name (e.g. Reports, Notifications)",
       "description": "Description",
       "requirementIds": ["FR-XXX"],
-      "priority": "HIGH",
-      "stories": [...]
+      "priority": "MEDIUM",
+      "stories": [
+        {
+          "id": "ST-NEW-001",
+          "sequence": 99,
+          "title": "Story title",
+          "userStory": "As a [role], I want [feature], so that [value].",
+          "description": "Brief description",
+          "requirementIds": ["FR-XXX"],
+          "storyPoints": 3,
+          "estimateReason": "Simple feature \u2014 3 points.",
+          "needsSplit": false,
+          "priority": "MEDIUM",
+          "acceptanceCriteria": ["Criterion 1"],
+          "dependencies": [],
+          "tasks": [
+            {
+              "id": "TASK-NEW-001",
+              "sequence": 99,
+              "title": "Create [Feature] Database Table",
+              "description": "Create the database table needed for this feature.",
+              "why": "We need to store this data before showing it to the user.",
+              "expectedResult": "Data can be stored in the database.",
+              "dependency": "None",
+              "category": "DATABASE",
+              "requirementIds": ["FR-XXX"],
+              "storyPoints": 1,
+              "estimateReason": "Standard table \u2014 1 point.",
+              "priority": "MEDIUM"
+            },
+            {
+              "id": "TASK-NEW-002",
+              "sequence": 100,
+              "title": "Create [Feature] API",
+              "description": "Create the API endpoint to add/update [feature] data.",
+              "why": "The frontend needs a backend service to manage this data.",
+              "expectedResult": "Data can be submitted and retrieved via the API.",
+              "dependency": "TASK-NEW-001",
+              "category": "API",
+              "requirementIds": ["FR-XXX"],
+              "storyPoints": 2,
+              "estimateReason": "Standard API \u2014 2 points.",
+              "priority": "MEDIUM"
+            }
+          ]
+        }
+      ]
     }
   ],
-  "removedModuleNames": ["Name of unrelated module to remove if any"]
+  "removedModuleNames": []
 }
 
 Use Fibonacci points only: 1, 2, 3, 5, 8, 13.
 Return ONLY the JSON. No markdown.`;
   let gapResult = { additionalModules: [], removedModuleNames: [] };
   try {
-    gapResult = await callAI(model23, prompt);
+    gapResult = await callAI(client, prompt, 3, "gemini-3.1-flash-lite", 4096);
   } catch (err) {
     console.error("[AI VALIDATOR] Gap-fill AI call failed:", err.message);
   }
@@ -6125,7 +7043,7 @@ var aiService = {
     console.log(`[AI PASS 2] \u2713 Total story points: ${totalPoints}`);
     console.log(`[AI PASS 2] \u2713 Sprints planned: ${pass2Result.sprints?.length || 0}`);
     console.log(`
-[AI VALIDATOR] Running schema validation and Fibonacci repair...`);
+[5] JSON/schema validation starting...`);
     const { repairedPlan, errors } = validateAndRepairPlan(pass2Result);
     if (errors.length > 0) {
       console.log(`[AI VALIDATOR] Repaired ${errors.length} schema issues:`);
@@ -6170,10 +7088,9 @@ var aiService = {
    * Validates Fibonacci on the regenerated item before returning.
    */
   async regenerateItem(itemId, itemType, context, promptAddition) {
-    const apiKey = import_process.default.env.GEMINI_API_KEY || "";
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
-    const genAI2 = new import_generative_ai2.GoogleGenerativeAI(apiKey);
-    const model23 = genAI2.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.3 } });
+    const apiKey = import_process.default.env.GROQ_API_KEY || "";
+    if (!apiKey) throw new Error("GROQ_API_KEY is not configured.");
+    const client = new import_groq_sdk3.default({ apiKey });
     const prompt = `You are an expert Agile Project Manager.
 Regenerate a single ${itemType} based on the following context.
 Return ONLY valid JSON for the item (no markdown, start with {).
@@ -6187,14 +7104,20 @@ ${promptAddition || "Improve this item"}
 RULES:
 - Story points MUST be Fibonacci: 1, 2, 3, 5, 8, or 13 ONLY.
 - Every requirementId in the original context must be preserved.
-- Tasks must be concrete engineering actions.
+- If regenerating a TASK: make it SMALL and SPECIFIC (one clear action only). Title must start with a verb (Add, Create, Show, Validate, Connect). NEVER use broad titles like "Create Landing Page" or "Implement Feature".
+- If regenerating a STORY: ensure the tasks list contains 5-15 GRANULAR tasks that each describe ONE specific implementation action (component, input, section, API endpoint, DB field).
+- Use simple, non-technical language a Junior Developer can understand immediately.
 - Return ONLY the JSON. No markdown. Start with {.
 
 ${itemType === "TASK" ? `Return this exact structure:
 {
   "id": "${context.id}",
+  "sequence": ${context.sequence || 99},
   "title": "improved task title",
-  "description": "concrete description of what to implement",
+  "description": "concrete, simple description of what to implement",
+  "why": "Why is this task needed?",
+  "expectedResult": "What happens when it is done?",
+  "dependency": "None or task ID",
   "category": "FRONTEND|BACKEND|DATABASE|API|TESTING|SECURITY",
   "requirementIds": ${JSON.stringify(context.requirementIds || [])},
   "storyPoints": 2,
@@ -6203,6 +7126,7 @@ ${itemType === "TASK" ? `Return this exact structure:
 }` : `Return this exact structure:
 {
   "id": "${context.id}",
+  "sequence": ${context.sequence || 99},
   "title": "improved story title",
   "userStory": "As a [role], I want [feature], so that [value].",
   "description": "detailed description",
@@ -6215,8 +7139,13 @@ ${itemType === "TASK" ? `Return this exact structure:
   "dependencies": [],
   "tasks": [...]
 }`}`;
-    const result = await model23.generateContent(prompt);
-    let text = result.response.text();
+    const completion = await client.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      response_format: { type: "json_object" }
+    });
+    let text = completion.choices[0]?.message?.content || "{}";
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
     const startIdx = text.indexOf("{");
     const endIdx = text.lastIndexOf("}");
@@ -6231,24 +7160,107 @@ ${itemType === "TASK" ? `Return this exact structure:
       });
     }
     return parsed;
+  },
+  /**
+   * Generates a high-level suggestion of features, topics, and layout for user confirmation.
+   *
+   * @param rawRequirements  Full requirement text from the user
+   * @returns                A markdown string with the suggested overview
+   */
+  async suggestProjectPlan(rawRequirements) {
+    const apiKey = import_process.default.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+    const { GoogleGenerativeAI: GoogleGenerativeAI2 } = require("@google/generative-ai");
+    const client = new GoogleGenerativeAI2(apiKey);
+    const prompt = `You are a Senior Technical Architect and Product Manager.
+The customer has provided the following requirements for a software project.
+
+CUSTOMER REQUIREMENTS:
+"""
+${rawRequirements}
+"""
+
+Analyze these requirements and suggest an extremely detailed and complete project structure.
+Your response MUST be in formatted Markdown.
+
+Include the following sections in a highly structured flow:
+1. **Project Topics & Overview**: A summary of the core objective and what the product aims to achieve.
+2. **Roles & Actors**: The exact types of users who will use the system, and what they can do.
+3. **Features & Modules to Build**: A detailed breakdown of EVERY single feature required. Break this down logically. Example: "Admin Dashboard -> Overview Tab, Settings Tab -> Functions needed in settings...". DO NOT skip any modules.
+4. **Sidebar / Navigation Layout**: A complete list of all recommended sidebar tabs, navigation links, and the sub-pages within them for the application layout.
+5. **Implementation Orderflow**: Suggest a clean, step-by-step sequential order of what should be built first to last (e.g., 1. Database schema, 2. Auth, 3. Landing Page, etc.).
+
+6. **No Conversational Filler**: NEVER ask the user what to generate next, and NEVER include conversational sign-offs. Generate the COMPLETE overview and stop.
+
+CRITICAL: Do NOT summarize broadly. Be exhaustively detailed. List every single tab, page, and feature so the user can perfectly visualize what is going to be built before they confirm and generate tasks. If the system is large, do NOT stop midway. Map out the ENTIRE system.`;
+    const model25 = client.getGenerativeModel({
+      model: "gemini-3.1-flash-lite",
+      generationConfig: {
+        temperature: 0.5,
+        maxOutputTokens: 8192
+      }
+    });
+    for (let i = 0; i < 3; i++) {
+      try {
+        const result = await model25.generateContent(prompt);
+        return result.response.text() || "No suggestion generated.";
+      } catch (err) {
+        if (i === 2) {
+          console.error("[AI SUGGEST] FAILED:", err.message);
+          require("fs").appendFileSync("ai-error.log", (/* @__PURE__ */ new Date()).toISOString() + " [AI SUGGEST ERROR]: " + err.stack + "\n");
+          throw new Error("Failed to generate project suggestion: " + err.message);
+        }
+        const waitMs = err.message?.includes("503") || err.message?.includes("429") ? 1e4 : 3e3;
+        console.warn(`[AI SUGGEST Retry] Attempt ${i + 1} failed, retrying in ${waitMs / 1e3}s... Error: ${err.message}`);
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+      }
+    }
+    throw new Error("Failed to generate project suggestion.");
   }
 };
 
-// backend-fastify/src/routes/ai.ts
+// src/routes/ai.ts
 init_aiValidator();
 var aiRoutes = async (fastify2) => {
-  fastify2.post("/project-plan/analyze", { preValidation: [authenticate] }, async (request, reply) => {
-    const { projectId, requirements: bodyReqs, sprintCapacity } = request.body;
+  fastify2.post("/project-plan/suggest", { preValidation: [authenticate] }, async (request, reply) => {
+    const { projectId, requirements: bodyReqs } = request.body;
     try {
+      request.log.info("[1] Request received: POST /project-plan/suggest");
       if (!projectId) return reply.code(400).send({ message: "projectId is required" });
       const project = await Project.findById(projectId);
       if (!project) return reply.code(404).send({ message: "Project not found" });
       const requirements = project.requirements?.trim() || bodyReqs?.trim();
       if (!requirements) {
+        return reply.code(400).send({ message: "No project requirements were found." });
+      }
+      request.log.info(`[2] Generating suggestion for project: ${project.name}`);
+      const suggestion = await aiService.suggestProjectPlan(requirements);
+      return reply.send({ suggestion });
+    } catch (err) {
+      request.log.error("[AI Suggest Error] " + err.stack);
+      return reply.code(500).send({ message: err.message || "AI Suggestion failed" });
+    }
+  });
+  fastify2.post("/project-plan/analyze", { preValidation: [authenticate] }, async (request, reply) => {
+    const { projectId, requirements: bodyReqs, sprintCapacity, confirmedSuggestion } = request.body;
+    try {
+      request.log.info("[1] Request received: POST /project-plan/analyze");
+      if (!projectId) return reply.code(400).send({ message: "projectId is required" });
+      const project = await Project.findById(projectId);
+      if (!project) return reply.code(404).send({ message: "Project not found" });
+      let requirements = project.requirements?.trim() || bodyReqs?.trim();
+      if (!requirements) {
         return reply.code(400).send({ message: "No project requirements were found. Add project requirements before generating an AI plan." });
       }
+      if (confirmedSuggestion) {
+        requirements = `ORIGINAL REQUIREMENTS:
+${requirements}
+
+CONFIRMED PROJECT OVERVIEW (FEATURES AND TABS TO BUILD):
+${confirmedSuggestion}`;
+      }
+      request.log.info(`[2] Requirements validated for project: ${project.name}`);
       request.log.info(`[AI PLANNER] Project ID: ${projectId}`);
-      request.log.info(`[AI PLANNER] Project Name: ${project.name}`);
       request.log.info(`[AI PLANNER] Requirements length: ${requirements.length} characters`);
       request.log.info(`[AI PLANNER] Sprint capacity: ${sprintCapacity || 40} points`);
       const existingIssues = await Issue.find({ projectId: String(projectId) }, "_id title").lean();
@@ -6288,13 +7300,16 @@ var aiRoutes = async (fastify2) => {
         validation: result.validation || {}
       });
       await draft.save();
-      request.log.info(`[AI PLANNER] Draft saved successfully. ID: ${draft._id}`);
+      request.log.info(`[6] Database save: Draft saved successfully. ID: ${draft._id}`);
       const responseData = draft.toObject();
       responseData.epics = responseData.modules || [];
+      request.log.info("[7] Response returned: Sending AI plan to client");
       return reply.send(responseData);
     } catch (err) {
-      request.log.error("[AI Analyze Error] " + err.message);
-      return reply.code(500).send({ message: err.message || "AI Analysis failed" });
+      request.log.error("[AI Analyze Error] " + err.stack);
+      let safeMsg = err.message || "AI Analysis failed";
+      safeMsg = safeMsg.replace(/AIza[0-9A-Za-z-_]{35}/g, "***API_KEY_HIDDEN***");
+      return reply.code(500).send({ message: safeMsg });
     }
   });
   fastify2.get("/project-plan/:projectId", { preValidation: [authenticate] }, async (request, reply) => {
@@ -6321,151 +7336,228 @@ var aiRoutes = async (fastify2) => {
       return reply.code(500).send({ message: err.message || "Regeneration failed" });
     }
   });
-  const isLeadOrManager = (role) => {
+  const isLeadOrManager2 = (role) => {
     if (!role) return false;
     const r = role.toUpperCase();
     return ["TEAM_LEAD", "TEAM LEAD", "MANAGER", "ADMIN", "SUPER-ADMIN", "COMPANY-ADMIN"].includes(r);
   };
   fastify2.post("/project-plan/approve", { preValidation: [authenticate] }, async (request, reply) => {
     const userRole = request.user?.role;
-    if (!isLeadOrManager(userRole)) {
+    if (!isLeadOrManager2(userRole)) {
       return reply.code(403).send({ message: "Only Team Leads and Managers can approve AI plans." });
     }
     const { planId, approvedEpicIds, approvedStoryIds, approvedTaskIds } = request.body;
-    const plan = await AIProjectPlan.findById(planId);
-    if (!plan) return reply.code(404).send({ message: "Plan not found" });
-    request.log.info(`[AI APPROVE] Approving plan ${planId} for project ${plan.projectId}`);
-    request.log.info(`[AI APPROVE] Approved modules: ${approvedEpicIds?.length || 0}`);
-    request.log.info(`[AI APPROVE] Approved stories: ${approvedStoryIds?.length || 0}`);
-    request.log.info(`[AI APPROVE] Approved tasks: ${approvedTaskIds?.length || 0}`);
-    const projectIdStr = plan.projectId.toString();
-    const workspaceId = request.user?.workspaceId || "forge-india-connect";
-    const creatorId = request.user?.id || "system";
-    const sprintMap = {};
-    const epicMap = {};
-    for (const s of plan.sprints) {
-      const sprint = new Sprint({
-        projectId: projectIdStr,
-        name: s.name,
-        goal: s.goal,
-        status: "PLANNING"
-      });
-      await sprint.save();
-      sprintMap[s.id] = sprint._id.toString();
-      request.log.info(`[AI APPROVE] Created sprint: "${s.name}" (${sprint._id})`);
-    }
-    const getSprintForStory = (sId) => {
-      const sp = plan.sprints.find((s) => s.storyIds.includes(sId));
-      return sp ? sprintMap[sp.id] || null : null;
-    };
-    const modules = plan.modules || [];
-    for (const mod of modules) {
-      const modId = mod.id || "";
-      if (approvedEpicIds.includes(modId)) {
-        const reqIds = (mod.requirementIds || []).join(", ");
-        const epic = new Epic({
+    try {
+      const plan = await AIProjectPlan.findById(planId);
+      if (!plan) return reply.code(404).send({ message: "Plan not found" });
+      request.log.info(`[AI APPROVE] Approving plan ${planId} for project ${plan.projectId}`);
+      request.log.info(`[AI APPROVE] Approved modules: ${approvedEpicIds?.length || 0}`);
+      request.log.info(`[AI APPROVE] Approved stories: ${approvedStoryIds?.length || 0}`);
+      request.log.info(`[AI APPROVE] Approved tasks: ${approvedTaskIds?.length || 0}`);
+      const projectIdStr = plan.projectId.toString();
+      const creatorId = request.user?.id || "system";
+      const projectDoc = await Project.findById(projectIdStr).lean();
+      const workspaceId = projectDoc?.workspaceId || request.user?.workspaceId || "forge-india-connect";
+      const sprintMap = {};
+      const epicMap = {};
+      for (const s of plan.sprints || []) {
+        if (!s.id || !s.name) continue;
+        const sprint = new Sprint({
           projectId: projectIdStr,
-          name: mod.name,
-          description: (mod.description || "") + (reqIds ? ` [Requirements: ${reqIds}]` : ""),
-          status: "TODO"
+          name: s.name,
+          goal: s.goal || "",
+          status: "PLANNING"
         });
-        await epic.save();
-        epicMap[modId] = epic._id.toString();
-        request.log.info(`[AI APPROVE] Created epic/module: "${mod.name}" (${epic._id})`);
+        await sprint.save();
+        sprintMap[s.id] = sprint._id.toString();
+        request.log.info(`[AI APPROVE] Created sprint: "${s.name}" (${sprint._id})`);
       }
-      for (const story of mod.stories || []) {
-        if (approvedStoryIds.includes(story.id)) {
-          const sprintId = getSprintForStory(story.id);
-          const acText = Array.isArray(story.acceptanceCriteria) ? story.acceptanceCriteria.map((c) => `- ${c}`).join("\n") : "";
-          const reqIdsStr = (story.requirementIds || []).join(", ");
-          const descParts = [
-            story.description || "",
-            story.userStory ? `
+      const getSprintForStory = (sId) => {
+        const sp = (plan.sprints || []).find((s) => Array.isArray(s.storyIds) && s.storyIds.includes(sId));
+        return sp ? sprintMap[sp.id] || null : null;
+      };
+      const modules = plan.modules || [];
+      const storyIssueMap = {};
+      for (const mod of modules) {
+        const modId = mod.id || "";
+        if ((approvedEpicIds || []).includes(modId)) {
+          const reqIds = (mod.requirementIds || []).join(", ");
+          const epic = new Epic({
+            projectId: projectIdStr,
+            name: mod.name,
+            description: (mod.description || "") + (reqIds ? ` [Requirements: ${reqIds}]` : ""),
+            status: "TODO"
+          });
+          await epic.save();
+          epicMap[modId] = epic._id.toString();
+          request.log.info(`[AI APPROVE] Created epic/module: "${mod.name}" (${epic._id})`);
+        }
+        for (const story of mod.stories || []) {
+          let storyIssueId = null;
+          if ((approvedStoryIds || []).includes(story.id)) {
+            const sprintId = getSprintForStory(story.id);
+            const acText = Array.isArray(story.acceptanceCriteria) ? story.acceptanceCriteria.map((c) => `- ${c}`).join("\n") : "";
+            const reqIdsStr = (story.requirementIds || []).join(", ");
+            const descParts = [
+              story.description || "",
+              story.userStory ? `
 
 **User Story:** ${story.userStory}` : "",
-            acText ? `
+              acText ? `
 
 **Acceptance Criteria:**
 ${acText}` : "",
-            story.estimateReason ? `
+              story.estimateReason ? `
 
 **Estimate Reason:** ${story.estimateReason}` : "",
-            reqIdsStr ? `
-
-**Requirements:** ${reqIdsStr}` : ""
-          ];
-          const storyIssue = new Issue({
-            workspaceId,
-            projectId: projectIdStr,
-            epicId: epicMap[modId] || void 0,
-            sprintId,
-            title: story.title,
-            description: descParts.join(""),
-            type: "STORY",
-            status: "TO_DO",
-            priority: story.priority || "MEDIUM",
-            storyPoints: story.storyPoints,
-            creatorId
-          });
-          await storyIssue.save();
-        }
-        for (const task of story.tasks || []) {
-          if (approvedTaskIds.includes(task.id)) {
-            const sprintId = getSprintForStory(story.id);
-            const reqIdsStr = (task.requirementIds || story.requirementIds || []).join(", ");
-            const taskDescParts = [
-              task.description || "",
-              task.estimateReason ? `
-
-**Estimate Reason:** ${task.estimateReason}` : "",
               reqIdsStr ? `
 
 **Requirements:** ${reqIdsStr}` : ""
             ];
-            const taskIssue = new Issue({
+            const storyIssue = new Issue({
               workspaceId,
               projectId: projectIdStr,
               epicId: epicMap[modId] || void 0,
-              sprintId,
-              title: task.title,
-              description: taskDescParts.join(""),
-              type: "TASK",
+              sprintId: sprintId || void 0,
+              title: story.title,
+              description: descParts.join(""),
+              type: "STORY",
               status: "TO_DO",
-              priority: task.priority || "MEDIUM",
-              storyPoints: task.storyPoints,
+              priority: story.priority || "MEDIUM",
+              storyPoints: story.storyPoints,
               creatorId
             });
-            await taskIssue.save();
-            const legacyTask = new Task({
-              workspaceId,
-              title: task.title,
-              description: taskDescParts.join(""),
-              status: "todo",
-              priority: (task.priority || "MEDIUM").toLowerCase(),
-              createdByEmail: request.user?.email || "ai-planner@system.local",
-              assigneeEmail: task.suggestedAssignee ? task.suggestedAssignee + "@forge.local" : void 0,
-              assigneeName: task.suggestedAssignee || void 0
-            });
-            await legacyTask.save();
+            await storyIssue.save();
+            storyIssueId = storyIssue._id.toString();
+            storyIssueMap[story.id] = storyIssueId;
+            request.log.info(`[AI APPROVE] Created story: "${story.title}" (${storyIssue._id})`);
+          }
+          for (const task of story.tasks || []) {
+            if ((approvedTaskIds || []).includes(task.id)) {
+              const sprintId = getSprintForStory(story.id);
+              const reqIdsStr = (task.requirementIds || story.requirementIds || []).join(", ");
+              const taskDescParts = [
+                task.description || "",
+                task.estimateReason ? `
+
+**Estimate Reason:** ${task.estimateReason}` : "",
+                reqIdsStr ? `
+
+**Requirements:** ${reqIdsStr}` : ""
+              ];
+              const taskIssue = new Issue({
+                workspaceId,
+                projectId: projectIdStr,
+                epicId: epicMap[modId] || void 0,
+                sprintId: sprintId || void 0,
+                // BUG FIX 3: Link task to parent story issue
+                parentId: storyIssueId || storyIssueMap[story.id] || void 0,
+                title: task.title,
+                description: taskDescParts.join(""),
+                type: task.category || "BACKEND",
+                // Default to BACKEND if not provided, maps to Task Type
+                status: "TO_DO",
+                priority: task.priority || "MEDIUM",
+                storyPoints: task.storyPoints,
+                creatorId
+              });
+              await taskIssue.save();
+              request.log.info(`[AI APPROVE] Created task: "${task.title}" (${taskIssue._id})`);
+              const legacyTask = new Task({
+                workspaceId,
+                projectId: projectIdStr,
+                title: task.title,
+                description: taskDescParts.join(""),
+                status: "todo",
+                priority: (task.priority || "MEDIUM").toLowerCase(),
+                createdByEmail: request.user?.email || "ai-planner@system.local"
+              });
+              await legacyTask.save();
+            }
           }
         }
       }
+      plan.status = "APPROVED";
+      await plan.save();
+      const totalCreated = Object.keys(storyIssueMap).length;
+      request.log.info(`[AI APPROVE] \u2713 Plan approved. Project: ${projectIdStr}. Stories: ${totalCreated}`);
+      return reply.send({ success: true, message: "Plan applied successfully", projectId: projectIdStr });
+    } catch (err) {
+      request.log.error("[AI APPROVE Error] " + err.stack);
+      return reply.code(500).send({ message: err.message || "Approval failed" });
     }
-    plan.status = "APPROVED";
-    await plan.save();
-    request.log.info(`[AI APPROVE] \u2713 Plan approved and persisted. Project: ${projectIdStr}`);
-    return reply.send({ success: true, message: "Plan applied successfully", projectId: projectIdStr });
   });
 };
 
-// backend-fastify/src/index.ts
-var import_groq_sdk3 = __toESM(require("groq-sdk"));
+// src/routes/notifications.ts
+async function notificationsRoutes(fastify2) {
+  fastify2.addHook("preValidation", authenticate);
+  fastify2.get("/", async (request, reply) => {
+    try {
+      const { isRead, is_read } = request.query;
+      const filter = { userId: request.user?.id };
+      const readParam = isRead !== void 0 ? isRead : is_read;
+      if (readParam !== void 0) {
+        filter.isRead = readParam === "true";
+      }
+      const notifications = await Notification.find(filter).sort({ createdAt: -1 }).limit(50).lean();
+      const transformed = notifications.map((n) => ({
+        ...n,
+        id: n._id
+      }));
+      return reply.code(200).send(transformed);
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch notifications", details: err.message });
+    }
+  });
+  fastify2.get("/unread-count", async (request, reply) => {
+    try {
+      const count = await Notification.countDocuments({
+        userId: request.user?.id,
+        isRead: false
+      });
+      return reply.code(200).send({ count });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to fetch unread count", details: err.message });
+    }
+  });
+  fastify2.put("/:id/read", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const notification = await Notification.findOneAndUpdate(
+        { _id: id, userId: request.user?.id },
+        { isRead: true, updatedAt: /* @__PURE__ */ new Date() },
+        { new: true }
+      );
+      if (!notification) {
+        return reply.code(404).send({ error: "Notification not found" });
+      }
+      return reply.code(200).send({ success: true });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to mark as read", details: err.message });
+    }
+  });
+  fastify2.put("/read-all", async (request, reply) => {
+    try {
+      await Notification.updateMany(
+        { userId: request.user?.id, isRead: false },
+        { isRead: true, updatedAt: /* @__PURE__ */ new Date() }
+      );
+      return reply.code(200).send({ success: true });
+    } catch (err) {
+      return reply.code(500).send({ error: "Failed to mark all as read", details: err.message });
+    }
+  });
+}
 
-// backend-fastify/src/services/webrtc.ts
+// src/index.ts
+var import_groq_sdk4 = __toESM(require("groq-sdk"));
+
+// src/services/webrtc.ts
 var import_ws2 = require("ws");
 var import_jsonwebtoken4 = __toESM(require("jsonwebtoken"));
 init_User();
-var import_mongoose30 = require("mongoose");
+var import_mongoose33 = require("mongoose");
 var JWT_SECRET2 = process.env.JWT_SECRET || "nexus-jwt-secret-key";
 var rooms = /* @__PURE__ */ new Map();
 function send(ws, payload) {
@@ -6613,7 +7705,7 @@ function handleWebRtcSignalling(ws) {
     }
     if (type === "end-meeting-all") {
       broadcastToRoom(meetingId, peerId, { type: "meeting-ended" });
-      const query = import_mongoose30.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
+      const query = import_mongoose33.Types.ObjectId.isValid(meetingId) ? { _id: meetingId } : { joinCode: meetingId };
       Meeting.updateOne(query, { status: "ended" }).catch((err) => console.error("[WebRTC] Failed to update meeting status:", err));
       return;
     }
@@ -6659,7 +7751,7 @@ async function cleanupPeer(roomId, pid) {
   const baseUserId = pid.split("_")[0];
   try {
     let meetingQuery = { _id: roomId };
-    if (!import_mongoose30.Types.ObjectId.isValid(roomId)) {
+    if (!import_mongoose33.Types.ObjectId.isValid(roomId)) {
       meetingQuery = { joinCode: roomId };
     }
     const meeting = await Meeting.findOne(meetingQuery);
@@ -6737,7 +7829,7 @@ setInterval(() => {
   }
 }, 3e4);
 
-// backend-fastify/src/services/callSignaling.ts
+// src/services/callSignaling.ts
 var import_ws3 = require("ws");
 var import_jsonwebtoken5 = __toESM(require("jsonwebtoken"));
 var JWT_SECRET3 = process.env.JWT_SECRET || "nexus-jwt-secure-key-change-in-production";
@@ -6881,10 +7973,10 @@ function handleCallSignaling(ws) {
   });
 }
 
-// backend-fastify/src/index.ts
+// src/index.ts
 init_mailSockets();
 
-// backend-fastify/src/utils/seedDefaultUser.ts
+// src/utils/seedDefaultUser.ts
 var import_bcrypt5 = __toESM(require("bcrypt"));
 init_User();
 async function ensureDefaultUser() {
@@ -6969,7 +8061,7 @@ async function ensureDefaultUser() {
   }
 }
 
-// backend-fastify/src/index.ts
+// src/index.ts
 import_dotenv2.default.config({ path: import_path5.default.join(__dirname, "../.env") });
 import_dotenv2.default.config();
 var PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
@@ -7084,10 +8176,8 @@ async function bootstrap() {
   await server.register(statusRoutes, { prefix: "/api/status" });
   await server.register(threadsRoutes, { prefix: "/api/threads" });
   await server.register(aiRoutes, { prefix: "/api/v1/ai" });
+  await server.register(notificationsRoutes, { prefix: "/api/notifications" });
   console.log("[BOOTSTRAP] Registering mock routes...");
-  server.get("/api/notifications/unread-count", async () => {
-    return { count: 0 };
-  });
   server.get("/api/bug-reports", async () => {
     return [];
   });
@@ -7134,7 +8224,7 @@ async function bootstrap() {
       if (!audioBuffer || audioBuffer.length === 0) {
         return reply.code(400).send({ error: 'No audio file uploaded or the file is empty. Use field name "audio".' });
       }
-      const groqClient = new import_groq_sdk3.default({ apiKey: groqKey });
+      const groqClient = new import_groq_sdk4.default({ apiKey: groqKey });
       const blob = new Blob([new Uint8Array(audioBuffer)], { type: mimetype });
       const file = new File([blob], filename, { type: mimetype });
       const transcription = await groqClient.audio.transcriptions.create({
@@ -7161,7 +8251,7 @@ async function bootstrap() {
       if (!transcript || !transcript.trim()) {
         return reply.code(400).send({ error: "Missing required field: transcript." });
       }
-      const groqClient = new import_groq_sdk3.default({ apiKey: groqKey });
+      const groqClient = new import_groq_sdk4.default({ apiKey: groqKey });
       const systemPrompt = `You are an expert meeting analyst. Analyze the provided meeting transcript and return a structured JSON object ONLY \u2014 no markdown, no code fences, no extra text.
 
 Return valid JSON with exactly these fields:
@@ -7234,7 +8324,7 @@ ${transcript}` }
     </ul>
   </div>
 </div>`;
-        const validId = import_mongoose31.default.Types.ObjectId.isValid(meetingId) ? meetingId : null;
+        const validId = import_mongoose34.default.Types.ObjectId.isValid(meetingId) ? meetingId : null;
         let meetingDoc = null;
         if (validId) meetingDoc = await Meeting.findById(validId);
         if (!meetingDoc) meetingDoc = await Meeting.findOne({ joinCode: meetingId });

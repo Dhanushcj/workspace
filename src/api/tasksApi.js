@@ -1,6 +1,6 @@
 const isLocalhost = typeof window !== 'undefined' && 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const BASE = import.meta.env.VITE_API_URL || (isLocalhost ? 'https://workspace-backend-r9f8.onrender.com' : 'https://workspace-backend-r9f8.onrender.com');
+const BASE = import.meta.env.VITE_API_URL || (isLocalhost ? 'http://localhost:3001' : 'https://workspace-backend-r9f8.onrender.com');
 const API_BASE_URL = `${BASE.replace(/\/api$/, '')}/api`;
 
 const getAuthHeaders = () => {
@@ -89,6 +89,35 @@ export const addMember = async (memberData) => {
       body: JSON.stringify(memberData),
     });
     if (!response.ok) throw new Error('Failed to add member');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+export const updateMember = async (id, updates) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) throw new Error('Failed to update member');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+export const removeMember = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to remove member');
     return await response.json();
   } catch (error) {
     console.error('API Error:', error);

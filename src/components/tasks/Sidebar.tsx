@@ -70,6 +70,13 @@ const Sidebar = React.memo(function Sidebar() {
     t.status !== 'DONE' &&
     (sprintId ? (t.sprintId === sprintId || (t as any).sprintId === sprintId) : true)
   ).length;
+
+  // Badge: count tasks in CODE_REVIEW for Team Lead notification
+  const allTasks = useWorkflowStore(state => state.allTasks);
+  const codeReviewCount = (['TEAM_LEAD', 'ADMIN', 'LEAD'].includes(role))
+    ? allTasks.filter(t => t.status === 'CODE_REVIEW').length
+    : tasks.filter(t => t.status === 'CODE_REVIEW' && t.assigneeId === user?.id).length;
+  const testingCount = tasks.filter(t => t.status === 'TESTING').length;
   
   const blockerCount = tasks.filter(t => t.status === 'BLOCKED').length;
   const projectCount = projects.length;
@@ -108,6 +115,14 @@ const Sidebar = React.memo(function Sidebar() {
           ]
         },
         {
+          title: 'TASK MANAGEMENT',
+          items: [
+            { label: 'Task Management', icon: ListChecks, href: `${baseUrl}?tab=TaskManagement` },
+            { label: 'Code Review', icon: Code2, href: `${baseUrl}?tab=CodeReview`, badge: codeReviewCount > 0 ? codeReviewCount : null, badgeColor: codeReviewCount > 0 ? 'bg-violet-100 text-violet-700' : undefined },
+            { label: 'Test Queue', icon: FlaskConical, href: `${baseUrl}?tab=TestQueue`, badge: testingCount > 0 ? testingCount : null },
+          ]
+        },
+        {
           title: 'SPRINT MANAGEMENT',
           items: [
             { label: 'Sprint Planner', icon: Target, href: `${baseUrl}?tab=SprintPlanner` },
@@ -116,7 +131,6 @@ const Sidebar = React.memo(function Sidebar() {
             { label: 'Blockers', icon: ShieldAlert, href: `${baseUrl}?tab=Blockers`, badge: blockerCount > 0 ? blockerCount : null },
           ]
         },
-
         {
           title: 'TEAM',
           items: [
@@ -148,6 +162,7 @@ const Sidebar = React.memo(function Sidebar() {
           title: 'MY WORK',
           items: [
             { label: 'My Tasks', icon: ListChecks, href: `${baseUrl}?tab=MyTasks`, badge: myTasksCount > 0 ? myTasksCount : null },
+            { label: 'Code Review', icon: Code2, href: `${baseUrl}?tab=CodeReviewDev`, badge: codeReviewCount > 0 ? codeReviewCount : null, badgeColor: codeReviewCount > 0 ? 'bg-violet-100 text-violet-700' : undefined },
             { label: 'Bug Inbox', icon: Bug, href: `${baseUrl}?tab=BugInbox`, badge: openBugsCount > 0 ? openBugsCount : null },
           ]
         },
@@ -175,7 +190,8 @@ const Sidebar = React.memo(function Sidebar() {
         {
           title: 'MY QA WORK',
           items: [
-            { label: 'Test Queue', icon: ListTodo, href: `${baseUrl}?tab=TestQueue`, badge: tasks.filter(t => t.status === 'TESTING').length || null },
+            { label: 'Test Queue', icon: FlaskConical, href: `${baseUrl}?tab=TestQueue`, badge: testingCount > 0 ? testingCount : null, badgeColor: testingCount > 0 ? 'bg-amber-100 text-amber-700' : undefined },
+            { label: 'My Tasks', icon: ListChecks, href: `${baseUrl}?tab=MyTasks`, badge: myTasksCount > 0 ? myTasksCount : null },
             { label: 'Active Testing', icon: Play, href: `${baseUrl}?tab=ActiveTesting` },
             { label: 'Bug Reports', icon: Bug, href: `${baseUrl}?tab=BugReports`, badge: openBugsCount > 0 ? openBugsCount : null },
             { label: 'Test Cases', icon: FileText, href: `${baseUrl}?tab=TestCases` },
