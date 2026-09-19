@@ -53,7 +53,7 @@ export const TesterHeader: React.FC<TesterHeaderProps> = ({ name, stats }) => {
         <div className="grid grid-cols-4 gap-4">
            {[
              { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-             { label: 'In Review', value: stats.inProgress, icon: Zap, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+             { label: 'Code Review', value: stats.inProgress, icon: Zap, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
              { label: 'Success', value: stats.passed, icon: CircleCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
              { label: 'Failures', value: stats.failed, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
            ].map((stat, idx) => (

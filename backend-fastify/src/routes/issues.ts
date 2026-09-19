@@ -297,7 +297,7 @@ export async function issueRoutes(fastify: FastifyInstance) {
         'dueDate', 'startDate',
         'moduleName', 'moduleId', 'featureName', 'featureId',
         'reviewComment', 'testComment', 'dependencies',
-        'blockerInfo'
+        'blockerInfo', 'subtasks', 'requirements', 'acceptanceCriteria'
       ];
       const updateFields: any = { updatedAt: new Date() };
       for (const key of allowed) {

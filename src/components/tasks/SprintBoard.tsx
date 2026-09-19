@@ -184,7 +184,7 @@ export const SprintBoard = ({
     if (activeFilter === 'blocked') {
       filtered = filtered.filter(t => t.status === 'BLOCKED');
     } else if (activeFilter === 'pr') {
-      filtered = filtered.filter(t => t.status === 'IN_REVIEW' || t.status === 'PR_SUBMITTED');
+      filtered = filtered.filter(t => t.status === 'CODE_REVIEW' || t.status === 'PR_SUBMITTED');
     }
 
     if (filterAssignee) {
@@ -227,7 +227,12 @@ export const SprintBoard = ({
       'BLOCKED': 6
     };
 
-    let base = statuses.length === 0 ? core : [...statuses];
+    let base = statuses.length === 0 ? core : [...statuses].filter(s => 
+      s.key !== 'IN_REVIEW' && 
+      s.key !== 'PR_SUBMITTED' && 
+      s.name?.toUpperCase() !== 'IN REVIEW' && 
+      s.name?.toUpperCase() !== 'PR SUBMITTED'
+    );
 
     core.forEach(c => {
       if (!base.find(s => s.key === c.key || (s.name && s.name.toUpperCase() === c.name.toUpperCase()))) {

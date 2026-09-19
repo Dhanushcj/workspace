@@ -195,7 +195,12 @@ export const SprintBoard = ({
       'BLOCKED': 5
     };
 
-    let base = statuses.length === 0 ? core : [...statuses];
+    let base = statuses.length === 0 ? core : [...statuses].filter(s => 
+      s.key !== 'IN_REVIEW' && 
+      s.key !== 'PR_SUBMITTED' && 
+      s.name?.toUpperCase() !== 'IN REVIEW' && 
+      s.name?.toUpperCase() !== 'PR SUBMITTED'
+    );
 
     core.forEach(c => {
       if (!base.find(s => s.key === c.key)) {

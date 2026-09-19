@@ -98,7 +98,7 @@ export const KanbanColumn = React.memo(({
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${cs.dot}`} />
           <h3 className={`text-[12px] font-semibold ${cs.text} capitalize`}>
-            {title === 'In Review' || title === 'PR Submitted' ? 'In review' : title}
+            {title === 'Code Review' || title === 'PR Submitted' ? 'Code Review' : title}
           </h3>
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cs.badge}`}>
             {tasks.length}

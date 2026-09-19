@@ -240,7 +240,7 @@ const TasksLayout = ({ children, title, subtitle, headerActions, fullWidth = fal
 
         {/* Content View */}
         <div className="flex-1 overflow-y-auto p-8">
-          <div className={fullWidth ? 'h-full flex flex-col' : 'max-w-[1200px] mx-auto'}>
+          <div className={fullWidth ? 'h-full flex flex-col min-h-0' : 'max-w-[1200px] mx-auto w-full h-full flex flex-col min-h-0'}>
             {/* Page Header Area */}
             {(title || headerActions) && (
               <div className="flex items-start justify-between mb-8 shrink-0">
