@@ -131,6 +131,9 @@ export function validateAndRepairPlan(plan: any): PlanValidationResult {
         if (!task.category) { task.category = 'BACKEND'; }
         if (!task.priority) { task.priority = 'MEDIUM'; }
         if (!task.description) { task.description = ''; }
+        if (!Array.isArray(task.requirements)) { task.requirements = []; }
+        if (!Array.isArray(task.acceptanceCriteria)) { task.acceptanceCriteria = []; }
+        if (!Array.isArray(task.subtasks)) { task.subtasks = []; }
 
         // Validate/repair task story points
         if (!isValidFibonacci(task.storyPoints)) {

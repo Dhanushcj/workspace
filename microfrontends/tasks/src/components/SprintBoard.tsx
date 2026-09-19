@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Task, useWorkflowStore } from '../store/workflowStore';
+import { Task, useWorkflowStore } from '../../store/workflowStore';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskCard } from './TaskCard';
 import { SprintSummaryModal } from './SprintSummaryModal';
@@ -11,25 +11,33 @@ import {
   BarChart3, Settings, Layers, Zap, 
   Plus, Search, List, Flame, Flag, CircleCheck,
   Users, Activity, GitPullRequest, Layout, Clock,
-  ChevronRight, Filter, ChevronDown, AlertCircle, Target
+  ChevronRight, Filter, ChevronDown, AlertCircle
 } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 import SprintSelector from './SprintSelector';
-import { useAuthStore } from '../store/authStore';
-import { useToastStore } from '../store/toastStore';
+import { useAuthStore } from '../../store/authStore';
+import { useToastStore } from '../../store/toastStore';
 
 export const SprintBoard = ({ 
   onTaskClick, 
   onCreateTask,
   onBacklogClick,
   sprintId,
-  hiddenStatuses = []
+  hiddenStatuses = [],
+  searchQuery = '',
+  activeFilter = 'all',
+  filterAssignee = null,
+  filterPriority = null
 }: { 
   onTaskClick: (task: Task, displayId: string) => void, 
   onCreateTask: (status?: string) => void,
   onBacklogClick?: () => void,
   sprintId?: string,
-  hiddenStatuses?: string[]
+  hiddenStatuses?: string[],
+  searchQuery?: string,
+  activeFilter?: 'all' | 'blocked' | 'pr',
+  filterAssignee?: string | null,
+  filterPriority?: string | null
 }) => {
   // OPTIMIZED: Using specific selectors for Zustand
   const tasks = useWorkflowStore(state => state.tasks);
@@ -42,8 +50,8 @@ export const SprintBoard = ({
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const userRole = user?.role || 'DEVELOPER';
-  const isTeamLead = userRole === 'TEAM_LEAD' || userRole === 'MANAGER';
+  const userRole = (user?.role || '').toUpperCase().replace(' ', '_');
+  const isTeamLead = ['TEAM_LEAD', 'LEAD', 'MANAGER', 'SUPER_ADMIN', 'ADMIN', 'COMPANY-ADMIN', 'COMPANY_ADMIN'].includes(userRole);
   const { currentSprint } = useWorkflowStore();
   
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
@@ -51,10 +59,6 @@ export const SprintBoard = ({
   const [isEpicsOpen, setIsEpicsOpen] = useState(false);
   const [isAutomationsOpen, setIsAutomationsOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'blocked' | 'pr'>('all');
-  const [filterAssignee, setFilterAssignee] = useState<string | null>(null);
-  const [filterPriority, setFilterPriority] = useState<string | null>(null);
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -65,14 +69,38 @@ export const SprintBoard = ({
   // Filter tasks by current sprint and assignee if individual employee
   const sprintTasks = useMemo(() => {
     const sid = currentSprint?.id || (currentSprint as any)?._id;
-    if (!sid) return [];
     
-    let filtered = tasks.filter(t => (t as any).sprintId === sid || t.sprintId === sid);
+    let filtered: Task[];
+    if (sid) {
+      // Sprint active: ONLY show tasks that belong to this sprint
+      filtered = tasks.filter(t => {
+        const taskSprintId = (t as any).sprintId;
+        return taskSprintId === sid || taskSprintId === (currentSprint as any)?._id;
+      });
+    } else {
+      // No sprint: show all tasks so the board is never empty
+      filtered = [...tasks];
+    }
+
+    // ENFORCE STRICT PROJECT SEPARATION:
+    // Never show tasks from other projects, even if they are in the store.
+    const cpId = currentProject?.id || (currentProject as any)?._id;
+    if (cpId) {
+       filtered = filtered.filter(t => {
+          const taskProjectId = t.projectId || (t as any).project?.id || (t as any).project?._id || (t as any).project;
+          return taskProjectId === cpId || !taskProjectId;
+       });
+    }
+
     
     // Filter tasks so individual employees only see tasks assigned to them (except MANAGER / TEAM_LEAD / ADMIN)
-    const isTeamLeadOrManager = user?.role === 'TEAM_LEAD' || user?.role === 'MANAGER' || user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
+    const rawRole = (user?.role || '').toUpperCase().replace(' ', '_');
+    const isTeamLeadOrManager = ['TEAM_LEAD', 'LEAD', 'MANAGER', 'SUPER_ADMIN', 'ADMIN', 'COMPANY-ADMIN', 'COMPANY_ADMIN'].includes(rawRole);
     if (user && !isTeamLeadOrManager) {
-      filtered = filtered.filter(t => t.assigneeId === user.id || t.assignee?.id === user.id);
+      filtered = filtered.filter(t => 
+        t.assigneeId === user.id || 
+        t.assignee?.id === user.id
+      );
     }
     
     return filtered;
@@ -113,15 +141,19 @@ export const SprintBoard = ({
 
   useEffect(() => {
     if (currentProject) {
-      fetchStatuses(currentProject.id || (currentProject as any)?._id);
+      const projectId = currentProject.id || (currentProject as any)?._id;
+      fetchStatuses(projectId);
+      // Always fetch all project tasks — the filter is done client-side
+      const { fetchTasks } = useWorkflowStore.getState();
+      fetchTasks({ projectId });
     }
-  }, [currentProject?.id, currentProject?._id]);
+  }, [currentProject?.id, (currentProject as any)?._id]);
 
   // Meta bar calculations
   const totalTasks = sprintTasks.length;
   const doneTasks = sprintTasks.filter(t => t.status === 'DONE').length;
   const blockedTasks = sprintTasks.filter(t => t.status === 'BLOCKED').length;
-  const openPRs = sprintTasks.filter(t => t.status === 'CODE_REVIEW' || t.status === 'PR_SUBMITTED').length;
+  const openPRs = sprintTasks.filter(t => t.status === 'PR_SUBMITTED' || t.status === 'CODE_REVIEW').length;
   const totalPoints = sprintTasks.reduce((acc, t) => acc + (t.storyPoints || t.estimate || 0), 0);
   const donePoints = sprintTasks.filter(t => t.status === 'DONE').reduce((acc, t) => acc + (t.storyPoints || t.estimate || 0), 0);
   const blockedPoints = sprintTasks.filter(t => t.status === 'BLOCKED').reduce((acc, t) => acc + (t.storyPoints || t.estimate || 0), 0);
@@ -152,7 +184,7 @@ export const SprintBoard = ({
     if (activeFilter === 'blocked') {
       filtered = filtered.filter(t => t.status === 'BLOCKED');
     } else if (activeFilter === 'pr') {
-      filtered = filtered.filter(t => t.status === 'IN_REVIEW' || t.status === 'PR_SUBMITTED');
+      filtered = filtered.filter(t => t.status === 'CODE_REVIEW' || t.status === 'PR_SUBMITTED');
     }
 
     if (filterAssignee) {
@@ -180,19 +212,19 @@ export const SprintBoard = ({
       { id: 'TO_DO', name: 'To Do', key: 'TO_DO', color: '#94A3B8', order: 0, projectId: '' },
       { id: 'IN_PROGRESS', name: 'In Progress', key: 'IN_PROGRESS', color: '#2563EB', order: 1, projectId: '' },
       { id: 'CODE_REVIEW', name: 'Code Review', key: 'CODE_REVIEW', color: '#6366F1', order: 2, projectId: '' },
-      { id: 'TESTING', name: 'Testing', key: 'TESTING', color: '#F59E0B', order: 3, projectId: '' },
-      { id: 'DONE', name: 'Done', key: 'DONE', color: '#10B981', order: 4, projectId: '' },
-      { id: 'BLOCKED', name: 'Blocked', key: 'BLOCKED', color: '#EF4444', order: 5, projectId: '' }
+      { id: 'TESTING', name: 'Testing', key: 'TESTING', color: '#F59E0B', order: 4, projectId: '' },
+      { id: 'DONE', name: 'Done', key: 'DONE', color: '#10B981', order: 5, projectId: '' },
+      { id: 'BLOCKED', name: 'Blocked', key: 'BLOCKED', color: '#EF4444', order: 6, projectId: '' }
     ];
 
     const statusOrderMap: Record<string, number> = {
       'TO_DO': 0,
       'IN_PROGRESS': 1,
       'CODE_REVIEW': 2,
-      'PR_SUBMITTED': 2,
-      'TESTING': 3,
-      'DONE': 4,
-      'BLOCKED': 5
+      'PR_SUBMITTED': 3,
+      'TESTING': 4,
+      'DONE': 5,
+      'BLOCKED': 6
     };
 
     let base = statuses.length === 0 ? core : [...statuses].filter(s => 
@@ -203,7 +235,7 @@ export const SprintBoard = ({
     );
 
     core.forEach(c => {
-      if (!base.find(s => s.key === c.key)) {
+      if (!base.find(s => s.key === c.key || (s.name && s.name.toUpperCase() === c.name.toUpperCase()))) {
         base.push(c);
       }
     });
@@ -223,18 +255,6 @@ export const SprintBoard = ({
     if (onTaskClick) onTaskClick(task, dId);
   };
 
-  if (!currentProject) {
-    return (
-      <div className="flex-1 w-full overflow-hidden flex flex-col bg-slate-50 items-center justify-center p-8">
-        <div className="text-center max-w-sm bg-white p-10 rounded-3xl border border-slate-100 shadow-sm">
-           <Target className="mx-auto text-slate-200 mb-4" size={48} />
-           <h2 className="text-xl font-bold text-slate-900 mb-2">No Projects Assigned</h2>
-           <p className="text-[13px] text-slate-500 font-medium leading-relaxed">You have not been assigned to any projects. Please contact your Team Lead or Manager to get access.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 w-full overflow-hidden flex flex-col bg-[var(--background)]">
       {/* 1. Top Bar Controls */}
@@ -244,9 +264,7 @@ export const SprintBoard = ({
             <div className="flex items-center gap-4">
                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Sprint Board</h1>
                <div className="flex items-center gap-2">
-                  <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
-                     {currentSprint?.name || 'No Active Sprint'} — {currentSprint?.status || 'Active'}
-                  </div>
+                  <SprintSelector />
                   {daysLeft > 0 && (
                     <div className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-md text-[10px] font-bold uppercase tracking-widest border border-amber-100">
                        {daysLeft} days left

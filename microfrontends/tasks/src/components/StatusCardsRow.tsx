@@ -1,4 +1,4 @@
-
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate as useRouter } from 'react-router-dom';
@@ -34,7 +34,7 @@ export const StatusCardsRow: React.FC<Props> = ({ backlog, active, review, deplo
   const cards = [
     { label: 'BACKLOG', count: backlog, statusFilter: 'to_do', color: '#64748B', bg: 'bg-slate-50' },
     { label: 'ACTIVE', count: active, statusFilter: 'in_progress', color: '#3B82F6', bg: 'bg-blue-50' },
-    { label: 'REVIEW', count: review, statusFilter: 'in_review', color: '#8B5CF6', bg: 'bg-violet-50' },
+    { label: 'REVIEW', count: review, statusFilter: 'code_review', color: '#8B5CF6', bg: 'bg-violet-50' },
     { label: 'DONE', count: deployed, statusFilter: 'done', color: '#10B981', bg: 'bg-emerald-50' },
   ];
 

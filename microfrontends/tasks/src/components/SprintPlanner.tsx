@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Calendar, Target, Bot, Plus, ArrowRight, BrainCircuit, ShieldAlert,
-  Play, Pause, AlertCircle, GripVertical, CheckCircle2, MoreHorizontal,
-  CalendarDays, Edit3, Trash2
+  Search, Target, Calendar, Play,
+  AlertCircle, User,
+  GripVertical, CalendarDays, Trash2, LayoutGrid, Settings, X
 } from 'lucide-react';
 import {
   DndContext,
@@ -15,24 +17,35 @@ import {
   DragStartEvent
 } from '@dnd-kit/core';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { useWorkflowStore, Task } from '../store/workflowStore';
-import { useToastStore } from '../store/toastStore';
-import api from '../lib/api';
+import { useWorkflowStore, Task } from '../../store/workflowStore';
+import { useToastStore } from '../../store/toastStore';
+import api from '../../lib/api';
 import { SprintNavigatorBar } from './SprintNavigatorBar';
 import { CreateSprintModal } from './CreateSprintModal';
+import { CreateTaskModal } from './CreateTaskModal';
+import { Plus, Bot } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 import AIPlannerModal from './AIPlannerModal';
-import { useAuthStore } from '../store/authStore';
+import { EditSprintModal } from './EditSprintModal';
 
 export default function SprintPlanner() {
-  const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint } = useWorkflowStore();
-  const { addToast } = useToastStore();
   const { user } = useAuthStore();
-  
-  const isLeadOrManager = ['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com';
+  const { currentProject, tasks, fetchTasks, fetchProjects, currentSprint, setCurrentSprint, epics, fetchEpics } = useWorkflowStore();
+  const { addToast } = useToastStore();
   const [sprints, setSprints] = useState<any[]>([]);
   const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isAIPlannerOpen, setIsAIPlannerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [isEditSprintModalOpen, setIsEditSprintModalOpen] = useState(false);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [goalInput, setGoalInput] = useState('');
+  const [isDatesModalOpen, setIsDatesModalOpen] = useState(false);
+  const [startDateInput, setStartDateInput] = useState('');
+  const [endDateInput, setEndDateInput] = useState('');
+  const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
+  const [newModuleName, setNewModuleName] = useState('');
 
   // Local state for optimistic updates
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
@@ -71,6 +84,7 @@ export default function SprintPlanner() {
             setCurrentSprint(active);
           }
           await fetchTasks({ projectId });
+          await fetchEpics(projectId);
         } catch (error) {
           console.error('Failed to load sprint data', error);
         }
@@ -91,13 +105,13 @@ export default function SprintPlanner() {
 
   const filteredTasks = useMemo(() => {
     return localTasks.filter(t =>
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.title && t.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (t.id && t.id.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [localTasks, searchQuery]);
 
   const sprintTasks = filteredTasks.filter(t => t.sprintId === activeSprintId);
-  const backlogTasks = filteredTasks.filter(t => !t.sprintId || t.sprintId === 'null' || t.sprintId === '');
+  const backlogTasks = filteredTasks.filter(t => !t.sprintId || ['null', '', 'undefined'].includes(String(t.sprintId).trim().toLowerCase()));
 
   const totalPoints = sprintTasks.reduce((sum, t) => sum + (t.storyPoints || t.estimate || 0), 0);
   const teamCapacity = 40;
@@ -111,9 +125,67 @@ export default function SprintPlanner() {
     ? `${sprintStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${sprintEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
     : 'May 16–29';
 
+  const renderTasksByEpic = (taskList: Task[], isBacklog = false) => {
+    const epicGroups: Record<string, Task[]> = {};
+    const noEpicTasks: Task[] = [];
+
+    taskList.forEach(t => {
+      const epicId = t.epicId || (t as any).epic?._id || (t as any).epic?.id;
+      if (epicId) {
+        if (!epicGroups[epicId]) epicGroups[epicId] = [];
+        epicGroups[epicId].push(t);
+      } else {
+        noEpicTasks.push(t);
+      }
+    });
+
+    return (
+      <>
+        {Object.entries(epicGroups).map(([epicId, groupTasks]) => {
+          const epic = epics.find(e => e.id === epicId || (e as any)._id === epicId);
+          return (
+            <div key={epicId} className="mb-4 last:mb-0">
+              <h5 className="text-[11px] font-bold text-[var(--accent-tl)] uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5"><LayoutGrid size={13} /> {epic?.name || 'Unknown Module'}</h5>
+              <div className="space-y-1.5">
+                {groupTasks.map(task => (
+                  <DraggableTask
+                    key={task.id}
+                    task={task}
+                    onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
+                    onDelete={() => handleDeleteTask(task.id)}
+                    sprints={sprints}
+                    isBacklog={isBacklog}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {noEpicTasks.length > 0 && (
+          <div className="mb-4 last:mb-0">
+            {Object.keys(epicGroups).length > 0 && <h5 className="text-[11px] font-bold text-[var(--accent-tl)] uppercase tracking-wider mb-2 px-1 mt-4">Other Tasks</h5>}
+            <div className="space-y-1.5">
+              {noEpicTasks.map(task => (
+                <DraggableTask
+                  key={task.id}
+                  task={task}
+                  onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
+                  onDelete={() => handleDeleteTask(task.id)}
+                  sprints={sprints}
+                  isBacklog={isBacklog}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const task = localTasks.find(t => t.id === active.id);
+    const task = localTasks.find(t => (t.id === active.id || (t as any)._id === active.id));
     if (task) setActiveDragTask(task);
   };
 
@@ -154,7 +226,7 @@ export default function SprintPlanner() {
     try {
       setIsUpdating(true);
       // Backend expects null or actual ID via PUT
-      await api.put(`/issues/${taskId}`, { sprintId: targetSprintId });
+      await api.patch(`/issues/${taskId}`, { sprintId: targetSprintId });
       addToast({ type: 'SUCCESS', title: 'Task Moved', message: `"${currentTask.title}" moved.` });
       // Refresh to ensure store is in sync
       await fetchTasks({ projectId: currentProject?.id || (currentProject as any)?._id });
@@ -167,20 +239,25 @@ export default function SprintPlanner() {
     }
   };
 
-  const handleSetGoal = async () => {
+  const handleSetGoal = () => {
     if (!activeSprintId) return;
-    const goal = prompt('Enter sprint goal:', activeSprint?.goal || '');
-    if (goal === null) return;
+    setGoalInput(activeSprint?.goal || '');
+    setIsGoalModalOpen(true);
+  };
+
+  const saveGoal = async () => {
+    if (!activeSprintId) return;
 
     try {
       setIsUpdating(true);
-      const res = await api.put(`/sprints/${activeSprintId}`, { goal });
+      const res = await api.put(`/sprints/${activeSprintId}`, { goal: goalInput });
       const updatedSprint = res.data?.data || res.data;
       addToast({ type: 'SUCCESS', title: 'Goal Updated', message: 'Sprint goal saved successfully.' });
       setCurrentSprint({ ...activeSprint, ...updatedSprint });
 
-      const sprintsRes = await api.get(`/projects/${currentProject?.id}/sprints`);
+      const sprintsRes = await api.get(`/projects/${currentProject?.id || (currentProject as any)._id}/sprints`);
       setSprints(Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []));
+      setIsGoalModalOpen(false);
     } catch (err) {
       addToast({ type: 'ERROR', title: 'Update Failed', message: 'Could not update sprint goal.' });
     } finally {
@@ -188,21 +265,26 @@ export default function SprintPlanner() {
     }
   };
 
-  const handleChangeDates = async () => {
+  const handleChangeDates = () => {
     if (!activeSprintId) return;
-    const start = prompt('Start Date (YYYY-MM-DD):', activeSprint?.startDate?.split('T')[0] || '');
-    const end = prompt('End Date (YYYY-MM-DD):', activeSprint?.endDate?.split('T')[0] || '');
-    if (!start || !end) return;
+    setStartDateInput(activeSprint?.startDate?.split('T')[0] || '');
+    setEndDateInput(activeSprint?.endDate?.split('T')[0] || '');
+    setIsDatesModalOpen(true);
+  };
+
+  const saveDates = async () => {
+    if (!activeSprintId || !startDateInput || !endDateInput) return;
 
     try {
       setIsUpdating(true);
-      const res = await api.put(`/sprints/${activeSprintId}`, { startDate: start, endDate: end });
+      const res = await api.put(`/sprints/${activeSprintId}`, { startDate: startDateInput, endDate: endDateInput });
       const updatedSprint = res.data?.data || res.data;
       addToast({ type: 'SUCCESS', title: 'Dates Updated', message: 'Sprint timeline adjusted.' });
       setCurrentSprint({ ...activeSprint, ...updatedSprint });
 
-      const sprintsRes = await api.get(`/projects/${currentProject?.id}/sprints`);
+      const sprintsRes = await api.get(`/projects/${currentProject?.id || (currentProject as any)._id}/sprints`);
       setSprints(Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []));
+      setIsDatesModalOpen(false);
     } catch (err) {
       addToast({ type: 'ERROR', title: 'Update Failed', message: 'Could not adjust dates.' });
     } finally {
@@ -234,48 +316,52 @@ export default function SprintPlanner() {
     }
   };
 
-  const handleEditSprint = async () => {
-    if (!activeSprint) return;
-    const newName = prompt('Enter new sprint name:', activeSprint.name);
-    if (!newName || newName === activeSprint.name) return;
-    
+  const handleCreateModule = async () => {
+    if (!newModuleName.trim() || !currentProject) return;
+    setIsUpdating(true);
     try {
-      setIsUpdating(true);
-      await api.put(`/sprints/${activeSprint.id || (activeSprint as any)._id}`, { name: newName });
-      addToast({ type: 'SUCCESS', title: 'Sprint Updated', message: 'Sprint name changed successfully.' });
-      
-      const projectId = currentProject?.id || (currentProject as any)?._id;
-      if (projectId) {
-        const res = await api.get(`/projects/${projectId}/sprints`);
-        setSprints(Array.isArray(res.data) ? res.data : (res.data?.data || []));
-        setCurrentSprint({ ...activeSprint, name: newName });
-      }
+      await useWorkflowStore.getState().createEpic({
+        name: newModuleName,
+        projectId: currentProject.id || (currentProject as any)._id,
+        color: '#4f46e5'
+      });
+      addToast({ type: 'SUCCESS', title: 'Module Created', message: `Module "${newModuleName}" created successfully.` });
+      setNewModuleName('');
+      setIsModuleModalOpen(false);
     } catch (err) {
-      addToast({ type: 'ERROR', title: 'Update Failed', message: 'Could not update sprint.' });
+      addToast({ type: 'ERROR', title: 'Failed', message: 'Could not create module.' });
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleDeleteSprint = async () => {
-    if (!activeSprint) return;
-    if (!confirm(`Are you sure you want to delete "${activeSprint.name}"?`)) return;
+    if (!activeSprintId) return;
+    if (!window.confirm(`Are you sure you want to delete the sprint "${activeSprint?.name}"?`)) return;
     
     try {
       setIsUpdating(true);
-      await api.delete(`/sprints/${activeSprint.id || (activeSprint as any)._id}`);
-      addToast({ type: 'SUCCESS', title: 'Sprint Deleted', message: 'The sprint was deleted.' });
+      await api.delete(`/sprints/${activeSprintId}`);
+      addToast({ type: 'SUCCESS', title: 'Sprint Deleted', message: 'Sprint has been deleted.' });
       
+      // Reload sprints and set first active/planning sprint
       const projectId = currentProject?.id || (currentProject as any)?._id;
-      if (projectId) {
-        const res = await api.get(`/projects/${projectId}/sprints`);
-        const sprintList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-        setSprints(sprintList);
-        setCurrentSprint(sprintList[0] || null);
-        await fetchTasks({ projectId });
-      }
+      const sprintsRes = await api.get(`/projects/${projectId}/sprints`);
+      const rawSprints = Array.isArray(sprintsRes.data) ? sprintsRes.data : (sprintsRes.data?.data || []);
+      const normalized = rawSprints.map((s: any) => ({
+        ...s,
+        id: s.id || s._id,
+        _id: s._id || s.id
+      }));
+      setSprints(normalized);
+      
+      const active = normalized.find((s: any) => s.status === 'ACTIVE') ||
+                     normalized.find((s: any) => s.status === 'PLANNING') ||
+                     normalized[0] || null;
+      setCurrentSprint(active);
+      await fetchTasks({ projectId });
     } catch (err) {
-      addToast({ type: 'ERROR', title: 'Delete Failed', message: 'Could not delete sprint.' });
+      addToast({ type: 'ERROR', title: 'Delete Failed', message: 'Could not delete the sprint.' });
     } finally {
       setIsUpdating(false);
     }
@@ -285,7 +371,7 @@ export default function SprintPlanner() {
     try {
       setIsUpdating(true);
       // Corrected to PUT for backend compatibility
-      await api.put(`/issues/${taskId}`, { sprintId: targetSprintId });
+      await api.patch(`/issues/${taskId}`, { sprintId: targetSprintId });
       addToast({ type: 'SUCCESS', title: 'Task Updated', message: targetSprintId ? 'Task added to sprint.' : 'Task moved to backlog.' });
       await fetchTasks({ projectId: currentProject?.id || (currentProject as any)?._id });
     } catch (err) {
@@ -295,10 +381,73 @@ export default function SprintPlanner() {
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
+    try {
+      setIsUpdating(true);
+      await api.delete(`/issues/${taskId}`);
+      addToast({ type: 'SUCCESS', title: 'Task Deleted', message: 'Task deleted successfully.' });
+      await fetchTasks({ projectId: currentProject?.id || (currentProject as any)?._id });
+    } catch (err) {
+      addToast({ type: 'ERROR', title: 'Delete Failed', message: 'Could not delete task.' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const isWithinCapacity = totalPoints <= teamCapacity;
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      {isTaskModalOpen && (
+        <CreateTaskModal
+          isOpen={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          projectId={currentProject?.id || (currentProject as any)?._id}
+          onTaskCreated={(newTask) => {
+            fetchTasks({ projectId: currentProject?.id || (currentProject as any)?._id });
+            setIsTaskModalOpen(false);
+          }}
+        />
+      )}
+      {isModuleModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModuleModalOpen(false)} />
+          <div className="relative bg-[var(--surface)] w-full max-w-sm rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg2)]">
+              <h3 className="font-semibold text-[var(--text)]">Add New Module</h3>
+              <button onClick={() => setIsModuleModalOpen(false)} className="text-[var(--text3)] hover:text-[var(--text)] transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-[13px] font-medium text-[var(--text2)]">Module Name</label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={newModuleName}
+                  onChange={(e) => setNewModuleName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateModule();
+                  }}
+                  className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-[13px] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all"
+                  placeholder="e.g. Authentication, API..."
+                />
+              </div>
+              <button
+                onClick={handleCreateModule}
+                disabled={isUpdating || !newModuleName.trim()}
+                className="w-full py-2 bg-[var(--accent)] text-white rounded-lg text-[13px] font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center"
+              >
+                {isUpdating ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : 'Create Module'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <CreateSprintModal
         isOpen={isSprintModalOpen}
         onClose={() => setIsSprintModalOpen(false)}
@@ -314,8 +463,20 @@ export default function SprintPlanner() {
           });
         }}
       />
+      <EditSprintModal
+        isOpen={isEditSprintModalOpen}
+        onClose={() => setIsEditSprintModalOpen(false)}
+        sprint={activeSprint}
+        onSuccess={(updatedSprint) => {
+          setCurrentSprint({ ...activeSprint, ...updatedSprint });
+          const projectId = currentProject?.id || (currentProject as any)?._id;
+          api.get(`/projects/${projectId}/sprints`).then(sRes => {
+            setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
+          });
+        }}
+      />
 
-      <div className="flex flex-col h-full bg-[var(--background)] overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 bg-[var(--background)] overflow-hidden">
         {/* Sprint Navigator Bar */}
         <SprintNavigatorBar
           sprints={sprints}
@@ -332,29 +493,25 @@ export default function SprintPlanner() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {isLeadOrManager ? (
-                <>
-                  <button
-                    onClick={() => setIsAIPlannerOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-[12px] font-bold hover:bg-indigo-100 transition-all shadow-sm"
-                  >
-                    <Bot size={14} /> ✨ AI Plan Project
-                  </button>
-                  <button
-                    onClick={handleEditSprint}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
-                  >
-                    <Edit3 size={14} /> Edit
-                  </button>
-                  <button
-                    onClick={handleDeleteSprint}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--redbg)] border border-red-200 text-[var(--redtext)] rounded-lg text-[12px] font-medium hover:opacity-90 transition-all"
-                  >
-                    <Trash2 size={14} /> Delete
-                  </button>
-                </>
+              {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
+                <button onClick={() => setIsAIPlannerOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
+                >
+                  AI Plan Project
+                </button>
               ) : null}
-
+              <button
+                onClick={() => setIsTaskModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
+              >
+                <Plus size={14} /> Add Task
+              </button>
+              <button
+                onClick={() => setIsModuleModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
+              >
+                <Plus size={14} /> Add Module
+              </button>
               <button
                 onClick={handleSetGoal}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
@@ -368,9 +525,21 @@ export default function SprintPlanner() {
                 <Calendar size={14} /> Change Dates
               </button>
               <button
+                onClick={() => setIsEditSprintModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] rounded-lg text-[12px] font-medium hover:bg-[var(--bg2)] transition-all"
+              >
+                <Settings size={14} /> Edit Sprint
+              </button>
+              <button
+                onClick={handleDeleteSprint}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface)] border border-red-200/50 text-red-500 rounded-lg text-[12px] font-medium hover:bg-red-50 hover:border-red-200 transition-all"
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+              <button
                 onClick={handleStartSprint}
                 disabled={isUpdating || activeSprint?.status === 'ACTIVE' || activeSprint?.status === 'COMPLETED'}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--accent-tl)] text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--accent)] text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-all disabled:opacity-50"
               >
                 <Play size={12} fill="currentColor" />
                 {activeSprint?.status === 'ACTIVE' ? 'Sprint Active' : `Start ${activeSprint?.name || 'Sprint'}`}
@@ -398,11 +567,11 @@ export default function SprintPlanner() {
 
           {/* Metric Cards */}
           <div className="grid grid-cols-5 gap-4">
-            <MetricCard label="Planned tasks" value={sprintTasks.length.toString()} color="var(--accent-tl)" />
-            <MetricCard label="Story points" value={`${totalPoints}/${teamCapacity}`} color="var(--accent-tl)" />
-            <MetricCard label="Backlog remaining" value={backlogTasks.length.toString()} color="var(--accent-tl)" />
-            <MetricCard label="Sprint duration" value={`${sprintDurationDays}d`} color="var(--accent-tl)" />
-            <MetricCard label="Avg velocity" value={`${teamCapacity}pts`} color="var(--accent-tl)" />
+            <MetricCard label="Planned tasks" value={sprintTasks.length.toString()} color="var(--accent)" />
+            <MetricCard label="Story points" value={`${totalPoints}/${teamCapacity}`} color="var(--accent)" />
+            <MetricCard label="Backlog remaining" value={backlogTasks.length.toString()} color="var(--accent)" />
+            <MetricCard label="Sprint duration" value={`${sprintDurationDays}d`} color="var(--accent)" />
+            <MetricCard label="Avg velocity" value={`${teamCapacity}pts`} color="var(--accent)" />
           </div>
 
           {/* Sprint Tasks Section */}
@@ -412,14 +581,7 @@ export default function SprintPlanner() {
             count={sprintTasks.length}
             isUpdating={isUpdating}
           >
-            {sprintTasks.map(task => (
-              <DraggableTask
-                key={task.id}
-                task={task}
-                onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
-                sprints={sprints}
-              />
-            ))}
+            {sprintTasks.length > 0 && renderTasksByEpic(sprintTasks, false)}
             {sprintTasks.length === 0 && (
               <div className="py-12 flex flex-col items-center justify-center gap-2 text-[var(--text3)]">
                 <CalendarDays size={28} strokeWidth={1.5} />
@@ -436,15 +598,7 @@ export default function SprintPlanner() {
             count={backlogTasks.length}
             isUpdating={isUpdating}
           >
-            {backlogTasks.map(task => (
-              <DraggableTask
-                key={task.id}
-                task={task}
-                onMove={(targetId: any) => handleMoveTask(task.id, targetId)}
-                sprints={sprints}
-                isBacklog
-              />
-            ))}
+            {backlogTasks.length > 0 && renderTasksByEpic(backlogTasks, true)}
             {backlogTasks.length === 0 && (
               <div className="py-8 flex flex-col items-center justify-center gap-1 text-[var(--text3)]">
                 <p className="text-[12px]">Backlog is empty</p>
@@ -469,10 +623,23 @@ export default function SprintPlanner() {
           projectId={currentProject.id || (currentProject as any)._id}
           projectName={currentProject.name}
           onSuccess={() => {
-            fetchTasks({ projectId: currentProject.id || (currentProject as any)._id });
-            api.get(`/projects/${currentProject.id || (currentProject as any)._id}/sprints`).then(sRes => {
-              setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
+            const projectId = currentProject.id || (currentProject as any)._id;
+            // 1. Reload sprints so newly created AI sprints appear
+            api.get(`/projects/${projectId}/sprints`).then(sRes => {
+              const rawSprints = Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []);
+              const normalized = rawSprints.map((s: any) => ({
+                ...s,
+                id: s.id || s._id,
+                _id: s._id || s.id
+              }));
+              setSprints(normalized);
+              // Activate first PLANNING sprint so backlog/sprint board updates
+              const planning = normalized.find((s: any) => s.status === 'PLANNING');
+              if (planning) setCurrentSprint(planning);
             });
+            // 2. Reload tasks silently — CRITICAL: pass projectId explicitly so the correct project's backlog loads
+            fetchTasks({ projectId }, true);
+            // NOTE: do NOT call fetchProjects(true) here — it resets currentProject to the first in list
           }}
         />
       )}
@@ -511,9 +678,10 @@ function DroppableArea({ id, title, count, children, isUpdating }: any) {
 }
 
 /* ── Draggable Task Row ─────────────────────────────────────────── */
-function DraggableTask({ task, isOverlay }: any) {
+function DraggableTask({ task, isOverlay, onDelete }: any) {
+  const taskId = task.id || task._id;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: task.id,
+    id: taskId,
   });
 
   const style = transform ? {
@@ -533,7 +701,7 @@ function DraggableTask({ task, isOverlay }: any) {
       <div className="p-1 text-[var(--text3)] hover:text-[var(--text2)]">
         <GripVertical size={14} />
       </div>
-      <span className="text-[11px] font-medium text-[var(--text3)] tabular-nums w-10">{task.id?.slice(-4) || '—'}</span>
+      <span className="text-[11px] font-medium text-[var(--text3)] tabular-nums w-10">{taskId?.slice(-4) || '—'}</span>
       <p className="text-[13px] text-[var(--text)] flex-1 line-clamp-1">{task.title}</p>
       <div className="flex items-center gap-2.5">
         <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${task.priority === 'CRITICAL' ? 'bg-[var(--redbg)] text-[var(--redtext)]' :
@@ -551,6 +719,18 @@ function DraggableTask({ task, isOverlay }: any) {
           </div>
         )}
         <span className="text-[12px] font-medium text-[var(--text2)] w-4 text-center">{task.storyPoints || task.estimate || '–'}</span>
+        {onDelete && !isOverlay && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-1 text-[var(--text3)] hover:text-[var(--redtext)] hover:bg-[var(--redbg)] rounded transition-colors ml-1"
+            title="Delete Task"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
     </div>
   );
