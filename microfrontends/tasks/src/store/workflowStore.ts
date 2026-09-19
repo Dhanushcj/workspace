@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import api from '../lib/api';
 import { socketService } from '../lib/socket';
 
-export type TaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'PR_SUBMITTED' | 'TESTING' | 'READY_FOR_RELEASE' | 'DONE' | 'BLOCKED';
+export type TaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'CODE_REVIEW' | 'PR_SUBMITTED' | 'TESTING' | 'READY_FOR_RELEASE' | 'DONE' | 'BLOCKED';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type UserRole = 'DEVELOPER' | 'TESTER' | 'MANAGER' | 'TEAM_LEAD';
 

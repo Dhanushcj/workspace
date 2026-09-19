@@ -61,7 +61,7 @@ export default function KanbanBoard() {
 
   return (
     <div className="h-full flex flex-col space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <style jsx>{`
+       <style>{`
           @keyframes success-pulse {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); transform: scale(1); }
             50% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); transform: scale(1.02); }
