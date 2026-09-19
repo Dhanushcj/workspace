@@ -121,7 +121,7 @@ export const SprintBoard = ({
   const totalTasks = sprintTasks.length;
   const doneTasks = sprintTasks.filter(t => t.status === 'DONE').length;
   const blockedTasks = sprintTasks.filter(t => t.status === 'BLOCKED').length;
-  const openPRs = sprintTasks.filter(t => t.status === 'IN_REVIEW' || t.status === 'PR_SUBMITTED').length;
+  const openPRs = sprintTasks.filter(t => t.status === 'CODE_REVIEW' || t.status === 'PR_SUBMITTED').length;
   const totalPoints = sprintTasks.reduce((acc, t) => acc + (t.storyPoints || t.estimate || 0), 0);
   const donePoints = sprintTasks.filter(t => t.status === 'DONE').reduce((acc, t) => acc + (t.storyPoints || t.estimate || 0), 0);
   const blockedPoints = sprintTasks.filter(t => t.status === 'BLOCKED').reduce((acc, t) => acc + (t.storyPoints || t.estimate || 0), 0);
@@ -179,7 +179,7 @@ export const SprintBoard = ({
     const core = [
       { id: 'TO_DO', name: 'To Do', key: 'TO_DO', color: '#94A3B8', order: 0, projectId: '' },
       { id: 'IN_PROGRESS', name: 'In Progress', key: 'IN_PROGRESS', color: '#2563EB', order: 1, projectId: '' },
-      { id: 'IN_REVIEW', name: 'In Review', key: 'IN_REVIEW', color: '#8B5CF6', order: 2, projectId: '' },
+      { id: 'CODE_REVIEW', name: 'Code Review', key: 'CODE_REVIEW', color: '#6366F1', order: 2, projectId: '' },
       { id: 'TESTING', name: 'Testing', key: 'TESTING', color: '#F59E0B', order: 3, projectId: '' },
       { id: 'DONE', name: 'Done', key: 'DONE', color: '#10B981', order: 4, projectId: '' },
       { id: 'BLOCKED', name: 'Blocked', key: 'BLOCKED', color: '#EF4444', order: 5, projectId: '' }
@@ -188,7 +188,7 @@ export const SprintBoard = ({
     const statusOrderMap: Record<string, number> = {
       'TO_DO': 0,
       'IN_PROGRESS': 1,
-      'IN_REVIEW': 2,
+      'CODE_REVIEW': 2,
       'PR_SUBMITTED': 2,
       'TESTING': 3,
       'DONE': 4,

@@ -85,7 +85,7 @@ export const TaskCard = React.memo(({
   const stack = deriveStack(task);
   const isBlocked = task.status === 'BLOCKED';
   const isDone = task.status === 'DONE';
-  const isInReview = task.status === 'IN_REVIEW' || task.status === 'PR_SUBMITTED';
+  const isInReview = task.status === 'CODE_REVIEW' || task.status === 'PR_SUBMITTED';
   const isTesting = task.status === 'TESTING';
   const isUnassigned = !task.assignee?.name;
 

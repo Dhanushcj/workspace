@@ -1008,7 +1008,7 @@ export default function DeveloperDashboard() {
         <TaskSelectionModal 
           isOpen={isTaskSelectorOpen}
           onClose={() => setIsTaskSelectorOpen(false)}
-          tasks={tasks.filter(t => t.assigneeId === user?.id && (t.status === 'IN_PROGRESS' || t.status === 'IN_REVIEW'))}
+          tasks={tasks.filter(t => t.assigneeId === user?.id && (t.status === 'IN_PROGRESS' || t.status === 'CODE_REVIEW'))}
           onSelect={handleTaskSelectForPR}
         />
 
@@ -1126,7 +1126,7 @@ const MyTaskListItem = React.memo(({ task, onPRClick, isDone = false, onClick }:
         </div>
       </div>
       <div className="flex items-center gap-4">
-        {(status === 'IN_PROGRESS' || status === 'IN_REVIEW') && (
+        {(status === 'IN_PROGRESS' || status === 'CODE_REVIEW') && (
           <button 
             onClick={() => onPRClick(task)}
             className="px-3 py-1 bg-[#EFF4FF] text-[#1B4FAB] rounded-lg text-[10px] font-bold uppercase tracking-widest border border-[#1B4FAB]/10 hover:bg-[#1B4FAB] hover:text-white transition-all flex items-center gap-1.5"
