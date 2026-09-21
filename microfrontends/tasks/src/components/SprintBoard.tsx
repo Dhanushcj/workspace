@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Task, useWorkflowStore } from '../../store/workflowStore';
+import { Task, useWorkflowStore } from '../store/workflowStore';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskCard } from './TaskCard';
 import { SprintSummaryModal } from './SprintSummaryModal';
@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 import SprintSelector from './SprintSelector';
-import { useAuthStore } from '../../store/authStore';
-import { useToastStore } from '../../store/toastStore';
+import { useAuthStore } from '../store/authStore';
+import { useToastStore } from '../store/toastStore';
 
 export const SprintBoard = ({ 
   onTaskClick, 
