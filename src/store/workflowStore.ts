@@ -58,6 +58,8 @@ export interface Task {
     blockers: number;
   };
   prNumber?: number;
+  requirements?: { id: string, text: string, completed: boolean }[];
+  acceptanceCriteria?: { id: string, text: string, completed: boolean }[];
 }
 
 export interface Epic {

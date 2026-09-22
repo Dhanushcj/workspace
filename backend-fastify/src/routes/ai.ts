@@ -193,6 +193,12 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
 
       const sprintMap: Record<string, string> = {};
       const epicMap: Record<string, string> = {};
+      
+      const reqMap: Record<string, string> = {};
+      const requirements = (plan as any).projectAnalysis?.requirements || (plan as any).requirements || [];
+      for (const req of requirements) {
+        reqMap[req.id] = req.title ? `${req.id}: ${req.title}` : req.id;
+      }
 
       // BUG FIX 2: Only create sprints if there are any; if sprints is empty, issues go to backlog (sprintId: null)
       for (const s of (plan.sprints || [])) {
@@ -245,7 +251,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
               ? story.acceptanceCriteria.map((c: string) => ({ id: new Types.ObjectId().toString(), text: c, completed: false }))
               : [];
             
-            const reqItems = (story.requirementIds || []).map((r: string) => ({ id: new Types.ObjectId().toString(), text: r, completed: false }));
+            const reqItems = (story.requirementIds || []).map((r: string) => ({ id: new Types.ObjectId().toString(), text: reqMap[r] || r, completed: false }));
 
             const descParts = [
               story.description || '',
@@ -278,7 +284,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
           for (const task of (story.tasks || [])) {
             if ((approvedTaskIds || []).includes(task.id)) {
               const sprintId = getSprintForStory(story.id);
-              const reqItems = (task.requirementIds || story.requirementIds || []).map((r: string) => ({ id: new Types.ObjectId().toString(), text: r, completed: false }));
+              const reqItems = (task.requirementIds || story.requirementIds || []).map((r: string) => ({ id: new Types.ObjectId().toString(), text: reqMap[r] || r, completed: false }));
 
               const taskDescParts = [
                 task.description || '',

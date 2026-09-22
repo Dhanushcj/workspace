@@ -485,14 +485,14 @@ export default function SprintPlanner() {
 
         {/* Action Header */}
         <div className="px-8 py-5 border-b border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4">
             <div>
               <h2 className="text-[20px] font-semibold text-[var(--text)]">{activeSprint?.name || 'Sprint Planning'}</h2>
               <p className="text-[12px] text-[var(--text3)] mt-0.5">
                 {currentProject?.name || 'Project'} · {activeSprint?.status || 'Planning'}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {['TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN', 'COMPANY_ADMIN'].includes(user?.role || '') || user?.email?.includes('lead') || user?.email === 'agila@fic.com' || user?.email === 'akila@fic.com' ? (
                 <button onClick={() => setIsAIPlannerOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1B4FAB] text-white rounded-lg text-[12px] font-medium hover:bg-[#1A3A8F] transition-all shadow-sm"
@@ -542,7 +542,7 @@ export default function SprintPlanner() {
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--accent)] text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-all disabled:opacity-50"
               >
                 <Play size={12} fill="currentColor" />
-                {activeSprint?.status === 'ACTIVE' ? 'Sprint Active' : `Start ${activeSprint?.name || 'Sprint'}`}
+                {activeSprint?.status === 'ACTIVE' ? 'Sprint Active' : `Start ${(activeSprint?.name || 'Sprint').split(':')[0].trim()}`}
               </button>
             </div>
           </div>
