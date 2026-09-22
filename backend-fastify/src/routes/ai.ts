@@ -1,4 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
+import { Types } from 'mongoose';
 import { AIProjectPlan } from '../models/AIProjectPlan';
 import { aiService } from '../services/aiService';
 import { Epic } from '../models/Epic';
@@ -240,17 +241,16 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
 
           if ((approvedStoryIds || []).includes(story.id)) {
             const sprintId = getSprintForStory(story.id);
-            const acText = Array.isArray(story.acceptanceCriteria)
-              ? story.acceptanceCriteria.map((c: string) => `- ${c}`).join('\n')
-              : '';
-            const reqIdsStr = (story.requirementIds || []).join(', ');
+            const acItems = Array.isArray(story.acceptanceCriteria)
+              ? story.acceptanceCriteria.map((c: string) => ({ id: new Types.ObjectId().toString(), text: c, completed: false }))
+              : [];
+            
+            const reqItems = (story.requirementIds || []).map((r: string) => ({ id: new Types.ObjectId().toString(), text: r, completed: false }));
 
             const descParts = [
               story.description || '',
               story.userStory ? `\n\n**User Story:** ${story.userStory}` : '',
-              acText ? `\n\n**Acceptance Criteria:**\n${acText}` : '',
-              story.estimateReason ? `\n\n**Estimate Reason:** ${story.estimateReason}` : '',
-              reqIdsStr ? `\n\n**Requirements:** ${reqIdsStr}` : ''
+              story.estimateReason ? `\n\n**Estimate Reason:** ${story.estimateReason}` : ''
             ];
 
             const storyIssue = new Issue({
@@ -260,6 +260,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
               sprintId: sprintId || undefined,
               title: story.title,
               description: descParts.join(''),
+              requirements: reqItems,
+              acceptanceCriteria: acItems,
               type: 'STORY',
               status: 'TO_DO',
               priority: story.priority || 'MEDIUM',
@@ -276,12 +278,11 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
           for (const task of (story.tasks || [])) {
             if ((approvedTaskIds || []).includes(task.id)) {
               const sprintId = getSprintForStory(story.id);
-              const reqIdsStr = (task.requirementIds || story.requirementIds || []).join(', ');
+              const reqItems = (task.requirementIds || story.requirementIds || []).map((r: string) => ({ id: new Types.ObjectId().toString(), text: r, completed: false }));
 
               const taskDescParts = [
                 task.description || '',
-                task.estimateReason ? `\n\n**Estimate Reason:** ${task.estimateReason}` : '',
-                reqIdsStr ? `\n\n**Requirements:** ${reqIdsStr}` : ''
+                task.estimateReason ? `\n\n**Estimate Reason:** ${task.estimateReason}` : ''
               ];
 
               const taskIssue = new Issue({
@@ -293,6 +294,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
                 parentId: storyIssueId || storyIssueMap[story.id] || undefined,
                 title: task.title,
                 description: taskDescParts.join(''),
+                requirements: reqItems,
                 type: task.category || 'BACKEND', // Default to BACKEND if not provided, maps to Task Type
                 status: 'TO_DO',
                 priority: task.priority || 'MEDIUM',

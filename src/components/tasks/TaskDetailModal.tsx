@@ -7,75 +7,8 @@ import { marked } from 'marked';
 import { useToastStore } from '../../store/toastStore';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../lib/api';
-import { MessageSquare, Send, User, BookOpen, Target, CheckSquare, Plus, Trash2, Layers, GitBranch } from 'lucide-react';
+import { MessageSquare, Send, User } from 'lucide-react';
 import { RaiseBugModal } from './RaiseBugModal';
-
-const ChecklistEditor = ({
-  label, icon, items, onChange, isDeveloper, textKey = 'text'
-}: {
-  label: string; icon: React.ReactNode; items: any[]; onChange: (items: any[]) => void; isDeveloper: boolean; textKey?: string;
-}) => {
-  const addItem = () => onChange([...items, { id: Date.now().toString(), [textKey]: '', completed: false }]);
-  const updateItem = (idx: number, val: string) => {
-    const updated = [...items];
-    updated[idx][textKey] = val;
-    onChange(updated);
-  };
-  const toggleItem = (idx: number) => {
-    const updated = [...items];
-    updated[idx].completed = !updated[idx].completed;
-    onChange(updated);
-  };
-  const removeItem = (idx: number) => onChange(items.filter((_, i) => i !== idx));
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between ml-1">
-        <label className="text-[12px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-          {icon} {label}
-        </label>
-        {!isDeveloper && (
-          <button type="button" onClick={addItem} className="text-[10px] flex items-center gap-1 font-bold text-indigo-500 hover:text-indigo-600 transition-colors uppercase tracking-wider">
-            <Plus size={12} /> Add
-          </button>
-        )}
-      </div>
-      {items.length > 0 && (
-        <div className="space-y-2">
-          {items.map((item, idx) => (
-            <div key={item.id || idx} className="flex items-start gap-2 group">
-              <button 
-                type="button" 
-                onClick={() => toggleItem(idx)}
-                className={`mt-1.5 shrink-0 flex items-center justify-center w-4 h-4 rounded border ${item.completed ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 hover:border-indigo-400'}`}
-              >
-                {item.completed && <CheckSquare size={12} />}
-              </button>
-              {isDeveloper ? (
-                <div className={`text-[13px] flex-1 pt-1 ${item.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                  {item[textKey]}
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  value={item[textKey]}
-                  onChange={e => updateItem(idx, e.target.value)}
-                  className={`flex-1 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all ${item.completed ? 'line-through text-slate-400' : ''}`}
-                />
-              )}
-              {!isDeveloper && (
-                <button type="button" onClick={() => removeItem(idx)} className="p-1.5 mt-0.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100">
-                  <Trash2 size={14} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -103,12 +36,7 @@ export const TaskDetailModal = ({
     status: '',
     priority: '',
     assigneeId: '',
-    storyPoints: 1,
-    moduleName: '',
-    featureName: '',
-    subtasks: [] as any[],
-    requirements: [] as any[],
-    acceptanceCriteria: [] as any[]
+    storyPoints: 1
   });
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -151,12 +79,7 @@ export const TaskDetailModal = ({
         status: task.status || 'TO_DO',
         priority: task.priority || 'MEDIUM',
         assigneeId: task.assigneeId || '',
-        storyPoints: task.storyPoints || task.estimate || 1,
-        moduleName: task.moduleName || '',
-        featureName: task.featureName || '',
-        subtasks: task.subtasks || [],
-        requirements: task.requirements || [],
-        acceptanceCriteria: task.acceptanceCriteria || []
+        storyPoints: task.storyPoints || task.estimate || 1
       });
       fetchComments();
     }
@@ -241,7 +164,7 @@ export const TaskDetailModal = ({
                     <>
                       <option value="TO_DO">To Do</option>
                       <option value="IN_PROGRESS">In Progress</option>
-                      <option value="CODE_REVIEW">Code Review</option>
+                      <option value="IN_REVIEW">In Review</option>
                       <option value="TESTING">Testing</option>
                       <option value="DONE">Done</option>
                       <option value="BLOCKED">Blocked</option>
@@ -309,44 +232,6 @@ export const TaskDetailModal = ({
                 <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-blue-500 transition-colors" />
               </div>
             </div>
-
-            {/* Module Name */}
-            <div className="space-y-2">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                <Layers size={14} /> Module
-              </label>
-              <input
-                type="text"
-                value={formData.moduleName}
-                onChange={e => setFormData(prev => ({ ...prev, moduleName: e.target.value }))}
-                disabled={isDeveloper}
-                placeholder="No Module"
-                className={`w-full px-4 py-3.5 border rounded-2xl text-[14px] font-medium outline-none transition-all ${
-                  isDeveloper
-                    ? 'bg-slate-100/50 border-slate-100 text-slate-500 cursor-not-allowed'
-                    : 'bg-slate-50 border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white'
-                }`}
-              />
-            </div>
-
-            {/* Feature Name */}
-            <div className="space-y-2">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                <GitBranch size={14} /> Feature
-              </label>
-              <input
-                type="text"
-                value={formData.featureName}
-                onChange={e => setFormData(prev => ({ ...prev, featureName: e.target.value }))}
-                disabled={isDeveloper}
-                placeholder="No Feature"
-                className={`w-full px-4 py-3.5 border rounded-2xl text-[14px] font-medium outline-none transition-all ${
-                  isDeveloper
-                    ? 'bg-slate-100/50 border-slate-100 text-slate-500 cursor-not-allowed'
-                    : 'bg-slate-50 border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white'
-                }`}
-              />
-            </div>
           </div>
 
           {/* Description */}
@@ -380,41 +265,6 @@ export const TaskDetailModal = ({
               />
             )}
           </div>
-
-          <div className="relative pt-4">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100" /></div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Task Checklist</span>
-            </div>
-          </div>
-
-          {/* Requirements */}
-          <ChecklistEditor
-            label="Requirements"
-            icon={<BookOpen size={14} />}
-            items={formData.requirements}
-            onChange={(items) => setFormData(prev => ({ ...prev, requirements: items }))}
-            isDeveloper={isDeveloper}
-          />
-
-          {/* Acceptance Criteria */}
-          <ChecklistEditor
-            label="Acceptance Criteria"
-            icon={<Target size={14} />}
-            items={formData.acceptanceCriteria}
-            onChange={(items) => setFormData(prev => ({ ...prev, acceptanceCriteria: items }))}
-            isDeveloper={isDeveloper}
-          />
-
-          {/* Subtasks */}
-          <ChecklistEditor
-            label="Subtasks"
-            icon={<CheckSquare size={14} />}
-            items={formData.subtasks}
-            onChange={(items) => setFormData(prev => ({ ...prev, subtasks: items }))}
-            isDeveloper={isDeveloper}
-            textKey="title"
-          />
 
           {/* Comments Section */}
           <div className="pt-6 border-t border-slate-100 space-y-4">

@@ -21,7 +21,6 @@ export default function KanbanBoard() {
     { id: 'TO_DO', label: 'To Do', color: 'bg-slate-200' },
     { id: 'BLOCKED', label: 'Blocked', color: 'bg-red-500' },
     { id: 'IN_PROGRESS', label: 'Active', color: 'bg-amber-400' },
-    { id: 'CODE_REVIEW', label: 'Code Review', color: 'bg-indigo-400' },
     { id: 'PR_SUBMITTED', label: 'PR Submitted', color: 'bg-blue-400' },
     { id: 'TESTING', label: 'Validation', color: 'bg-emerald-400' },
     { id: 'READY_FOR_RELEASE', label: 'Final Stage', color: 'bg-blue-500' },
@@ -42,7 +41,7 @@ export default function KanbanBoard() {
 
     // Determine animation type based on transition
     let type: 'success' | 'fail' = 'success';
-    if (status === 'IN_PROGRESS' && (task.status === 'PR_SUBMITTED' || task.status === 'CODE_REVIEW' || task.status === 'TESTING')) {
+    if (status === 'IN_PROGRESS' && (task.status === 'PR_SUBMITTED' || task.status === 'TESTING')) {
       type = 'fail';
     }
 

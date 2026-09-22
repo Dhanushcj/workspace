@@ -5,9 +5,9 @@ import {
   X, Calendar, ChevronDown, Loader, AlertCircle, Plus,
   Trash2, BookOpen, Target, CheckSquare, Layers, GitBranch
 } from 'lucide-react';
-import { Task, useWorkflowStore } from '../../store/workflowStore';
-import { useNotificationStore } from '../../store/notificationStore';
-import api from '../../lib/api';
+import { Task, useWorkflowStore } from '../store/workflowStore';
+import { useNotificationStore } from '../store/notificationStore';
+import api from '../lib/api';
 
 interface CreateTaskModalProps {
   isOpen: boolean;

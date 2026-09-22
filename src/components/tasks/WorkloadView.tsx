@@ -63,7 +63,7 @@ export const WorkloadView = () => {
           const latestTask = [...userTasks].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
           if (latestTask.status === 'TO_DO') {
             currentTaskString = `Up next: ${latestTask.title}`;
-          } else if (latestTask.status === 'CODE_REVIEW' || latestTask.status === 'TESTING') {
+          } else if (latestTask.status === 'IN_REVIEW' || latestTask.status === 'TESTING') {
             currentTaskString = `Reviewing: ${latestTask.title}`;
           } else {
             currentTaskString = `Recently finished: ${latestTask.title}`;

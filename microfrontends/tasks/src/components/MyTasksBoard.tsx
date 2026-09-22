@@ -1,4 +1,4 @@
-
+'use client';
 
 import React from 'react';
 import { 
@@ -16,7 +16,7 @@ interface Props {
   onSubmitPR: (taskId: string) => void;
 }
 
-export const MyTasksBoard: React.FC<Props> = ({ tasks, theme = 'light', onStartTask, onRaiseBlocker, onSubmitPR }) => {
+export const MyTasksBoard: React.FC<Props> = ({ tasks = [], theme = 'light', onStartTask = () => {}, onRaiseBlocker = () => {}, onSubmitPR = () => {} }) => {
   const isDark = theme === 'dark';
   const columns = [
     { label: 'TO DO', status: 'TO_DO' },

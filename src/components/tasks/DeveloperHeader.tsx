@@ -68,7 +68,7 @@ export const DeveloperHeader: React.FC<Props> = ({ developerName, stats }) => {
                { label: 'Pending', value: stats.todo, icon: ClipboardList, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
                { label: 'Active', value: stats.inProgress, icon: Zap, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
                { label: 'Blocked', value: stats.blocked, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
-               { label: 'Code Review', value: stats.inReview, icon: Eye, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+               { label: 'In Review', value: stats.inReview, icon: Eye, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
              ].map((stat, idx) => (
                <div key={idx} className={`flex items-center gap-4 p-4 rounded-2xl bg-white border ${stat.border} hover:border-blue-300 transition-all shadow-sm group/stat`}>
                   <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center ${stat.color}`}>

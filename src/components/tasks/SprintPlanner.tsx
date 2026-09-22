@@ -476,7 +476,7 @@ export default function SprintPlanner() {
         }}
       />
 
-      <div className="flex flex-col flex-1 min-h-0 bg-[var(--background)] overflow-hidden">
+      <div className="flex flex-col h-full bg-[var(--background)] overflow-hidden">
         {/* Sprint Navigator Bar */}
         <SprintNavigatorBar
           sprints={sprints}

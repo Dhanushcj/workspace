@@ -1,17 +1,19 @@
-
+'use client';
 
 import React from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { useNavigate as useRouter, useSearchParams } from 'react-router-dom';
 import { 
   LayoutGrid, Layers, Kanban, Target, ListChecks, 
   UserPlus, ShieldAlert, GitBranch, History, 
   Users, Monitor, TrendingUp, Bell, List, Settings, LogOut,
   Bug, BarChart3, Clock, MessageSquare, Code2,
-  ListTodo, Play, FileText, FlaskConical, Zap, CircleCheck
+  ListTodo, Play, FileText, FlaskConical, Zap, CircleCheck, ChevronDown
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useWorkflowStore } from '../store/workflowStore';
 import { useNotificationStore } from '../store/notificationStore';
+
 
 interface NavItem {
   label: string;
@@ -30,33 +32,53 @@ const Sidebar = React.memo(function Sidebar() {
   const location = useLocation();
   const pathname = location.pathname;
   const [searchParams] = useSearchParams();
-  const router = useNavigate();
-  const user = useAuthStore(state => state.user);
-  const logout = useAuthStore(state => state.logout);
-  const role = user?.role || 'DEVELOPER';
-
-  const tasks = useWorkflowStore(state => state.tasks);
-  const projects = useWorkflowStore(state => state.projects);
-  const prs = useWorkflowStore(state => state.prs);
-  const bugs = useWorkflowStore(state => state.bugs);
-  const unreadCount = useNotificationStore(state => state.unreadCount);
+  const router = useRouter();
+  const user = useAuthStore((state: any) => state.user);
+  const logout = useAuthStore((state: any) => state.logout);
+  const { workspaceId } = useParams();
   
-  const fetchPRs = useWorkflowStore(state => state.fetchPRs);
-  const fetchBugs = useWorkflowStore(state => state.fetchBugs);
-  const fetchUnreadCount = useNotificationStore(state => state.fetchUnreadCount);
-  const fetchTasks = useWorkflowStore(state => state.fetchTasks);
+  // Normalize role
+  let rawRole = (user?.role || 'DEVELOPER').toUpperCase();
+  if (rawRole === 'USER' || rawRole === 'MEMBER') rawRole = 'DEVELOPER';
+  const role = rawRole;
+
+  const tasks = useWorkflowStore((state: any) => state.tasks);
+  const projects = useWorkflowStore((state: any) => state.projects);
+  const prs = useWorkflowStore((state: any) => state.prs);
+  const bugs = useWorkflowStore((state: any) => state.bugs);
+  const unreadCount = useNotificationStore((state: any) => state.unreadCount);
+  
+  const fetchPRs = useWorkflowStore((state: any) => state.fetchPRs);
+  const fetchBugs = useWorkflowStore((state: any) => state.fetchBugs);
+  const fetchUnreadCount = useNotificationStore((state: any) => state.fetchUnreadCount);
+  const fetchTasks = useWorkflowStore((state: any) => state.fetchTasks);
 
   React.useEffect(() => {
     if (user) {
       fetchPRs();
       fetchBugs();
       fetchUnreadCount();
-      fetchTasks(); // Fetch tasks to get "My Tasks" count
+      // Removed fetchTasks() to prevent overwriting dashboard's task filter
     }
-  }, [user, fetchPRs, fetchBugs, fetchUnreadCount, fetchTasks]);
+  }, [user, fetchPRs, fetchBugs, fetchUnreadCount]);
 
-  const myTasksCount = tasks.filter(t => t.assigneeId === user?.id && t.status !== 'DONE').length;
-  const blockerCount = tasks.filter(t => t.status === 'BLOCKED').length;
+  const currentSprint = useWorkflowStore((state: any) => state.currentSprint);
+  const sprintId = currentSprint?.id || (currentSprint as any)?._id;
+  
+  const myTasksCount = tasks.filter((t: any) => 
+    t.assigneeId === user?.id && 
+    t.status !== 'DONE' &&
+    (sprintId ? (t.sprintId === sprintId || (t as any).sprintId === sprintId) : true)
+  ).length;
+
+  // Badge: count tasks in CODE_REVIEW for Team Lead notification
+  const allTasks = useWorkflowStore((state: any) => state.allTasks);
+  const codeReviewCount = (['TEAM_LEAD', 'ADMIN', 'LEAD'].includes(role))
+    ? allTasks.filter((t: any) => t.status === 'CODE_REVIEW').length
+    : tasks.filter((t: any) => t.status === 'CODE_REVIEW' && t.assigneeId === user?.id).length;
+  const testingCount = tasks.filter((t: any) => t.status === 'TESTING').length;
+  
+  const blockerCount = tasks.filter((t: any) => t.status === 'BLOCKED').length;
   const projectCount = projects.length;
   const openPrsCount = prs.length;
   const openBugsCount = bugs.length;
@@ -79,8 +101,8 @@ const Sidebar = React.memo(function Sidebar() {
   };
 
   const getSections = (): NavSection[] => {
-    const rolePath = role === 'TEAM_LEAD' ? 'lead' : role === 'MANAGER' ? 'manager' : role === 'TESTER' ? 'tester' : role === 'ADMIN' ? 'lead' : 'developer';
-    const baseUrl = `/dashboard/${rolePath}`;
+    const rolePath = role === 'TEAM_LEAD' ? 'lead' : role === 'MANAGER' ? 'manager' : role === 'TESTER' ? 'tester' : role === 'ADMIN' ? 'lead' : 'member';
+    const baseUrl = `/w/${workspaceId || 'forge-india-connect'}/dashboard/${rolePath}`;
 
     if (role === 'TEAM_LEAD' || role === 'ADMIN') {
       return [
@@ -92,16 +114,16 @@ const Sidebar = React.memo(function Sidebar() {
             { label: 'Sprint Board', icon: Kanban, href: `${baseUrl}?tab=SprintBoard` },
           ]
         },
+
         {
           title: 'SPRINT MANAGEMENT',
           items: [
             { label: 'Sprint Planner', icon: Target, href: `${baseUrl}?tab=SprintPlanner` },
-            { label: 'Backlog', icon: ListChecks, href: `${baseUrl}?tab=Backlog`, badge: tasks.filter(t => t.status === 'TO_DO').length || null },
+            { label: 'Backlog', icon: ListChecks, href: `${baseUrl}?tab=Backlog`, badge: tasks.filter((t: any) => t.status === 'TO_DO').length || null },
             { label: 'Task Assignment', icon: UserPlus, href: `${baseUrl}?tab=Assignment` },
             { label: 'Blockers', icon: ShieldAlert, href: `${baseUrl}?tab=Blockers`, badge: blockerCount > 0 ? blockerCount : null },
           ]
         },
-
         {
           title: 'TEAM',
           items: [
@@ -125,34 +147,19 @@ const Sidebar = React.memo(function Sidebar() {
           title: 'CORE ARCHITECTURE',
           items: [
             { label: 'Overview', icon: LayoutGrid, href: `${baseUrl}?tab=Overview` },
-            { label: 'Projects', icon: Layers, href: `${baseUrl}?tab=Projects` },
             { label: 'Sprint Board', icon: Kanban, href: `${baseUrl}?tab=SprintBoard` },
+            { label: 'Projects', icon: Layers, href: `${baseUrl}?tab=Projects` },
           ]
         },
         {
           title: 'MY WORK',
           items: [
             { label: 'My Tasks', icon: ListChecks, href: `${baseUrl}?tab=MyTasks`, badge: myTasksCount > 0 ? myTasksCount : null },
-            { label: 'Pull Requests', icon: GitBranch, href: `${baseUrl}?tab=PullRequests`, badge: openPrsCount > 0 ? openPrsCount : null },
-            { label: 'Blockers', icon: ShieldAlert, href: `${baseUrl}?tab=Blockers`, badge: blockerCount > 0 ? blockerCount : null },
+            { label: 'Code Review', icon: Code2, href: `${baseUrl}?tab=CodeReviewDev`, badge: codeReviewCount > 0 ? codeReviewCount : null, badgeColor: codeReviewCount > 0 ? 'bg-violet-100 text-violet-700' : undefined },
             { label: 'Bug Inbox', icon: Bug, href: `${baseUrl}?tab=BugInbox`, badge: openBugsCount > 0 ? openBugsCount : null },
           ]
         },
-        {
-          title: 'COLLABORATION',
-          items: [
-            { label: 'Team', icon: Users, href: `${baseUrl}?tab=Team` },
-            { label: 'Messages', icon: MessageSquare, href: `${baseUrl}?tab=Messages` },
-          ]
-        },
-        {
-          title: 'INSIGHTS',
-          items: [
-            { label: 'Activity Log', icon: History, href: `${baseUrl}?tab=ActivityLog` },
-            { label: 'My Analytics', icon: BarChart3, href: `${baseUrl}?tab=Analytics`, badge: 'NEW', badgeColor: 'bg-emerald-50 text-emerald-600' },
-            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker`, badge: 'NEW', badgeColor: 'bg-emerald-50 text-emerald-600' },
-          ]
-        },
+
         {
           title: 'SYSTEM',
           items: [
@@ -169,14 +176,15 @@ const Sidebar = React.memo(function Sidebar() {
           title: 'OVERVIEW',
           items: [
             { label: 'Dashboard', icon: LayoutGrid, href: `${baseUrl}?tab=Overview` },
-            { label: 'Projects', icon: Layers, href: `${baseUrl}?tab=Projects` },
             { label: 'Sprint Board', icon: Kanban, href: `${baseUrl}?tab=SprintBoard` },
+            { label: 'Projects', icon: Layers, href: `${baseUrl}?tab=Projects` },
           ]
         },
         {
           title: 'MY QA WORK',
           items: [
-            { label: 'Test Queue', icon: ListTodo, href: `${baseUrl}?tab=TestQueue`, badge: tasks.filter(t => t.status === 'TESTING').length || null },
+            { label: 'Test Queue', icon: FlaskConical, href: `${baseUrl}?tab=TestQueue`, badge: testingCount > 0 ? testingCount : null, badgeColor: testingCount > 0 ? 'bg-amber-100 text-amber-700' : undefined },
+            { label: 'My Tasks', icon: ListChecks, href: `${baseUrl}?tab=MyTasks`, badge: myTasksCount > 0 ? myTasksCount : null },
             { label: 'Active Testing', icon: Play, href: `${baseUrl}?tab=ActiveTesting` },
             { label: 'Bug Reports', icon: Bug, href: `${baseUrl}?tab=BugReports`, badge: openBugsCount > 0 ? openBugsCount : null },
             { label: 'Test Cases', icon: FileText, href: `${baseUrl}?tab=TestCases` },
@@ -283,11 +291,40 @@ const Sidebar = React.memo(function Sidebar() {
   const activeBg = getActiveColor();
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      <nav className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+    <div className="w-[220px] flex flex-col shrink-0 h-full z-10 relative" style={{ background: 'linear-gradient(180deg, #1B4FAB 0%, #1540A0 100%)', boxShadow: '4px 0 24px rgba(27,79,171,0.18)' }}>
+      <div className="p-5">
+        {/* Logo Area */}
+        <div className="flex items-center gap-3 mb-6 mt-1">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#F5C300', boxShadow: '0 2px 12px rgba(245,195,0,0.4)' }}>
+            <Zap size={18} fill="#1B4FAB" strokeWidth={0} />
+          </div>
+          <div>
+            <div className="text-[13px] font-black tracking-tight uppercase leading-none" style={{ color: '#F5C300' }}>Forge India</div>
+            <div className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>PMT APP</div>
+          </div>
+        </div>
+
+        {/* Workspace Chip */}
+        {workspaceId && (
+          <div className="mt-4 px-3 py-2 bg-white/10 hover:bg-white/15 rounded-lg cursor-pointer transition-colors border border-white/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold text-white bg-blue-600 shrink-0">
+                  {workspaceId[0].toUpperCase()}
+                </div>
+                <span className="text-xs font-semibold text-white/90 truncate">
+                  {workspaceId.replace(/-/g, ' ')}
+                </span>
+              </div>
+              <ChevronDown size={12} className="text-white/40" />
+            </div>
+          </div>
+        )}
+      </div>
+      <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-6 pb-6 pt-2 space-y-8">
         {sections.map((section, idx) => (
           <div key={idx} className="space-y-2">
-            <h3 className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-3">
+            <h3 className="px-4 text-[10px] font-bold uppercase tracking-[0.15em] mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
               {section.title}
             </h3>
             <div className="space-y-1">
@@ -297,22 +334,22 @@ const Sidebar = React.memo(function Sidebar() {
                   <Link
                     key={i}
                     to={item.href}
-                    className={`
-                      flex items-center justify-between px-4 py-2 rounded-xl transition-all group
-                      ${active 
-                        ? `${activeBg} text-white shadow-md` 
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
-                    `}
+                    className="flex items-center justify-between px-4 py-2 rounded-xl transition-all group"
+                    style={active
+                      ? { background: '#F5C300', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(245,195,0,0.35)' }
+                      : { color: 'rgba(255,255,255,0.65)' }
+                    }
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#FFFFFF'; } }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; } }}
                   >
                     <div className="flex items-center gap-3">
-                      <item.icon size={18} className={active ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'} />
-                      <span className="text-[13px] font-medium tracking-tight">{item.label}</span>
+                      <item.icon size={18} className={active ? 'text-[#FFFFFF]' : 'text-white/50 group-hover:text-white'} strokeWidth={active ? 2.5 : 1.5} />
+                      <span className={`text-[13px] tracking-tight ${active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
                     </div>
                     {item.badge !== undefined && item.badge !== null && (
                       <span className={`
                         px-2 py-0.5 rounded-full text-[10px] font-bold
-                        ${active ? 'bg-white/20 text-white' : (item.badgeColor || 'bg-slate-100 text-slate-500')}
-                      `}>
+                      `} style={{ background: active ? 'rgba(27,79,171,0.15)' : 'rgba(255,255,255,0.12)', color: active ? '#FFFFFF' : 'white' }}>
                         {item.badge}
                       </span>
                     )}
@@ -324,22 +361,28 @@ const Sidebar = React.memo(function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-50">
-        <div className="bg-slate-50/50 rounded-2xl p-4 mb-4 flex items-center gap-3">
-           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${activeBg.split(' ')[0]}`}>
+      <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+        <div className="mb-3 opacity-80 hover:opacity-100 transition-opacity">
+          
+        </div>
+        <div className="rounded-xl p-3 mb-3 flex items-center gap-2.5" style={{ background: 'rgba(255,255,255,0.08)' }}>
+           <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0" style={{ background: '#F5C300', color: '#1B4FAB' }}>
              {user?.name?.[0] || 'D'}
            </div>
            <div className="min-w-0">
-             <p className="text-[13px] font-semibold text-slate-900 truncate">{user?.name || 'Nexus Developer'}</p>
-             <p className="text-[11px] font-medium text-slate-400 capitalize">{role.toLowerCase().replace('_', ' ')}</p>
+             <p className="text-[12px] font-semibold text-white truncate leading-tight">{user?.name || 'Nexus Developer'}</p>
+             <p className="text-[10px] font-medium capitalize mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{role.toLowerCase().replace('_', ' ')}</p>
            </div>
         </div>
         <button
           onClick={() => logout()}
-          className="w-full flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+          className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all hover:opacity-100 opacity-60"
+          style={{ color: 'white', background: 'rgba(255,255,255,0.08)' }}
         >
-          <LogOut size={18} />
-          <span className="text-[13px] font-medium">Neural Logout</span>
+          <div className="flex items-center gap-2.5">
+            <LogOut size={16} strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.8)' }} />
+            <span className="text-[13px] font-semibold">Logout</span>
+          </div>
         </button>
       </div>
     </div>

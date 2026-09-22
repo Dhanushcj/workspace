@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, ChevronDown, Loader, AlertCircle, Save, Ban, Bug, Edit3 } from 'lucide-react';
-import { Task, useWorkflowStore } from '../../store/workflowStore';
+import { Task, useWorkflowStore } from '../store/workflowStore';
 import { marked } from 'marked';
-import { useToastStore } from '../../store/toastStore';
-import { useAuthStore } from '../../store/authStore';
-import api from '../../lib/api';
+import { useToastStore } from '../store/toastStore';
+import { useAuthStore } from '../store/authStore';
+import api from '../lib/api';
 import { MessageSquare, Send, User, BookOpen, Target, CheckSquare, Plus, Trash2, Layers, GitBranch } from 'lucide-react';
 import { RaiseBugModal } from './RaiseBugModal';
 

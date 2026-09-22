@@ -1,4 +1,4 @@
-
+'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { 
@@ -40,7 +40,8 @@ export const TeamView = () => {
   const loadTeamData = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/users');
+      const workspaceId = currentProject?.id || 'forge-india-connect';
+      const res = await api.get(`/members/${workspaceId}`);
       const rawUsers = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       
       if (!Array.isArray(rawUsers)) {

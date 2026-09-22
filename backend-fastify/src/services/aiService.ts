@@ -167,8 +167,7 @@ You have a list of CUSTOMER REQUIREMENTS. Your job is to generate the developmen
 6. The description for each task MUST be highly detailed and explain the flow and implementation steps clearly using markdown. Use bullet points and bold text where necessary to make the workflow clear.
 7. Order them by actual implementation dependencies (Database -> API -> Layout -> Components) so they can be completed in perfect order.
 8. Every task MUST contain: sequence, title (describing ONE clear action with a verb), highly detailed markdown description, why it is needed, expected result, and dependency.
-9. EVERY task MUST include "requirements", "acceptanceCriteria" (as arrays of objects with a "text" field) and "subtasks" (array of objects with a "title" field).
-10. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database).
+9. STRICTLY focus on application DEVELOPMENT tasks (coding UI, APIs, Database).
 
 CUSTOMER PROJECT OBJECTIVE: ${pass1Result.objective}
 USER ROLES: ${(pass1Result.actors || []).join(', ')}
@@ -247,17 +246,6 @@ Return ONLY this exact JSON (no markdown, no explanation, start with {):
               "dependency": "None",
               "category": "BACKEND",
               "requirementIds": ["FR-001"],
-              "requirements": [
-                { "text": "FR-001: System must allow users to log in securely." }
-              ],
-              "acceptanceCriteria": [
-                { "text": "Email field validates standard email format." },
-                { "text": "Password field masks characters." }
-              ],
-              "subtasks": [
-                { "title": "Create User schema in Mongoose" },
-                { "title": "Add email index" }
-              ],
               "storyPoints": 2,
               "estimateReason": "Standard table structure — 2 points.",
               "priority": "HIGH"

@@ -1,4 +1,4 @@
-
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { 
@@ -12,7 +12,8 @@ import {
   AlertCircle,
   MoreVertical,
   ArrowUpRight,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { useWorkflowStore, Task } from '../store/workflowStore';
 import { useToastStore } from '../store/toastStore';
@@ -35,6 +36,7 @@ export const TaskAssignmentView = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSprintName, setActiveSprintName] = useState('No Active Sprint');
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
   useEffect(() => {
     if (!currentProject) return;
@@ -53,10 +55,13 @@ export const TaskAssignmentView = () => {
       setUnassignedTasks(unassigned);
 
       // 2. Fetch team members and calculate real load
-      const usersRes = await api.get('/users');
+      const workspaceId = 'forge-india-connect'; // Members belong to workspace, not project
+      const usersRes = await api.get(`/members/${workspaceId}`);
       const rawUsers = Array.isArray(usersRes.data) ? usersRes.data : (usersRes.data?.data || []);
       
-      const membersWithLoad = rawUsers.map((u: any) => {
+      const membersWithLoad = rawUsers
+        .filter((u: any) => u.role !== 'Manager')
+        .map((u: any) => {
         const userId = u.id || u._id;
         const userTasks = normalizedTasks.filter((t: any) => (t.assigneeId === userId || t.assignee?.id === userId));
         const points = userTasks.reduce((sum: number, t: any) => sum + (t.storyPoints || 0), 0);
@@ -90,7 +95,8 @@ export const TaskAssignmentView = () => {
     
     try {
       // Modernized to PUT for Native backend compatibility
-      await api.put(`/issues/${taskId}`, { assigneeId: userId });
+      // Use PATCH instead of PUT
+      await api.patch(`/issues/${taskId}`, { assigneeId: userId });
       addToast({ title: 'Success', message: 'Task assigned successfully', type: 'SUCCESS' });
       
       // Optimistic update
@@ -104,6 +110,45 @@ export const TaskAssignmentView = () => {
       ));
     } catch (err) {
       addToast({ title: 'Error', message: 'Failed to assign task', type: 'ERROR' });
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
+    try {
+      await api.delete(`/issues/${taskId}`);
+      addToast({ title: 'Success', message: 'Task deleted successfully', type: 'SUCCESS' });
+      setUnassignedTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (err) {
+      addToast({ title: 'Error', message: 'Failed to delete task', type: 'ERROR' });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTasks.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedTasks.length} tasks?`)) return;
+    
+    try {
+      await Promise.all(selectedTasks.map(id => api.delete(`/issues/${id}`)));
+      addToast({ title: 'Success', message: `${selectedTasks.length} tasks deleted`, type: 'SUCCESS' });
+      setUnassignedTasks(prev => prev.filter(t => !selectedTasks.includes(t.id)));
+      setSelectedTasks([]);
+    } catch (err) {
+      addToast({ title: 'Error', message: 'Failed to delete some tasks', type: 'ERROR' });
+    }
+  };
+  
+  const toggleSelect = (taskId: string) => {
+    setSelectedTasks(prev => 
+      prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+    );
+  };
+  
+  const toggleSelectAll = () => {
+    if (selectedTasks.length === unassignedTasks.length) {
+      setSelectedTasks([]);
+    } else {
+      setSelectedTasks(unassignedTasks.map(t => t.id));
     }
   };
 
@@ -126,21 +171,45 @@ export const TaskAssignmentView = () => {
             {activeSprintName} · <span className="text-emerald-600">{unassignedTasks.length} unassigned tasks</span>
           </p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-2.5 bg-[#0D5F46] text-white rounded-xl text-[14px] font-medium hover:opacity-90 transition-all shadow-md shadow-emerald-900/10">
-          <UserPlus size={18} /> Bulk Assign
-        </button>
+        <div className="flex items-center gap-3">
+          {selectedTasks.length > 0 && (
+            <button 
+              onClick={handleBulkDelete}
+              className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-[14px] font-medium hover:bg-red-100 transition-all border border-red-200"
+            >
+              <Trash2 size={18} /> Bulk Delete ({selectedTasks.length})
+            </button>
+          )}
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-[#0D5F46] text-white rounded-xl text-[14px] font-medium hover:opacity-90 transition-all shadow-md shadow-emerald-900/10">
+            <UserPlus size={18} /> Bulk Assign
+          </button>
+        </div>
       </div>
 
       {/* Unassigned Tasks Section */}
       <div className="px-8 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <input 
+            type="checkbox" 
+            checked={unassignedTasks.length > 0 && selectedTasks.length === unassignedTasks.length}
+            onChange={toggleSelectAll}
+            className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+          />
           <h3 className="text-[12px] font-normal uppercase tracking-widest">Unassigned Tasks</h3>
         </div>
         
         <div className="flex flex-col gap-3">
           {unassignedTasks.length > 0 ? (
             unassignedTasks.map(task => (
-              <TaskRow key={task.id} task={task} teamMembers={teamMembers} onAssign={handleAssign} />
+              <TaskRow 
+                key={task.id} 
+                task={task} 
+                teamMembers={teamMembers} 
+                onAssign={handleAssign} 
+                onDelete={handleDeleteTask}
+                selected={selectedTasks.includes(task.id)}
+                onToggle={() => toggleSelect(task.id)}
+              />
             ))
           ) : (
             <div className="py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
@@ -166,17 +235,23 @@ export const TaskAssignmentView = () => {
   );
 };
 
-function TaskRow({ task, teamMembers, onAssign }: { task: Task, teamMembers: TeamMember[], onAssign: (taskId: string, userId: string) => void }) {
+function TaskRow({ task, teamMembers, onAssign, onDelete, selected, onToggle }: { task: Task, teamMembers: TeamMember[], onAssign: (taskId: string, userId: string) => void, onDelete: (taskId: string) => void, selected: boolean, onToggle: () => void }) {
   const typeLabel = task.type ? (task.type.charAt(0).toUpperCase() + task.type.slice(1).toLowerCase()) : 'Backend';
   
   return (
-    <div className="group flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50 transition-all">
-      <div className="flex items-center gap-6 flex-1 min-w-0">
-        <div className="flex items-center gap-4">
+    <div className={`group flex items-center justify-between p-4 bg-white border ${selected ? 'border-emerald-400 ring-1 ring-emerald-400' : 'border-slate-100'} rounded-2xl hover:shadow-lg hover:shadow-slate-200/50 transition-all`}>
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <input 
+          type="checkbox" 
+          checked={selected}
+          onChange={onToggle}
+          className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+        />
+        <div className="flex items-center gap-3 w-20">
           <div className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.4)]" />
-          <span className="text-[12px] font-normal w-12">#T-{String(task.id || '').slice(-2)}</span>
+          <span className="text-[12px] font-normal">#T-{String(task.id || '').slice(-2)}</span>
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 ml-4">
           <h4 className="text-[15px] font-medium text-slate-900 truncate">{task.title}</h4>
           <p className="text-[13px] text-slate-400 mt-0.5">
             {typeLabel} · {task.storyPoints || 0} pts · Due {task.createdAt ? new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'May 15'}
@@ -205,6 +280,13 @@ function TaskRow({ task, teamMembers, onAssign }: { task: Task, teamMembers: Tea
           </select>
           <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
+        <button 
+          onClick={() => onDelete(task.id)}
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors border border-slate-200 ml-2"
+          title="Delete Task"
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
     </div>
   );

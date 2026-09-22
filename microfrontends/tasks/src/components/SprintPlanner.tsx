@@ -17,14 +17,14 @@ import {
   DragStartEvent
 } from '@dnd-kit/core';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { useWorkflowStore, Task } from '../../store/workflowStore';
-import { useToastStore } from '../../store/toastStore';
-import api from '../../lib/api';
+import { useWorkflowStore, Task } from '../store/workflowStore';
+import { useToastStore } from '../store/toastStore';
+import api from '../lib/api';
 import { SprintNavigatorBar } from './SprintNavigatorBar';
 import { CreateSprintModal } from './CreateSprintModal';
 import { CreateTaskModal } from './CreateTaskModal';
 import { Plus, Bot } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../store/authStore';
 import AIPlannerModal from './AIPlannerModal';
 import { EditSprintModal } from './EditSprintModal';
 
@@ -142,7 +142,7 @@ export default function SprintPlanner() {
     return (
       <>
         {Object.entries(epicGroups).map(([epicId, groupTasks]) => {
-          const epic = epics.find(e => e.id === epicId || (e as any)._id === epicId);
+          const epic = epics.find((e: any) => e.id === epicId || (e as any)._id === epicId);
           return (
             <div key={epicId} className="mb-4 last:mb-0">
               <h5 className="text-[11px] font-bold text-[var(--accent-tl)] uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5"><LayoutGrid size={13} /> {epic?.name || 'Unknown Module'}</h5>
@@ -452,12 +452,12 @@ export default function SprintPlanner() {
         isOpen={isSprintModalOpen}
         onClose={() => setIsSprintModalOpen(false)}
         onSuccess={(id) => {
-          api.get(`/sprints/${id}`).then(res => {
+          api.get(`/sprints/${id}`).then((res: any) => {
             const sprint = res.data?.data || res.data;
             setCurrentSprint(sprint);
             // Reload list
             const projectId = currentProject?.id || (currentProject as any)?._id;
-            api.get(`/projects/${projectId}/sprints`).then(sRes => {
+            api.get(`/projects/${projectId}/sprints`).then(s(res: any) => {
               setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
             });
           });
@@ -470,7 +470,7 @@ export default function SprintPlanner() {
         onSuccess={(updatedSprint) => {
           setCurrentSprint({ ...activeSprint, ...updatedSprint });
           const projectId = currentProject?.id || (currentProject as any)?._id;
-          api.get(`/projects/${projectId}/sprints`).then(sRes => {
+          api.get(`/projects/${projectId}/sprints`).then(s(res: any) => {
             setSprints(Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []));
           });
         }}
@@ -625,7 +625,7 @@ export default function SprintPlanner() {
           onSuccess={() => {
             const projectId = currentProject.id || (currentProject as any)._id;
             // 1. Reload sprints so newly created AI sprints appear
-            api.get(`/projects/${projectId}/sprints`).then(sRes => {
+            api.get(`/projects/${projectId}/sprints`).then(s(res: any) => {
               const rawSprints = Array.isArray(sRes.data) ? sRes.data : (sRes.data?.data || []);
               const normalized = rawSprints.map((s: any) => ({
                 ...s,

@@ -1,4 +1,4 @@
-
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -35,7 +35,7 @@ export default function ReportsView() {
       // In a real app, this would be a specialized backend endpoint
       const [tasksRes, membersRes] = await Promise.all([
         api.get(`/issues?projectId=${currentProject.id}`),
-        api.get('/users')
+        api.get(`/members/forge-india-connect`)
       ]);
 
       const tasksData = Array.isArray(tasksRes.data) ? tasksRes.data : (tasksRes.data?.data || []);

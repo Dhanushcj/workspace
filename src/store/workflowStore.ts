@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import api from '../lib/api';
 import { socketService } from '../lib/socket';
 
-export type TaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'CODE_REVIEW' | 'PR_SUBMITTED' | 'TESTING' | 'READY_FOR_RELEASE' | 'DONE' | 'BLOCKED';
+export type TaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'PR_SUBMITTED' | 'TESTING' | 'READY_FOR_RELEASE' | 'DONE' | 'BLOCKED';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type UserRole = 'DEVELOPER' | 'TESTER' | 'MANAGER' | 'TEAM_LEAD';
 
@@ -14,32 +14,6 @@ export interface Status {
   color: string;
   order: number;
   projectId: string;
-}
-
-export interface TaskSubtask {
-  id: string;
-  title: string;
-  completed: boolean;
-}
-
-export interface TaskRequirement {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-export interface TaskAcceptanceCriterion {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-export interface TaskActivityLog {
-  action: string;
-  userId: string;
-  userName: string;
-  timestamp: string;
-  meta?: string;
 }
 
 export interface Task {
@@ -57,44 +31,16 @@ export interface Task {
     avatar?: string;
     avatarUrl?: string;
   };
-  testerId?: string;
-  tester?: {
-    id: string;
-    name: string;
-    email?: string;
-  };
   creatorId: string;
   projectId: string;
   sprintId: string;
-  displayId?: string;
-  // Task hierarchy
-  moduleName?: string;
-  moduleId?: string;
-  featureName?: string;
-  featureId?: string;
-  // Dates
-  dueDate?: string;
-  startDate?: string;
-  startedAt?: string;
-  completedAt?: string;
-  estimatedHours?: number;
-  // Checklists
-  subtasks?: TaskSubtask[];
-  requirements?: TaskRequirement[];
-  acceptanceCriteria?: TaskAcceptanceCriterion[];
-  activityLog?: TaskActivityLog[];
-  // Workflow
-  reviewComment?: string;
-  testComment?: string;
-  dependencies?: string[];
-  // Legacy/existing fields
   prLink?: string;
   prStatus?: 'OPEN' | 'MERGED' | 'REJECTED';
   isHotfix?: boolean;
   blockerInfo?: {
-    raisedBy?: string;
-    raisedAt?: string;
-    reason?: string;
+    raisedBy: string;
+    raisedAt: string;
+    reason: string;
   };
   deployedAt?: string;
   createdAt: string;
@@ -144,7 +90,6 @@ export interface Project {
 
 interface WorkflowState {
   tasks: Task[];
-  allTasks: Task[];  // For Team Lead — all tasks without assignee filter
   projects: Project[];
   isLoading: boolean;
   currentProject: Project | null;
@@ -155,7 +100,6 @@ interface WorkflowState {
   prs: any[];
   bugs: any[];
   fetchTasks: (filters?: { projectId?: string, sprintId?: string }, silent?: boolean) => Promise<void>;
-  fetchAllTasks: (filters?: { projectId?: string, sprintId?: string }, silent?: boolean) => Promise<void>;
   fetchProjects: (silent?: boolean) => Promise<void>;
   createProject: (data: { name: string, description: string }) => Promise<void>;
   updateProject: (projectId: string, updates: any) => Promise<void>;
@@ -169,7 +113,7 @@ interface WorkflowState {
   resolveBlocker: (blockerId: string, resolutionNote: string) => Promise<boolean>;
   setCurrentProject: (project: any) => void;
   setCurrentSprint: (sprint: any) => void;
-  addComment: (taskId: string, content: string, parentId?: string) => Promise<any>;
+  addComment: (taskId: string, content: string) => Promise<any>;
   fetchComments: (taskId: string) => Promise<any[]>;
   addIssueLink: (taskId: string, targetIssueId: string, type: string) => Promise<any>;
   fetchIssueLinks: (taskId: string) => Promise<{linksTo: any[], linksFrom: any[]}>;
@@ -193,18 +137,6 @@ interface WorkflowState {
   updateTaskEstimation: (taskId: string, points: number | null) => Promise<boolean>;
   fetchPRs: () => Promise<void>;
   fetchBugs: () => Promise<void>;
-  // ── New workflow actions ──
-  startTask: (taskId: string) => Promise<boolean>;
-  submitForReview: (taskId: string) => Promise<boolean>;
-  approveTask: (taskId: string) => Promise<boolean>;
-  requestChanges: (taskId: string, comment: string) => Promise<boolean>;
-  passTest: (taskId: string) => Promise<boolean>;
-  failTest: (taskId: string, comment: string) => Promise<boolean>;
-  updateSubtasks: (taskId: string, subtasks: TaskSubtask[]) => Promise<boolean>;
-  updateRequirements: (taskId: string, requirements: TaskRequirement[]) => Promise<boolean>;
-  updateAcceptanceCriteria: (taskId: string, criteria: TaskAcceptanceCriterion[]) => Promise<boolean>;
-  fetchActivityLog: (taskId: string) => Promise<TaskActivityLog[]>;
-  fetchTask: (taskId: string) => Promise<Task | null>;
 }
 
 const canTransition = (current: string, next: string, role: string): boolean => {
@@ -220,7 +152,6 @@ export const useWorkflowStore = create<WorkflowState>()(
   persist(
     (set, get) => ({
       tasks: [],
-      allTasks: [],
       projects: [],
       isLoading: false,
       activeSprintId: null,
@@ -506,9 +437,9 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       setCurrentSprint: (sprint) => set({ currentSprint: sprint }),
 
-      addComment: async (taskId, content, parentId?) => {
+      addComment: async (taskId, content) => {
         try {
-          const response = await api.post(`/issues/${taskId}/comments`, { content, parentId });
+          const response = await api.post(`/issues/${taskId}/comments`, { content });
           return response.data;
         } catch (error) {
           console.error('Failed to add comment', error);
@@ -519,7 +450,7 @@ export const useWorkflowStore = create<WorkflowState>()(
       fetchComments: async (taskId) => {
         try {
           const response = await api.get(`/issues/${taskId}/comments`);
-          return Array.isArray(response.data) ? response.data : (response.data?.data || []);
+          return response.data;
         } catch (error) {
           console.error('Failed to fetch comments', error);
           return [];
@@ -770,174 +701,6 @@ export const useWorkflowStore = create<WorkflowState>()(
           set({ bugs: data });
         } catch (error) {
           console.error('Failed to fetch bugs', error);
-        }
-      },
-
-      fetchAllTasks: async (filters, silent = false) => {
-        if (!silent) set({ isLoading: true });
-        try {
-          const params = new URLSearchParams();
-          if (filters?.projectId) params.append('projectId', filters.projectId);
-          if (filters?.sprintId) params.append('sprintId', filters.sprintId);
-          const response = await api.get(`/issues/all?${params.toString()}`);
-          let apiData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-          apiData = apiData.map((item: any) => ({ ...item, id: item.id || item._id, _id: item._id || item.id }));
-          set({ allTasks: apiData, isLoading: false });
-        } catch (error) {
-          set({ isLoading: false });
-        }
-      },
-
-      fetchTask: async (taskId: string) => {
-        try {
-          const response = await api.get(`/issues/${taskId}`);
-          const item = response.data;
-          return { ...item, id: item.id || item._id };
-        } catch (error) {
-          console.error('Failed to fetch task', error);
-          return null;
-        }
-      },
-
-      startTask: async (taskId: string) => {
-        try {
-          const response = await api.post(`/issues/${taskId}/start`);
-          const updated = { ...response.data, id: response.data._id || response.data.id };
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-          }));
-          return true;
-        } catch (error: any) {
-          console.error('Failed to start task', error);
-          throw error;
-        }
-      },
-
-      submitForReview: async (taskId: string) => {
-        try {
-          const response = await api.post(`/issues/${taskId}/submit-review`);
-          const updated = { ...response.data, id: response.data._id || response.data.id };
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-          }));
-          return true;
-        } catch (error: any) {
-          console.error('Failed to submit for review', error);
-          throw error;
-        }
-      },
-
-      approveTask: async (taskId: string) => {
-        try {
-          const response = await api.post(`/issues/${taskId}/approve`);
-          const updated = { ...response.data, id: response.data._id || response.data.id };
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-          }));
-          return true;
-        } catch (error: any) {
-          console.error('Failed to approve task', error);
-          throw error;
-        }
-      },
-
-      requestChanges: async (taskId: string, comment: string) => {
-        try {
-          const response = await api.post(`/issues/${taskId}/request-changes`, { comment });
-          const updated = { ...response.data, id: response.data._id || response.data.id };
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-          }));
-          return true;
-        } catch (error: any) {
-          console.error('Failed to request changes', error);
-          throw error;
-        }
-      },
-
-      passTest: async (taskId: string) => {
-        try {
-          const response = await api.post(`/issues/${taskId}/test-pass`);
-          const updated = { ...response.data, id: response.data._id || response.data.id };
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-          }));
-          return true;
-        } catch (error: any) {
-          console.error('Failed to pass test', error);
-          throw error;
-        }
-      },
-
-      failTest: async (taskId: string, comment: string) => {
-        try {
-          const response = await api.post(`/issues/${taskId}/test-fail`, { comment });
-          const updated = { ...response.data, id: response.data._id || response.data.id };
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, ...updated } : t),
-          }));
-          return true;
-        } catch (error: any) {
-          console.error('Failed to fail test', error);
-          throw error;
-        }
-      },
-
-      updateSubtasks: async (taskId: string, subtasks: TaskSubtask[]) => {
-        try {
-          const response = await api.patch(`/issues/${taskId}/subtasks`, { subtasks });
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, subtasks } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, subtasks } : t),
-          }));
-          return true;
-        } catch (error) {
-          console.error('Failed to update subtasks', error);
-          return false;
-        }
-      },
-
-      updateRequirements: async (taskId: string, requirements: TaskRequirement[]) => {
-        try {
-          await api.patch(`/issues/${taskId}/requirements`, { requirements });
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, requirements } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, requirements } : t),
-          }));
-          return true;
-        } catch (error) {
-          console.error('Failed to update requirements', error);
-          return false;
-        }
-      },
-
-      updateAcceptanceCriteria: async (taskId: string, acceptanceCriteria: TaskAcceptanceCriterion[]) => {
-        try {
-          await api.patch(`/issues/${taskId}/acceptance-criteria`, { acceptanceCriteria });
-          set(state => ({
-            tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, acceptanceCriteria } : t),
-            allTasks: state.allTasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, acceptanceCriteria } : t),
-          }));
-          return true;
-        } catch (error) {
-          console.error('Failed to update acceptance criteria', error);
-          return false;
-        }
-      },
-
-      fetchActivityLog: async (taskId: string) => {
-        try {
-          const response = await api.get(`/issues/${taskId}/activity`);
-          return Array.isArray(response.data) ? response.data : [];
-        } catch (error) {
-          console.error('Failed to fetch activity log', error);
-          return [];
         }
       },
     }),
