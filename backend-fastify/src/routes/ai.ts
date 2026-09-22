@@ -197,7 +197,10 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       const reqMap: Record<string, string> = {};
       const requirements = (plan as any).projectAnalysis?.requirements || (plan as any).requirements || [];
       for (const req of requirements) {
-        reqMap[req.id] = req.title ? `${req.id}: ${req.title}` : req.id;
+        let text = req.id;
+        if (req.title) text += `: ${req.title}`;
+        if (req.description) text += ` - ${req.description}`;
+        reqMap[req.id] = text;
       }
 
       // BUG FIX 2: Only create sprints if there are any; if sprints is empty, issues go to backlog (sprintId: null)

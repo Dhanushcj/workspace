@@ -3,7 +3,7 @@ import {
   ShieldAlert, GitPullRequest, 
   AlertCircle, Calendar, Check, X, UserPlus,
   Unlock, ChevronUp, ChevronDown, Minus,
-  Zap, Clock, Bug
+  Zap, Clock, Bug, PlayCircle, StopCircle
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -96,6 +96,25 @@ export const TaskCard = React.memo(({
 
   const bugs = useWorkflowStore(state => state.bugs);
   const taskBugs = bugs.filter((b: any) => b.parentId === task.id || b.parentId === (task as any)._id);
+
+  const activeTimer = useWorkflowStore(state => state.activeTimer);
+  const startTimer = useWorkflowStore(state => state.startTimer);
+  const stopTimer = useWorkflowStore(state => state.stopTimer);
+  const tid = task.id || (task as any)._id;
+  const isTimerRunning = activeTimer?.taskId === tid;
+
+  const handleToggleTimer = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (isTimerRunning) {
+        await stopTimer();
+      } else {
+        await startTimer(tid);
+      }
+    } catch (err) {
+      console.error('Failed to toggle timer', err);
+    }
+  };
 
   const prNum = task.prNumber || parseInt(task.id.replace(/\D/g, '').slice(-2) || '11', 10);
 
@@ -239,6 +258,21 @@ export const TaskCard = React.memo(({
             className="w-full py-2.5 bg-white border-2 border-slate-200 text-slate-800 rounded-xl text-[11px] font-semibold uppercase tracking-widest hover:border-emerald-500 hover:text-emerald-700 transition-all flex items-center justify-center gap-2 shadow-sm"
           >
             <Unlock size={13} strokeWidth={2.5} /> Resolve
+          </button>
+        )}
+
+        {/* IN_PROGRESS - Timer */}
+        {task.status === 'IN_PROGRESS' && (
+          <button
+            onClick={handleToggleTimer}
+            className={`w-full py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm transition-all border ${
+              isTimerRunning 
+                ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' 
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#1A3A8F] hover:text-[#1A3A8F] hover:bg-blue-50'
+            }`}
+          >
+            {isTimerRunning ? <StopCircle size={13} className="animate-pulse" /> : <PlayCircle size={13} />}
+            {isTimerRunning ? 'Stop Timer' : 'Start Timer'}
           </button>
         )}
       </div>

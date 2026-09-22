@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, ChevronDown, Loader, AlertCircle, Save, Ban, Bug, Edit3 } from 'lucide-react';
-import { Task, useWorkflowStore } from '../store/workflowStore';
+import { X, Calendar, ChevronDown, Loader, AlertCircle, Save, Ban, Bug, Edit3, Clock, PlayCircle, StopCircle } from 'lucide-react';
+import { Task, useWorkflowStore } from '../../store/workflowStore';
 import { marked } from 'marked';
-import { useToastStore } from '../store/toastStore';
-import { useAuthStore } from '../store/authStore';
-import api from '../lib/api';
+import { useToastStore } from '../../store/toastStore';
+import { useAuthStore } from '../../store/authStore';
+import api from '../../lib/api';
 import { MessageSquare, Send, User, BookOpen, Target, CheckSquare, Plus, Trash2, Layers, GitBranch } from 'lucide-react';
 import { RaiseBugModal } from './RaiseBugModal';
 
@@ -76,7 +76,6 @@ const ChecklistEditor = ({
   );
 };
 
-
 interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -90,7 +89,7 @@ export const TaskDetailModal = ({
   task,
   displayId
 }: TaskDetailModalProps) => {
-  const { updateTask, statuses, members } = useWorkflowStore();
+  const { updateTask, statuses, members, activeTimer, startTimer, stopTimer, fetchActiveTimer } = useWorkflowStore();
   const { addToast } = useToastStore();
   const { user } = useAuthStore();
   const rawRole = (user?.role || '').toUpperCase().replace(' ', '_');
@@ -104,8 +103,6 @@ export const TaskDetailModal = ({
     priority: '',
     assigneeId: '',
     storyPoints: 1,
-    moduleName: '',
-    featureName: '',
     subtasks: [] as any[],
     requirements: [] as any[],
     acceptanceCriteria: [] as any[]
@@ -116,6 +113,13 @@ export const TaskDetailModal = ({
   const [commentLoading, setCommentLoading] = useState(false);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [isRaiseBugOpen, setIsRaiseBugOpen] = useState(false);
+  const [timerLoading, setTimerLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchActiveTimer();
+    }
+  }, [isOpen, fetchActiveTimer]);
 
   const handleRaiseBugSubmit = async (taskId: string, description: string) => {
     try {
@@ -152,9 +156,7 @@ export const TaskDetailModal = ({
         priority: task.priority || 'MEDIUM',
         assigneeId: task.assigneeId || '',
         storyPoints: task.storyPoints || task.estimate || 1,
-        moduleName: task.moduleName || '',
-        featureName: task.featureName || '',
-        subtasks: task.subtasks || [],
+        subtasks: (task as any).subtasks || [],
         requirements: task.requirements || [],
         acceptanceCriteria: task.acceptanceCriteria || []
       });
@@ -207,6 +209,25 @@ export const TaskDetailModal = ({
     }
   };
 
+  const handleToggleTimer = async () => {
+    if (!task) return;
+    setTimerLoading(true);
+    try {
+      const tid = task.id || (task as any)._id;
+      if (activeTimer?.taskId === tid) {
+        await stopTimer();
+        addToast({ type: 'SUCCESS', title: 'Timer Stopped', message: 'Time entry logged.' });
+      } else {
+        await startTimer(tid);
+        addToast({ type: 'SUCCESS', title: 'Timer Started', message: 'Time tracking began.' });
+      }
+    } catch (err: any) {
+      addToast({ type: 'ERROR', title: 'Timer Failed', message: err.message || 'Could not toggle timer.' });
+    } finally {
+      setTimerLoading(false);
+    }
+  };
+
   if (!isOpen || !task) return null;
 
   return (
@@ -241,7 +262,7 @@ export const TaskDetailModal = ({
                     <>
                       <option value="TO_DO">To Do</option>
                       <option value="IN_PROGRESS">In Progress</option>
-                      <option value="CODE_REVIEW">Code Review</option>
+                      <option value="IN_REVIEW">In Review</option>
                       <option value="TESTING">Testing</option>
                       <option value="DONE">Done</option>
                       <option value="BLOCKED">Blocked</option>
@@ -308,44 +329,6 @@ export const TaskDetailModal = ({
                 </select>
                 <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-blue-500 transition-colors" />
               </div>
-            </div>
-
-            {/* Module Name */}
-            <div className="space-y-2">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                <Layers size={14} /> Module
-              </label>
-              <input
-                type="text"
-                value={formData.moduleName}
-                onChange={e => setFormData(prev => ({ ...prev, moduleName: e.target.value }))}
-                disabled={isDeveloper}
-                placeholder="No Module"
-                className={`w-full px-4 py-3.5 border rounded-2xl text-[14px] font-medium outline-none transition-all ${
-                  isDeveloper
-                    ? 'bg-slate-100/50 border-slate-100 text-slate-500 cursor-not-allowed'
-                    : 'bg-slate-50 border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white'
-                }`}
-              />
-            </div>
-
-            {/* Feature Name */}
-            <div className="space-y-2">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                <GitBranch size={14} /> Feature
-              </label>
-              <input
-                type="text"
-                value={formData.featureName}
-                onChange={e => setFormData(prev => ({ ...prev, featureName: e.target.value }))}
-                disabled={isDeveloper}
-                placeholder="No Feature"
-                className={`w-full px-4 py-3.5 border rounded-2xl text-[14px] font-medium outline-none transition-all ${
-                  isDeveloper
-                    ? 'bg-slate-100/50 border-slate-100 text-slate-500 cursor-not-allowed'
-                    : 'bg-slate-50 border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white'
-                }`}
-              />
             </div>
           </div>
 
@@ -498,6 +481,17 @@ export const TaskDetailModal = ({
             >
               Close
             </button>
+            {formData.status === 'IN_PROGRESS' && (
+              <button 
+                type="button"
+                onClick={handleToggleTimer}
+                disabled={timerLoading}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all border disabled:opacity-50 ${activeTimer?.taskId === (task.id || (task as any)._id) ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 'bg-[#1A3A8F] text-white border-transparent hover:bg-blue-800'}`}
+              >
+                {timerLoading ? <Loader size={16} className="animate-spin" /> : (activeTimer?.taskId === (task.id || (task as any)._id) ? <StopCircle size={16} /> : <PlayCircle size={16} />)}
+                {activeTimer?.taskId === (task.id || (task as any)._id) ? 'Stop Timer' : 'Start Timer'}
+              </button>
+            )}
             <button 
               type="button"
               onClick={() => setIsRaiseBugOpen(true)}

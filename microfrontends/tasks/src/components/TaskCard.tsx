@@ -3,11 +3,11 @@ import {
   ShieldAlert, GitPullRequest, 
   AlertCircle, Calendar, Check, X, UserPlus,
   Unlock, ChevronUp, ChevronDown, Minus,
-  Zap, Clock
+  Zap, Clock, Bug, PlayCircle, StopCircle
 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../../store/authStore';
 
-import { Task } from '../store/workflowStore';
+import { useWorkflowStore, Task } from '../../store/workflowStore';
 
 interface Props {
   task: Task;
@@ -26,7 +26,9 @@ interface Props {
 }
 
 // Derive a stack label from task title / epic / type
-const deriveStack = (task: Task): string | null => {
+const deriveStack = (task: Task, taskEpicName?: string): string | null => {
+  if (taskEpicName) return taskEpicName;
+  if (task.epic?.name) return task.epic.name;
   const t = (task.title || '').toLowerCase();
   if (t.includes('payment') || t.includes('razorpay') || t.includes('invoice')) return 'Payments';
   if (t.includes('api') || t.includes('backend') || t.includes('webhook')) return 'Backend';
@@ -35,7 +37,6 @@ const deriveStack = (task: Task): string | null => {
   if (t.includes('cart') || t.includes('order') || t.includes('discount') || t.includes('coupon')) return 'Backend';
   if (t.includes('auth') || t.includes('jwt') || t.includes('otp') || t.includes('login')) return 'Backend';
   if (t.includes('full stack')) return 'Full stack';
-  if (task.epic?.name) return task.epic.name;
   if (task.type) {
     const type = task.type.toLowerCase();
     if (type === 'feature') return 'Feature';
@@ -81,13 +82,39 @@ export const TaskCard = React.memo(({
    isSelected, onSelect, onApprove, onReject, onAssign, onResolve,
    displayId, isTeamLead
 }: Props) => {
+  const epics = useWorkflowStore(state => state.epics);
+  const taskEpicId = task.epicId || (task as any).epic?._id || (task as any).epic?.id;
+  const taskEpic = taskEpicId ? epics.find(e => e.id === taskEpicId || (e as any)._id === taskEpicId) : null;
+
   const initials = getInitials(task.assignee?.name);
-  const stack = deriveStack(task);
+  const stack = deriveStack(task, taskEpic?.name);
   const isBlocked = task.status === 'BLOCKED';
   const isDone = task.status === 'DONE';
   const isInReview = task.status === 'IN_REVIEW' || task.status === 'PR_SUBMITTED';
   const isTesting = task.status === 'TESTING';
   const isUnassigned = !task.assignee?.name;
+
+  const bugs = useWorkflowStore(state => state.bugs);
+  const taskBugs = bugs.filter((b: any) => b.parentId === task.id || b.parentId === (task as any)._id);
+
+  const activeTimer = useWorkflowStore(state => state.activeTimer);
+  const startTimer = useWorkflowStore(state => state.startTimer);
+  const stopTimer = useWorkflowStore(state => state.stopTimer);
+  const tid = task.id || (task as any)._id;
+  const isTimerRunning = activeTimer?.taskId === tid;
+
+  const handleToggleTimer = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (isTimerRunning) {
+        await stopTimer();
+      } else {
+        await startTimer(tid);
+      }
+    } catch (err) {
+      console.error('Failed to toggle timer', err);
+    }
+  };
 
   const prNum = task.prNumber || parseInt(task.id.replace(/\D/g, '').slice(-2) || '11', 10);
 
@@ -122,8 +149,11 @@ export const TaskCard = React.memo(({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {task.assignee?.name ? (
-            <div className={`w-7 h-7 rounded-full ${avatarColor(initials)} flex items-center justify-center text-[10px] font-medium text-white shadow-sm`}>
-              {initials}
+            <div className="flex items-center gap-2" title={task.assignee.name}>
+              <div className={`w-7 h-7 rounded-full ${avatarColor(initials)} flex items-center justify-center text-[10px] font-medium text-white shadow-sm`}>
+                {initials}
+              </div>
+              <span className="text-[12px] font-semibold text-[var(--text)]">{task.assignee.name}</span>
             </div>
           ) : null}
           {stack && (
@@ -150,6 +180,13 @@ export const TaskCard = React.memo(({
           )}
         </div>
       ) : null}
+
+      {/* Raised Bugs Indicator */}
+      {taskBugs.length > 0 && (
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-rose-500 bg-rose-50 border border-rose-100 rounded-lg px-2 py-1 w-fit">
+          <Bug size={12} /> {taskBugs.length} bug{taskBugs.length > 1 ? 's' : ''} reported
+        </div>
+      )}
 
       {/* Tester badge (Testing) */}
       {isTesting && task.assignee?.name && (
@@ -221,6 +258,21 @@ export const TaskCard = React.memo(({
             className="w-full py-2.5 bg-white border-2 border-slate-200 text-slate-800 rounded-xl text-[11px] font-semibold uppercase tracking-widest hover:border-emerald-500 hover:text-emerald-700 transition-all flex items-center justify-center gap-2 shadow-sm"
           >
             <Unlock size={13} strokeWidth={2.5} /> Resolve
+          </button>
+        )}
+
+        {/* IN_PROGRESS - Timer */}
+        {task.status === 'IN_PROGRESS' && (
+          <button
+            onClick={handleToggleTimer}
+            className={`w-full py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm transition-all border ${
+              isTimerRunning 
+                ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' 
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#1A3A8F] hover:text-[#1A3A8F] hover:bg-blue-50'
+            }`}
+          >
+            {isTimerRunning ? <StopCircle size={13} className="animate-pulse" /> : <PlayCircle size={13} />}
+            {isTimerRunning ? 'Stop Timer' : 'Start Timer'}
           </button>
         )}
       </div>

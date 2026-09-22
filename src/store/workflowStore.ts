@@ -101,6 +101,8 @@ interface WorkflowState {
   epics: Epic[];
   prs: any[];
   bugs: any[];
+  activeTimer: any | null;
+  timeEntries: any[];
   fetchTasks: (filters?: { projectId?: string, sprintId?: string }, silent?: boolean) => Promise<void>;
   fetchProjects: (silent?: boolean) => Promise<void>;
   createProject: (data: { name: string, description: string }) => Promise<void>;
@@ -139,6 +141,10 @@ interface WorkflowState {
   updateTaskEstimation: (taskId: string, points: number | null) => Promise<boolean>;
   fetchPRs: () => Promise<void>;
   fetchBugs: () => Promise<void>;
+  startTimer: (taskId: string) => Promise<void>;
+  stopTimer: () => Promise<void>;
+  fetchActiveTimer: () => Promise<void>;
+  fetchUserTimeEntries: (userId?: string) => Promise<void>;
 }
 
 const canTransition = (current: string, next: string, role: string): boolean => {
@@ -164,6 +170,8 @@ export const useWorkflowStore = create<WorkflowState>()(
       epics: [],
       prs: [],
       bugs: [],
+      activeTimer: null,
+      timeEntries: [],
       
       fetchTasks: async (filters, silent = false) => {
         if (!silent) set({ isLoading: true });
@@ -378,6 +386,15 @@ export const useWorkflowStore = create<WorkflowState>()(
                     }
                   }
                 }
+
+                // If status changed and is no longer IN_PROGRESS, stop the active timer if it belongs to this task
+                if (updates.status && updates.status !== 'IN_PROGRESS') {
+                  const currentActiveTimer = get().activeTimer;
+                  if (currentActiveTimer?.taskId === (updatedTask.id || (updatedTask as any)._id)) {
+                    get().stopTimer().catch(console.error);
+                  }
+                }
+
                 return updatedTask;
               }
               return t;
@@ -400,6 +417,15 @@ export const useWorkflowStore = create<WorkflowState>()(
             set((state) => ({
               tasks: state.tasks.map((t) => (t.id === taskId || (t as any)._id === taskId) ? { ...t, status: nextStatus, updatedAt: new Date().toISOString() } : t),
             }));
+
+            // Stop timer if status changed from IN_PROGRESS
+            if (nextStatus !== 'IN_PROGRESS') {
+              const currentActiveTimer = get().activeTimer;
+              if (currentActiveTimer?.taskId === taskId) {
+                get().stopTimer().catch(console.error);
+              }
+            }
+
             return true;
           } catch (error: any) {
             const errorData = error.response?.data;
@@ -703,6 +729,54 @@ export const useWorkflowStore = create<WorkflowState>()(
           set({ bugs: data });
         } catch (error) {
           console.error('Failed to fetch bugs', error);
+        }
+      },
+
+      startTimer: async (taskId: string) => {
+        try {
+          const res = await api.post('/time/start', { taskId });
+          if (res.data?.success) {
+            set({ activeTimer: res.data.data });
+            get().fetchUserTimeEntries();
+          }
+        } catch (err) {
+          console.error('Failed to start timer:', err);
+          throw err;
+        }
+      },
+      stopTimer: async () => {
+        try {
+          const res = await api.post('/time/stop');
+          if (res.data?.success) {
+            set({ activeTimer: null });
+            get().fetchUserTimeEntries();
+          }
+        } catch (err) {
+          console.error('Failed to stop timer:', err);
+          throw err;
+        }
+      },
+      fetchActiveTimer: async () => {
+        try {
+          const res = await api.get('/time/active');
+          if (res.data?.success) {
+            set({ activeTimer: res.data.data });
+          } else {
+            set({ activeTimer: null });
+          }
+        } catch (err) {
+          console.error('Failed to fetch active timer:', err);
+        }
+      },
+      fetchUserTimeEntries: async (userId?: string) => {
+        try {
+          const url = userId ? `/time?userId=${userId}` : '/time';
+          const res = await api.get(url);
+          if (res.data?.success) {
+            set({ timeEntries: res.data.data });
+          }
+        } catch (err) {
+          console.error('Failed to fetch time entries:', err);
         }
       },
     }),

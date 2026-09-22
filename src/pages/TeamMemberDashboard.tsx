@@ -25,6 +25,7 @@ import { SubmitPRModal } from '../components/tasks/SubmitPRModal';
 import { RaiseBugModal } from '../components/tasks/RaiseBugModal';
 import { CreateTaskModal } from '../components/tasks/CreateTaskModal';
 import ProjectSelector from '../components/tasks/ProjectSelector';
+import TimeTrackerView from '../components/TimeTrackerView';
 
 import Sidebar from '../components/tasks/Sidebar';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
@@ -731,18 +732,7 @@ export default function DeveloperDashboard() {
           </div>
         )}
 
-        {activeTab === 'TimeTracker' && (
-          <div className="p-10 w-full space-y-10">
-            <div>
-              <h1 className="text-2xl font-bold text-[#1B4FAB] tracking-tight">Time Tracker</h1>
-              <p className="text-[12px] font-medium text-[#1B4FAB]/50 mt-1">Track billable hours and task duration</p>
-            </div>
-            <div className="p-20 border-2 border-dashed border-slate-100 rounded-[32px] text-center">
-              <Clock size={48} className="mx-auto text-slate-200 mb-4" />
-              <p className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">Select a task to start tracking</p>
-            </div>
-          </div>
-        )}
+        {activeTab === 'TimeTracker' && <TimeTrackerView />}
 
         {activeTab === 'CodeReview' && (
           <div className="p-10 w-full space-y-10">

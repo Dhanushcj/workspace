@@ -71,23 +71,49 @@ export interface Epic {
   projectId: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status?: string;
+  clientOrg?: string;
+  category?: string;
+  sprintName?: string;
+  completion?: number;
+  prCount?: number;
+  blockerCount?: number;
+  members?: any[];
+  gitRepo?: string;
+  frontendUrl?: string;
+  backendUrl?: string;
+  modules?: string[];
+  environments?: { key: string, value: string }[];
+}
+
 interface WorkflowState {
   tasks: Task[];
-  projects: any[];
+  projects: Project[];
   isLoading: boolean;
-  currentProject: any | null;
+  currentProject: Project | null;
   currentSprint: any | null;
   statuses: Status[];
   members: any[];
   epics: Epic[];
   prs: any[];
   bugs: any[];
+  activeTimer: any | null;
+  timeEntries: any[];
   fetchTasks: (filters?: { projectId?: string, sprintId?: string }, silent?: boolean) => Promise<void>;
   fetchProjects: (silent?: boolean) => Promise<void>;
   createProject: (data: { name: string, description: string }) => Promise<void>;
+  updateProject: (projectId: string, updates: any) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
   updateTask: (taskId: string, updates: any) => Promise<boolean>;
   updateTaskStatus: (taskId: string, status: string, role: string) => Promise<boolean>;
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  bulkDeleteTasks: (taskIds: string[]) => Promise<void>;
+  bulkUpdateTasks: (ids: string[], updates: any) => Promise<boolean>;
   resolveBlocker: (blockerId: string, resolutionNote: string) => Promise<boolean>;
   setCurrentProject: (project: any) => void;
   setCurrentSprint: (sprint: any) => void;
@@ -106,7 +132,6 @@ interface WorkflowState {
   addStatus: (projectId: string, data: { name: string, color: string, order: number }) => Promise<any>;
   updateStatus: (statusId: string, data: { name?: string, color?: string, order?: number }) => Promise<any>;
   deleteStatus: (statusId: string) => Promise<boolean>;
-  bulkUpdateTasks: (ids: string[], updates: { status?: TaskStatus | string, assigneeId?: string, priority?: TaskPriority | string }) => Promise<boolean>;
   fetchMembers: (projectId?: string) => Promise<void>;
   updateTaskAssignee: (taskId: string, userId: string) => Promise<boolean>;
   clearTasks: () => void;
@@ -116,6 +141,10 @@ interface WorkflowState {
   updateTaskEstimation: (taskId: string, points: number | null) => Promise<boolean>;
   fetchPRs: () => Promise<void>;
   fetchBugs: () => Promise<void>;
+  startTimer: (taskId: string) => Promise<void>;
+  stopTimer: () => Promise<void>;
+  fetchActiveTimer: () => Promise<void>;
+  fetchUserTimeEntries: (userId?: string) => Promise<void>;
 }
 
 const canTransition = (current: string, next: string, role: string): boolean => {
@@ -141,6 +170,8 @@ export const useWorkflowStore = create<WorkflowState>()(
       epics: [],
       prs: [],
       bugs: [],
+      activeTimer: null,
+      timeEntries: [],
       
       fetchTasks: async (filters, silent = false) => {
         if (!silent) set({ isLoading: true });
@@ -187,12 +218,16 @@ export const useWorkflowStore = create<WorkflowState>()(
           }));
 
           const state = get();
-          const currentInList = apiData.find((p: any) => p.id === state.currentProject?.id);
+          const currentId = String(state.currentProject?.id || (state.currentProject as any)?._id || '');
+          const currentInList = apiData.find((p: any) =>
+            String(p.id || p._id || '') === currentId
+          );
 
           const updates: any = { projects: apiData, isLoading: false };
 
           if (apiData.length > 0) {
-            if (!state.currentProject || !currentInList) {
+            if (!state.currentProject || (!currentInList && !currentId)) {
+              // Only switch to first project if we genuinely have no current project
               const projectToSet = apiData[0];
               // Use activeSprint field returned by the enriched backend
               const activeSprint =
@@ -248,6 +283,20 @@ export const useWorkflowStore = create<WorkflowState>()(
           }));
         } catch (error) {
           console.error('Failed to update project', error);
+          throw error;
+        }
+      },
+
+      deleteProject: async (projectId: string) => {
+        try {
+          await api.delete(`/projects/${projectId}`);
+          set((state) => ({
+            projects: state.projects.filter(p => p.id !== projectId && (p as any)._id !== projectId),
+            currentProject: (state.currentProject?.id === projectId || (state.currentProject as any)?._id === projectId) ? null : state.currentProject
+          }));
+        } catch (error) {
+          console.error('Failed to delete project', error);
+          throw error;
         }
       },
 
@@ -258,15 +307,98 @@ export const useWorkflowStore = create<WorkflowState>()(
         } catch (error) {}
       },
 
+      deleteTask: async (taskId: string) => {
+        try {
+          await api.delete(`/issues/${taskId}`);
+          set((state) => ({ tasks: state.tasks.filter(t => t.id !== taskId && (t as any)._id !== taskId) }));
+        } catch (error) {
+          console.error('Failed to delete task', error);
+          throw error;
+        }
+      },
+
+      bulkDeleteTasks: async (taskIds: string[]) => {
+        try {
+          await api.post('/issues/bulk-delete', { ids: taskIds });
+          set((state) => ({ tasks: state.tasks.filter(t => !taskIds.includes(t.id) && !taskIds.includes((t as any)._id)) }));
+        } catch (error) {
+          console.error('Failed to bulk delete tasks', error);
+          throw error;
+        }
+      },
+
+      bulkUpdateTasks: async (taskIds: string[], updates: any) => {
+        try {
+          await api.patch('/issues/bulk', { ids: taskIds, ...updates });
+          set((state) => ({
+            tasks: state.tasks.map((t) => {
+              if (taskIds.includes(t.id) || taskIds.includes((t as any)._id)) {
+                const updatedTask = { ...t, ...updates, updatedAt: new Date().toISOString() };
+                if (updates.assigneeId !== undefined) {
+                  if (updates.assigneeId === '' || updates.assigneeId === null || updates.assigneeId === 'null') {
+                    updatedTask.assignee = undefined;
+                    updatedTask.assigneeId = undefined;
+                    updatedTask.assigneeName = undefined;
+                  } else {
+                    const member = state.members.find(m => m.id === updates.assigneeId || (m as any)._id === updates.assigneeId);
+                    if (member) {
+                      updatedTask.assignee = {
+                        id: member.id || (member as any)._id,
+                        name: member.name,
+                        email: member.email,
+                        avatar: member.avatarUrl
+                      };
+                      updatedTask.assigneeName = member.name;
+                    }
+                  }
+                }
+                return updatedTask;
+              }
+              return t;
+            })
+          }));
+          return true;
+        } catch (error) {
+          console.error('Failed to bulk update tasks', error);
+          return false;
+        }
+      },
+
       updateTask: async (taskId: string, updates: any) => {
         try {
-          await api.put(`/issues/${taskId}`, updates);
+          await api.patch(`/issues/${taskId}`, updates);
           set((state) => ({
-            tasks: state.tasks.map((t) => 
-              (t.id === taskId || (t as any)._id === taskId) 
-                ? { ...t, ...updates, updatedAt: new Date().toISOString() } 
-                : t
-            ),
+            tasks: state.tasks.map((t) => {
+              if (t.id === taskId || (t as any)._id === taskId) {
+                const updatedTask = { ...t, ...updates, updatedAt: new Date().toISOString() };
+                if (updates.assigneeId !== undefined) {
+                  if (updates.assigneeId === '' || updates.assigneeId === null) {
+                    updatedTask.assignee = undefined;
+                  } else {
+                    const member = state.members.find(m => m.id === updates.assigneeId || (m as any)._id === updates.assigneeId);
+                    if (member) {
+                      updatedTask.assignee = {
+                        id: member.id || (member as any)._id,
+                        name: member.name,
+                        email: member.email,
+                        avatar: member.avatarUrl
+                      };
+                    }
+                  }
+                }
+
+                // If status changed and is no longer IN_PROGRESS, stop the active timer if it belongs to this task
+                if (updates.status && updates.status !== 'IN_PROGRESS') {
+                  const currentActiveTimer = get().activeTimer;
+                  if (currentActiveTimer?.taskId === (updatedTask.id || (updatedTask as any)._id)) {
+                    get().stopTimer().catch(console.error);
+                  }
+                }
+
+                return updatedTask;
+              }
+              return t;
+            }),
           }));
           return true;
         } catch (error) {
@@ -280,11 +412,20 @@ export const useWorkflowStore = create<WorkflowState>()(
         const task = tasks.find((t) => t.id === taskId || (t as any)._id === taskId);
         if (task && canTransition(task.status, nextStatus, role)) {
           try {
-            // Modernized to use unified PUT /issues/:id endpoint
-            await api.put(`/issues/${taskId}`, { status: nextStatus });
+            // Modernized to use unified PATCH /issues/:id endpoint
+            await api.patch(`/issues/${taskId}`, { status: nextStatus });
             set((state) => ({
               tasks: state.tasks.map((t) => (t.id === taskId || (t as any)._id === taskId) ? { ...t, status: nextStatus, updatedAt: new Date().toISOString() } : t),
             }));
+
+            // Stop timer if status changed from IN_PROGRESS
+            if (nextStatus !== 'IN_PROGRESS') {
+              const currentActiveTimer = get().activeTimer;
+              if (currentActiveTimer?.taskId === taskId) {
+                get().stopTimer().catch(console.error);
+              }
+            }
+
             return true;
           } catch (error: any) {
             const errorData = error.response?.data;
@@ -499,21 +640,6 @@ export const useWorkflowStore = create<WorkflowState>()(
         }
       },
 
-      bulkUpdateTasks: async (ids, updates) => {
-        try {
-          await api.patch('/issues/bulk', { ids, ...updates });
-          set(state => ({
-            tasks: state.tasks.map(t => 
-              ids.includes(t.id) ? { ...t, ...updates, updatedAt: new Date().toISOString() } as any : t
-            )
-          }));
-          return true;
-        } catch (error) {
-          console.error('Bulk update failed', error);
-          return false;
-        }
-      },
-
       fetchMembers: async () => {
         try {
           const authState = JSON.parse(localStorage.getItem('forge-auth') || '{}');
@@ -537,7 +663,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       updateTaskAssignee: async (taskId, assigneeId) => {
         try {
-          await api.put(`/issues/${taskId}`, { assigneeId });
+          await api.patch(`/issues/${taskId}`, { assigneeId });
           set(state => ({
             tasks: state.tasks.map(t => 
               (t.id === taskId || (t as any)._id === taskId) ? { ...t, assigneeId, updatedAt: new Date().toISOString() } as any : t
@@ -564,7 +690,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       updateTaskEpic: async (taskId, epicId) => {
         try {
-          await api.put(`/issues/${taskId}`, { epicId });
+          await api.patch(`/issues/${taskId}`, { epicId });
           set(state => ({
             tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, epicId } : t)
           }));
@@ -577,7 +703,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       updateTaskEstimation: async (taskId, storyPoints) => {
         try {
-          await api.put(`/issues/${taskId}`, { storyPoints });
+          await api.patch(`/issues/${taskId}`, { storyPoints });
           set(state => ({
             tasks: state.tasks.map(t => (t.id === taskId || (t as any)._id === taskId) ? { ...t, storyPoints } : t)
           }));
@@ -598,11 +724,59 @@ export const useWorkflowStore = create<WorkflowState>()(
       },
       fetchBugs: async () => {
         try {
-          const res = await api.get('/bug-reports?status=OPEN');
+          const res = await api.get('/issues?type=BUG');
           const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
           set({ bugs: data });
         } catch (error) {
           console.error('Failed to fetch bugs', error);
+        }
+      },
+
+      startTimer: async (taskId: string) => {
+        try {
+          const res = await api.post('/time/start', { taskId });
+          if (res.data?.success) {
+            set({ activeTimer: res.data.data });
+            get().fetchUserTimeEntries();
+          }
+        } catch (err) {
+          console.error('Failed to start timer:', err);
+          throw err;
+        }
+      },
+      stopTimer: async () => {
+        try {
+          const res = await api.post('/time/stop');
+          if (res.data?.success) {
+            set({ activeTimer: null });
+            get().fetchUserTimeEntries();
+          }
+        } catch (err) {
+          console.error('Failed to stop timer:', err);
+          throw err;
+        }
+      },
+      fetchActiveTimer: async () => {
+        try {
+          const res = await api.get('/time/active');
+          if (res.data?.success) {
+            set({ activeTimer: res.data.data });
+          } else {
+            set({ activeTimer: null });
+          }
+        } catch (err) {
+          console.error('Failed to fetch active timer:', err);
+        }
+      },
+      fetchUserTimeEntries: async (userId?: string) => {
+        try {
+          const url = userId ? `/time?userId=${userId}` : '/time';
+          const res = await api.get(url);
+          if (res.data?.success) {
+            set({ timeEntries: res.data.data });
+          }
+        } catch (err) {
+          console.error('Failed to fetch time entries:', err);
         }
       },
     }),

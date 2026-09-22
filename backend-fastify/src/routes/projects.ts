@@ -272,7 +272,7 @@ export async function projectRoutes(fastify: FastifyInstance) {
   fastify.get('/:projectId/sprints', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { projectId } = request.params as any;
-      const sprints = await Sprint.find({ projectId }).sort({ createdAt: -1 });
+      const sprints = await Sprint.find({ projectId }).sort({ createdAt: 1 });
       return reply.code(200).send(sprints);
     } catch (err: any) {
       return reply.code(500).send({ error: 'Failed to fetch sprints' });

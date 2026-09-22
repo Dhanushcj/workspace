@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, ChevronDown, Loader, AlertCircle, Save, Ban, Bug, Edit3 } from 'lucide-react';
+import { X, Calendar, ChevronDown, Loader, AlertCircle, Save, Ban, Bug, Edit3, Clock, PlayCircle, StopCircle } from 'lucide-react';
 import { Task, useWorkflowStore } from '../../store/workflowStore';
 import { marked } from 'marked';
 import { useToastStore } from '../../store/toastStore';
@@ -89,7 +89,7 @@ export const TaskDetailModal = ({
   task,
   displayId
 }: TaskDetailModalProps) => {
-  const { updateTask, statuses, members } = useWorkflowStore();
+  const { updateTask, statuses, members, activeTimer, startTimer, stopTimer, fetchActiveTimer } = useWorkflowStore();
   const { addToast } = useToastStore();
   const { user } = useAuthStore();
   const rawRole = (user?.role || '').toUpperCase().replace(' ', '_');
@@ -113,6 +113,13 @@ export const TaskDetailModal = ({
   const [commentLoading, setCommentLoading] = useState(false);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [isRaiseBugOpen, setIsRaiseBugOpen] = useState(false);
+  const [timerLoading, setTimerLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchActiveTimer();
+    }
+  }, [isOpen, fetchActiveTimer]);
 
   const handleRaiseBugSubmit = async (taskId: string, description: string) => {
     try {
@@ -199,6 +206,25 @@ export const TaskDetailModal = ({
       addToast({ type: 'ERROR', title: 'Save Failed', message: 'Could not save task changes.' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleTimer = async () => {
+    if (!task) return;
+    setTimerLoading(true);
+    try {
+      const tid = task.id || (task as any)._id;
+      if (activeTimer?.taskId === tid) {
+        await stopTimer();
+        addToast({ type: 'SUCCESS', title: 'Timer Stopped', message: 'Time entry logged.' });
+      } else {
+        await startTimer(tid);
+        addToast({ type: 'SUCCESS', title: 'Timer Started', message: 'Time tracking began.' });
+      }
+    } catch (err: any) {
+      addToast({ type: 'ERROR', title: 'Timer Failed', message: err.message || 'Could not toggle timer.' });
+    } finally {
+      setTimerLoading(false);
     }
   };
 
@@ -455,6 +481,17 @@ export const TaskDetailModal = ({
             >
               Close
             </button>
+            {formData.status === 'IN_PROGRESS' && (
+              <button 
+                type="button"
+                onClick={handleToggleTimer}
+                disabled={timerLoading}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all border disabled:opacity-50 ${activeTimer?.taskId === (task.id || (task as any)._id) ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 'bg-[#1A3A8F] text-white border-transparent hover:bg-blue-800'}`}
+              >
+                {timerLoading ? <Loader size={16} className="animate-spin" /> : (activeTimer?.taskId === (task.id || (task as any)._id) ? <StopCircle size={16} /> : <PlayCircle size={16} />)}
+                {activeTimer?.taskId === (task.id || (task as any)._id) ? 'Stop Timer' : 'Start Timer'}
+              </button>
+            )}
             <button 
               type="button"
               onClick={() => setIsRaiseBugOpen(true)}

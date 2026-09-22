@@ -182,6 +182,9 @@ async function bootstrap() {
   await server.register(threadsRoutes, { prefix: '/api/threads' });
   await server.register(aiRoutes, { prefix: '/api/v1/ai' });
   await server.register(notificationsRoutes, { prefix: '/api/notifications' });
+  
+  const { default: timeRoutes } = await import('./routes/time');
+  await server.register(timeRoutes, { prefix: '/api/time' });
 
   console.log('[BOOTSTRAP] Registering mock routes...');
   // MOCK ROUTES TO FIX 404 ERRORS

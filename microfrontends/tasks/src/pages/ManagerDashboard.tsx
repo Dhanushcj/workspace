@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import SprintPlanner from '../components/SprintPlanner';
 import { SprintBoard } from '../components/SprintBoard';
 import CreateProjectModal from '../components/CreateProjectModal';
+import TimeTrackerView from '../components/TimeTrackerView';
 
 export default function ManagerDashboard() {
    const router = useRouter();
@@ -516,6 +517,8 @@ export default function ManagerDashboard() {
                   </div>
                </div>
             )}
+
+            {activeTab === 'TimeTracker' && <TimeTrackerView />}
 
             <CreateProjectModal
                isOpen={isCreateModalOpen}

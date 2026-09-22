@@ -113,6 +113,7 @@ const Sidebar = React.memo(function Sidebar() {
             { label: 'Sprint Planner', icon: Target, href: `${baseUrl}?tab=SprintPlanner` },
             { label: 'Backlog', icon: ListChecks, href: `${baseUrl}?tab=Backlog`, badge: tasks.filter(t => t.status === 'TO_DO').length || null },
             { label: 'Task Assignment', icon: UserPlus, href: `${baseUrl}?tab=Assignment` },
+            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker` },
             { label: 'Blockers', icon: ShieldAlert, href: `${baseUrl}?tab=Blockers`, badge: blockerCount > 0 ? blockerCount : null },
           ]
         },
@@ -148,6 +149,7 @@ const Sidebar = React.memo(function Sidebar() {
           title: 'MY WORK',
           items: [
             { label: 'My Tasks', icon: ListChecks, href: `${baseUrl}?tab=MyTasks`, badge: myTasksCount > 0 ? myTasksCount : null },
+            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker` },
             { label: 'Bug Inbox', icon: Bug, href: `${baseUrl}?tab=BugInbox`, badge: openBugsCount > 0 ? openBugsCount : null },
           ]
         },
@@ -177,6 +179,7 @@ const Sidebar = React.memo(function Sidebar() {
           items: [
             { label: 'Test Queue', icon: ListTodo, href: `${baseUrl}?tab=TestQueue`, badge: tasks.filter(t => t.status === 'TESTING').length || null },
             { label: 'Active Testing', icon: Play, href: `${baseUrl}?tab=ActiveTesting` },
+            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker` },
             { label: 'Bug Reports', icon: Bug, href: `${baseUrl}?tab=BugReports`, badge: openBugsCount > 0 ? openBugsCount : null },
             { label: 'Test Cases', icon: FileText, href: `${baseUrl}?tab=TestCases` },
           ]

@@ -10,10 +10,10 @@ import {
   Bug, BarChart3, Clock, MessageSquare, Code2,
   ListTodo, Play, FileText, FlaskConical, Zap, CircleCheck, ChevronDown
 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
-import { useWorkflowStore } from '../store/workflowStore';
-import { useNotificationStore } from '../store/notificationStore';
-
+import { useAuthStore } from '../../store/authStore';
+import { useWorkflowStore } from '../../store/workflowStore';
+import { useNotificationStore } from '../../store/notificationStore';
+import { AppSwitcher } from '../AppLayout';
 
 interface NavItem {
   label: string;
@@ -33,8 +33,8 @@ const Sidebar = React.memo(function Sidebar() {
   const pathname = location.pathname;
   const [searchParams] = useSearchParams();
   const router = useRouter();
-  const user = useAuthStore((state: any) => state.user);
-  const logout = useAuthStore((state: any) => state.logout);
+  const user = useAuthStore(state => state.user);
+  const logout = useAuthStore(state => state.logout);
   const { workspaceId } = useParams();
   
   // Normalize role
@@ -42,16 +42,16 @@ const Sidebar = React.memo(function Sidebar() {
   if (rawRole === 'USER' || rawRole === 'MEMBER') rawRole = 'DEVELOPER';
   const role = rawRole;
 
-  const tasks = useWorkflowStore((state: any) => state.tasks);
-  const projects = useWorkflowStore((state: any) => state.projects);
-  const prs = useWorkflowStore((state: any) => state.prs);
-  const bugs = useWorkflowStore((state: any) => state.bugs);
-  const unreadCount = useNotificationStore((state: any) => state.unreadCount);
+  const tasks = useWorkflowStore(state => state.tasks);
+  const projects = useWorkflowStore(state => state.projects);
+  const prs = useWorkflowStore(state => state.prs);
+  const bugs = useWorkflowStore(state => state.bugs);
+  const unreadCount = useNotificationStore(state => state.unreadCount);
   
-  const fetchPRs = useWorkflowStore((state: any) => state.fetchPRs);
-  const fetchBugs = useWorkflowStore((state: any) => state.fetchBugs);
-  const fetchUnreadCount = useNotificationStore((state: any) => state.fetchUnreadCount);
-  const fetchTasks = useWorkflowStore((state: any) => state.fetchTasks);
+  const fetchPRs = useWorkflowStore(state => state.fetchPRs);
+  const fetchBugs = useWorkflowStore(state => state.fetchBugs);
+  const fetchUnreadCount = useNotificationStore(state => state.fetchUnreadCount);
+  const fetchTasks = useWorkflowStore(state => state.fetchTasks);
 
   React.useEffect(() => {
     if (user) {
@@ -62,23 +62,16 @@ const Sidebar = React.memo(function Sidebar() {
     }
   }, [user, fetchPRs, fetchBugs, fetchUnreadCount]);
 
-  const currentSprint = useWorkflowStore((state: any) => state.currentSprint);
+  const currentSprint = useWorkflowStore(state => state.currentSprint);
   const sprintId = currentSprint?.id || (currentSprint as any)?._id;
   
-  const myTasksCount = tasks.filter((t: any) => 
+  const myTasksCount = tasks.filter(t => 
     t.assigneeId === user?.id && 
     t.status !== 'DONE' &&
     (sprintId ? (t.sprintId === sprintId || (t as any).sprintId === sprintId) : true)
   ).length;
-
-  // Badge: count tasks in CODE_REVIEW for Team Lead notification
-  const allTasks = useWorkflowStore((state: any) => state.allTasks);
-  const codeReviewCount = (['TEAM_LEAD', 'ADMIN', 'LEAD'].includes(role))
-    ? allTasks.filter((t: any) => t.status === 'CODE_REVIEW').length
-    : tasks.filter((t: any) => t.status === 'CODE_REVIEW' && t.assigneeId === user?.id).length;
-  const testingCount = tasks.filter((t: any) => t.status === 'TESTING').length;
   
-  const blockerCount = tasks.filter((t: any) => t.status === 'BLOCKED').length;
+  const blockerCount = tasks.filter(t => t.status === 'BLOCKED').length;
   const projectCount = projects.length;
   const openPrsCount = prs.length;
   const openBugsCount = bugs.length;
@@ -114,16 +107,17 @@ const Sidebar = React.memo(function Sidebar() {
             { label: 'Sprint Board', icon: Kanban, href: `${baseUrl}?tab=SprintBoard` },
           ]
         },
-
         {
           title: 'SPRINT MANAGEMENT',
           items: [
             { label: 'Sprint Planner', icon: Target, href: `${baseUrl}?tab=SprintPlanner` },
-            { label: 'Backlog', icon: ListChecks, href: `${baseUrl}?tab=Backlog`, badge: tasks.filter((t: any) => t.status === 'TO_DO').length || null },
+            { label: 'Backlog', icon: ListChecks, href: `${baseUrl}?tab=Backlog`, badge: tasks.filter(t => t.status === 'TO_DO').length || null },
             { label: 'Task Assignment', icon: UserPlus, href: `${baseUrl}?tab=Assignment` },
+            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker` },
             { label: 'Blockers', icon: ShieldAlert, href: `${baseUrl}?tab=Blockers`, badge: blockerCount > 0 ? blockerCount : null },
           ]
         },
+
         {
           title: 'TEAM',
           items: [
@@ -155,7 +149,7 @@ const Sidebar = React.memo(function Sidebar() {
           title: 'MY WORK',
           items: [
             { label: 'My Tasks', icon: ListChecks, href: `${baseUrl}?tab=MyTasks`, badge: myTasksCount > 0 ? myTasksCount : null },
-            { label: 'Code Review', icon: Code2, href: `${baseUrl}?tab=CodeReviewDev`, badge: codeReviewCount > 0 ? codeReviewCount : null, badgeColor: codeReviewCount > 0 ? 'bg-violet-100 text-violet-700' : undefined },
+            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker` },
             { label: 'Bug Inbox', icon: Bug, href: `${baseUrl}?tab=BugInbox`, badge: openBugsCount > 0 ? openBugsCount : null },
           ]
         },
@@ -183,9 +177,9 @@ const Sidebar = React.memo(function Sidebar() {
         {
           title: 'MY QA WORK',
           items: [
-            { label: 'Test Queue', icon: FlaskConical, href: `${baseUrl}?tab=TestQueue`, badge: testingCount > 0 ? testingCount : null, badgeColor: testingCount > 0 ? 'bg-amber-100 text-amber-700' : undefined },
-            { label: 'My Tasks', icon: ListChecks, href: `${baseUrl}?tab=MyTasks`, badge: myTasksCount > 0 ? myTasksCount : null },
+            { label: 'Test Queue', icon: ListTodo, href: `${baseUrl}?tab=TestQueue`, badge: tasks.filter(t => t.status === 'TESTING').length || null },
             { label: 'Active Testing', icon: Play, href: `${baseUrl}?tab=ActiveTesting` },
+            { label: 'Time Tracker', icon: Clock, href: `${baseUrl}?tab=TimeTracker` },
             { label: 'Bug Reports', icon: Bug, href: `${baseUrl}?tab=BugReports`, badge: openBugsCount > 0 ? openBugsCount : null },
             { label: 'Test Cases', icon: FileText, href: `${baseUrl}?tab=TestCases` },
           ]
@@ -363,7 +357,7 @@ const Sidebar = React.memo(function Sidebar() {
 
       <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
         <div className="mb-3 opacity-80 hover:opacity-100 transition-opacity">
-          
+          <AppSwitcher workspaceId={workspaceId || 'demo'} />
         </div>
         <div className="rounded-xl p-3 mb-3 flex items-center gap-2.5" style={{ background: 'rgba(255,255,255,0.08)' }}>
            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0" style={{ background: '#F5C300', color: '#1B4FAB' }}>
