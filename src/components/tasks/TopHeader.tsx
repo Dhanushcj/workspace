@@ -24,6 +24,7 @@ export default function TopHeader({ onOpenNotifications }: TopHeaderProps) {
   const { user } = useAuthStore();
   const { notifications, markAsRead, clearAll } = useNotificationStore();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   const hasUnread = notifications.some(n => !n.read);
@@ -35,7 +36,13 @@ export default function TopHeader({ onOpenNotifications }: TopHeaderProps) {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      clearInterval(timer);
+    };
   }, []);
 
   const getNotificationIcon = (type: string) => {
@@ -169,6 +176,16 @@ export default function TopHeader({ onOpenNotifications }: TopHeaderProps) {
         </div>
 
         <div className="h-8 w-px bg-slate-200 mx-1" />
+
+        {/* Live Clock Display */}
+        <div className="hidden md:flex flex-col items-end mr-3">
+          <div className="text-[13px] font-bold text-slate-800 tracking-tight leading-none mb-1">
+            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+          <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest leading-none">
+            {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+          </div>
+        </div>
 
         {/* User Profile */}
         <div className="flex items-center gap-3 px-3 py-1.5 bg-[#F8F9FA] border border-slate-200 rounded-xl transition-all hover:bg-white cursor-pointer group">

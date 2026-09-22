@@ -17,7 +17,6 @@ import toast from 'react-hot-toast';
 import SprintPlanner from '../components/SprintPlanner';
 import { SprintBoard } from '../components/SprintBoard';
 import CreateProjectModal from '../components/CreateProjectModal';
-import TimeTrackerView from '../components/TimeTrackerView';
 
 export default function ManagerDashboard() {
    const router = useRouter();
@@ -43,6 +42,7 @@ export default function ManagerDashboard() {
    const [userSearch, setUserSearch] = useState('');
    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'DEVELOPER' });
    const [isCreatingUser, setIsCreatingUser] = useState(false);
+   const [currentTime, setCurrentTime] = useState(new Date());
 
    const handleCreateUser = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -138,8 +138,11 @@ export default function ManagerDashboard() {
       }
 
       socketService.connect();
+      
+      const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
       return () => {
+         clearInterval(timer);
       };
    }, [user, router, fetchData]);
 
@@ -185,7 +188,13 @@ export default function ManagerDashboard() {
             <div className="bg-white border-b border-slate-200/60 px-10 py-6 flex items-center justify-between sticky top-0 z-10">
                <div>
                   <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manager Dashboard</h1>
-                  <p className="text-[12px] font-medium text-slate-400 mt-1">Forge India PMT · {user?.name} · All Projects</p>
+                  <p className="text-[12px] font-medium text-slate-400 mt-1 flex items-center gap-2">
+                     Forge India PMT · {user?.name}
+                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                     {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                     {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </p>
                </div>
 
                <div className="flex items-center gap-3">
@@ -517,8 +526,6 @@ export default function ManagerDashboard() {
                   </div>
                </div>
             )}
-
-            {activeTab === 'TimeTracker' && <TimeTrackerView />}
 
             <CreateProjectModal
                isOpen={isCreateModalOpen}

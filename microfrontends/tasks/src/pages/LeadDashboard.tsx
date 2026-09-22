@@ -49,6 +49,7 @@ export default function LeadDashboard() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { notifications, markAsRead, clearAll, fetchNotifications } = useNotificationStore();
 
   useEffect(() => { fetchNotifications(); }, []);
@@ -139,7 +140,10 @@ export default function LeadDashboard() {
 
     socketService.connect();
 
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+
     return () => {
+       clearInterval(timer);
     };
   }, [user, router, fetchData]);
 
@@ -186,8 +190,15 @@ export default function LeadDashboard() {
        activeTab !== 'Team' && activeTab !== 'Workload' && activeTab !== 'Settings' && activeTab !== 'SprintBoard' && (
         <div className="px-6 py-5 flex items-end justify-between shrink-0">
            <div>
-              <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Team Lead Dashboard</h1>
+              <h1 className="text-xl font-semibold text-slate-900 tracking-tight flex items-center gap-2">
+                Team Lead Dashboard
+                <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-medium tracking-widest mt-1">
+                  {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              </h1>
               <div className="flex items-center gap-1.5 mt-1 text-[10px] font-medium text-slate-400 uppercase tracking-widest">
+                 <span>{currentTime.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+                 <span>•</span>
                  <span>{currentSprint?.name || 'No Active Sprint'}</span>
                  <span>•</span>
                  <span>{currentProject?.name || 'No Project Selected'}</span>
